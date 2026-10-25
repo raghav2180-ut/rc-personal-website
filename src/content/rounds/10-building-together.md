@@ -8,6 +8,9 @@ photo: "../../assets/photos/amrita-stage-2026.jpg"
 photoAlt: "Raghav on stage at Amrita Vishwa Vidyapeetham presenting the UnsaidTalks Mentorship Program"
 caption: "On stage at Amrita Vishwa Vidyapeetham, March 2026."
 gallery:
+  - src: "../../assets/photos/shubhankar-u-sign.jpg"
+    alt: "Raghav and Shubhankar Sharma doing the UnsaidTalks U sign"
+    caption: "Shubhankar Sharma (Full Stack Developer, BlackRock): school friend, mentor, and with us at every step."
   - src: "../../assets/photos/amrita-sow.jpg"
     alt: "Raghav signing the statement of work with the Director of Corporate & Industry Relations, Amrita"
     caption: "Signing with Amrita’s Corporate & Industry Relations office: 4,000+ students, 7 campuses."
@@ -49,6 +52,8 @@ gallery:
 The next eighteen months moved fast.
 
 We launched **Build4Hire** with Dr. Kushal Shah (former professor at IIT Delhi, AI researcher and educator), a nine-month program where students build real software instead of just consuming content. We signed a statement of work with Amrita Vishwa Vidyapeetham to deliver the UnsaidTalks Mentorship Program to **4,000+ students across 7 campuses**. In March 2026 I travelled through South India and met 1,800+ students in a month. When I asked whether they wanted to join the program, 1,633 said yes.
+
+None of this would have run without **Shubhankar Sharma**. We were friends at school, and today he is a Full Stack Developer at BlackRock. He has been with us through this whole journey: he helped Kajol and me design the UnsaidTalks Mentorship Program, and he has worked alongside us to deliver it at Manav Rachna, Amrita and every other college we've partnered with. Many of the students you'll read about in reviews name him. He's also one of the friends who invested in us when I went full time.
 
 In Bangalore, Kajol and I hosted our mentors so we could thank them in person. Dr. Amarjeet made it possible for us to visit Zoho Schools of Learning and meet its founder, Sridhar Vembu, to learn how they train freshers.
 
