@@ -22,6 +22,9 @@ const latestWriting = (await getCollection('writing'))
   .slice(0, 4);
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
+// Rounds with one or two extra photos show them stacked beside the text; more than two become a carousel.
+const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.gallery && entry.data.gallery.length <= 2;
 ---
 <Layout>
 
@@ -100,20 +103,23 @@ const pad = (n: number) => String(n).padStart(2, '0');
               <p class="m-0 font-mono text-[0.8rem] text-muted"><span class="text-ink">THIS ROUND ASKED:</span> {entry.data.asked}</p>
               <div class="prose-post max-w-[62ch]"><Content /></div>
             </div>
-            {(entry.data.photo || entry.data.tip) && (
+            {(entry.data.photo || entry.data.tip || sideGallery(entry)) && (
               <aside class="flex-[1_1_240px] min-w-0 max-w-[320px] flex flex-col gap-6 pt-1">
                 {entry.data.photo && (
                   <Photo src={entry.data.photo} alt={entry.data.photoAlt ?? ''} caption={entry.data.caption} frame tilt={entry.data.order % 2 ? -1.2 : 1.2} sizes="(min-width: 1024px) 320px, 85vw" />
                 )}
+                {sideGallery(entry) && entry.data.gallery!.map((g, i) => (
+                  <Photo src={g.src} alt={g.alt} caption={g.caption} frame tilt={(entry.data.order + i) % 2 ? 1.2 : -1.2} sizes="(min-width: 1024px) 320px, 85vw" />
+                ))}
                 {entry.data.tip && (
                   <p class="m-0 font-hand text-[1.3rem] leading-snug text-pen rotate-[-1.5deg]">tip: {entry.data.tip}</p>
                 )}
               </aside>
             )}
           </div>
-          {entry.data.gallery && entry.data.gallery.length > 0 && (
+          {entry.data.gallery && entry.data.gallery.length > 0 && !sideGallery(entry) && (
             <div class="mt-8 pt-6 border-t border-dashed border-rule">
-              <Carousel items={entry.data.gallery} label={`Photos from round ${pad(entry.data.order)}`} heading={entry.data.gallery.length > 2 ? 'swipe through the photos from this round →' : undefined} />
+              <Carousel items={entry.data.gallery} label={`Photos from round ${pad(entry.data.order)}`} heading="swipe through the photos from this round →" />
             </div>
           )}
         </li>
