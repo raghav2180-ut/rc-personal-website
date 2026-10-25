@@ -14,6 +14,7 @@ import zenatixVisit from '../assets/photos/zenatix-cofounders-visit.jpg';
 import zohoVembu from '../assets/photos/zoho-sridhar-vembu.jpg';
 import mriirsDivyanshu from '../assets/photos/mriirs-divyanshu.jpg';
 import mriirsCohort from '../assets/photos/mriirs-cohort.jpg';
+import jklu from '../assets/photos/jklu-engineering-day.jpg';
 import amritaSow from '../assets/photos/amrita-sow.jpg';
 import amritaCir from '../assets/photos/amrita-cir-team.jpg';
 import chitkara from '../assets/photos/chitkara-workshop.jpg';
@@ -104,13 +105,6 @@ export const sambhav = {
 export const testimonials = [
   {
     quote:
-      'Through structured interview preparation, insightful mentorship sessions, and valuable industry exposure, UnsaidTalks has played a pivotal role in significantly increasing placements at our university.',
-    name: 'Dr. Divyanshu Sinha',
-    context: 'Educator in technology, formerly at MRIIRS',
-    source: 'LinkedIn',
-  },
-  {
-    quote:
       'I only started actively contacting founders and cold mailing startups after getting inspired from Madhur sir’s lecture, and now I’m working at one.',
     name: 'Kshitij Thareja',
     context: 'UnsaidTalks Mentorship Program, inspired by mentor Madhur Yadav (Data Science Consultant, Saiva)',
@@ -178,7 +172,7 @@ export const colleges = [
   { name: 'Manav Rachna (MRIIRS)', detail: 'Our first college cohort (Oct 2024), then an MoU (Jan 2025)', photo: mriirsCohort, alt: 'MRIIRS students with Dr. Tapas Kumar and Ms. Meghna' },
   { name: 'Thapar Institute (ECE)', detail: 'My alma mater. MoU signed in 2018, when we were still a blog', photo: null, alt: '' },
   { name: 'Chitkara University', detail: 'Three-day workshop with students', photo: chitkara, alt: 'Chitkara students doing the U sign after a three-day workshop' },
-  { name: 'JK Lakshmipat University', detail: 'Guests for Engineering Day', photo: null, alt: '' },
+  { name: 'JK Lakshmipat University', detail: 'Guests for Engineering Day', photo: jklu, alt: 'Raghav, Kajol and Shubhankar with Dr. Tapas Kumar at JKLU' },
 ];
 
 export const collegePhotos = [

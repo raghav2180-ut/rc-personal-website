@@ -4,6 +4,13 @@ when: "2018"
 title: "Taking 30% less"
 asked: "Money or people?"
 tip: "optimise for learning, not salary. the returns come later."
+gallery:
+  - src: "../../assets/photos/zenatix-vishal-visit.jpg"
+    alt: "Vishal, co-founder of Zenatix, visiting the UnsaidTalks office"
+    caption: "Years later, Zenatix co-founder Vishal came to share his learnings with our team."
+  - src: "../../assets/photos/zenatix-cofounders-visit.jpg"
+    alt: "Raghav and Kajol with Zenatix co-founders Dr. Amarjeet Singh and Vishal"
+    caption: "Kajol and me with both Zenatix co-founders, Dr. Amarjeet Singh and Vishal."
 ---
 
 A year into my career I had two offers. One paid 30% more. Most people would have taken it without a second thought, and my head said to.

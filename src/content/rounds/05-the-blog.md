@@ -7,6 +7,10 @@ tip: "free and useful beats paid and forgettable."
 photo: "../../assets/photos/vinay-kumar-sir.jpg"
 photoAlt: "Raghav with Vinay Kumar sir"
 caption: "Vinay Kumar sir, who told his students about UnsaidTalks when it was only a blog."
+gallery:
+  - src: "../../assets/photos/thapar-ece-mou-2018.jpg"
+    alt: "Raghav signing an MoU with the ECE department at Thapar Institute"
+    caption: "Thapar’s ECE department signs with a student blog, 2018."
 ---
 
 I graduated in 2017 with a B.Tech in Electronics and Communication, joined EXL as a business analyst, and ended up leading the Python automation for financial data from thousands of US insurance companies.

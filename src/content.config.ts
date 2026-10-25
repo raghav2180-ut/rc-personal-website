@@ -17,6 +17,10 @@ const rounds = defineCollection({
       photo: image().optional(),
       photoAlt: z.string().optional(),
       caption: z.string().optional(),
+      // Extra photos shown as a swipeable strip under the round's text.
+      gallery: z
+        .array(z.object({ src: image(), alt: z.string(), caption: z.string().optional() }))
+        .optional(),
     }),
 });
 

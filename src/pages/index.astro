@@ -3,12 +3,12 @@ import { getCollection, render } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Photo from '../components/Photo.astro';
 import SectionTitle from '../components/SectionTitle.astro';
+import Carousel from '../components/Carousel.astro';
 import logo from '../assets/unsaidtalks-logo.png';
 import { Image } from 'astro:assets';
 import {
   person, company, factTable, stats, tips, loopStories, sambhav, testimonials, workingWithMe,
-  programs, colleges, collegePhotos, mentorCompanies, mentorPhotos, road, backers,
-  fuelEventPhoto, build4hirePhoto, teamTimeline,
+  programs, colleges, mentorCompanies, mentorPhotos, road, backers, teamTimeline,
 } from '../data/site';
 
 const rounds = await Promise.all(
@@ -111,6 +111,11 @@ const pad = (n: number) => String(n).padStart(2, '0');
               </aside>
             )}
           </div>
+          {entry.data.gallery && entry.data.gallery.length > 0 && (
+            <div class="mt-8 pt-6 border-t border-dashed border-rule">
+              <Carousel items={entry.data.gallery} label={`Photos from round ${pad(entry.data.order)}`} heading={entry.data.gallery.length > 2 ? 'swipe through the photos from this round →' : undefined} />
+            </div>
+          )}
         </li>
       ))}
     </ol>
@@ -238,12 +243,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
         {colleges.filter((c) => c.photo).map((c, i) => (
           <Photo src={c.photo!} alt={c.alt} caption={c.name} frame tilt={i % 2 ? 1 : -1} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
         ))}
-        {collegePhotos.map((c, i) => (
-          <Photo src={c.photo} alt={c.alt} caption={c.caption} frame tilt={i % 2 ? -1 : 1} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
-        ))}
-        <Photo src={fuelEventPhoto.photo} alt={fuelEventPhoto.alt} caption={fuelEventPhoto.caption} frame tilt={0.8} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
-        <Photo src={build4hirePhoto.photo} alt={build4hirePhoto.alt} caption={build4hirePhoto.caption} frame tilt={-0.8} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
-        <Photo src={person.photos.speakingWoodwall} alt="Raghav explaining something, in an UnsaidTalks polo" caption="Recording a session for our students." frame tilt={1} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
       </div>
     </div>
   </section>
@@ -268,35 +267,11 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
   <!-- Team, oldest to newest -->
   <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24" aria-labelledby="team-title">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div class="flex flex-col gap-3">
-        <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted uppercase">Seven years quietly, then together</p>
-        <h2 id="team-title" class="m-0 text-[2.4rem] font-extrabold leading-tight">The team, then and now</h2>
-      </div>
-      <div class="flex gap-2" data-carousel-controls>
-        <button type="button" class="w-11 h-11 border-[1.5px] border-ink bg-paper font-display text-lg hover:text-pen hover:border-pen" data-dir="-1" aria-label="Earlier photos">←</button>
-        <button type="button" class="w-11 h-11 border-[1.5px] border-ink bg-paper font-display text-lg hover:text-pen hover:border-pen" data-dir="1" aria-label="Later photos">→</button>
-      </div>
+    <div class="flex flex-col gap-3 mb-6">
+      <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted uppercase">Seven years quietly, then together</p>
+      <h2 id="team-title" class="m-0 text-[2.4rem] font-extrabold leading-tight">The team, then and now</h2>
     </div>
-    <ul class="list-none m-0 p-0 mt-8 flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4" data-carousel tabindex="0" aria-label="Team photos, oldest to newest">
-      {teamTimeline.map((t, i) => (
-        <li class="snap-start flex-[0_0_min(82vw,440px)]">
-          <Photo src={t.photo} alt={t.alt} caption={t.caption} frame tilt={i % 2 ? 0.8 : -0.8} ratio="4 / 3" sizes="(min-width: 640px) 440px, 82vw" widths={[440, 880]} />
-        </li>
-      ))}
-    </ul>
-    <script>
-      document.querySelectorAll('[data-carousel-controls]').forEach((controls) => {
-        const track = controls.closest('section')?.querySelector('[data-carousel]');
-        if (!track) return;
-        controls.querySelectorAll('button').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const dir = Number(btn.getAttribute('data-dir'));
-            track.scrollBy({ left: dir * track.clientWidth * 0.8, behavior: 'smooth' });
-          });
-        });
-      });
-    </script>
+    <Carousel items={teamTimeline.map((t) => ({ src: t.photo, alt: t.alt, caption: t.caption }))} label="Team photos, oldest to newest" heading="from a few interns to a full office →" size="md" />
   </section>
 
   <!-- Writing -->

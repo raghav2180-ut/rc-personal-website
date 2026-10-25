@@ -1,0 +1,56 @@
+---
+/**
+ * A swipeable row of framed photos with previous/next buttons.
+ * Works without JavaScript (native horizontal scroll with snap points);
+ * the buttons are a convenience for mouse users.
+ */
+import type { ImageMetadata } from 'astro';
+import Photo from './Photo.astro';
+
+interface Item {
+  src: ImageMetadata;
+  alt: string;
+  caption?: string;
+}
+interface Props {
+  items: Item[];
+  label: string;          // accessible name, e.g. "Photos from round 09"
+  heading?: string;       // optional handwritten lead-in
+  size?: 'sm' | 'md';     // sm = inside a round, md = full section
+}
+
+const { items, label, heading, size = 'sm' } = Astro.props;
+const itemClass = size === 'md' ? 'flex-[0_0_min(82vw,440px)]' : 'flex-[0_0_min(70vw,260px)]';
+const sizes = size === 'md' ? '(min-width: 640px) 440px, 82vw' : '(min-width: 640px) 260px, 70vw';
+const widths = size === 'md' ? [440, 880] : [260, 520];
+const ratio = size === 'md' ? '4 / 3' : '4 / 3';
+---
+<div class="flex flex-col gap-3" data-carousel-root>
+  <div class="flex items-end justify-between gap-4">
+    {heading ? <p class="m-0 font-hand text-[1.25rem] leading-snug text-pen">{heading}</p> : <span />}
+    <div class={`flex gap-2 shrink-0 ${items.length <= 2 ? 'hidden' : ''}`}>
+      <button type="button" class="w-11 h-11 border-[1.5px] border-ink bg-paper font-display text-lg hover:text-pen hover:border-pen" data-dir="-1" aria-label={`Previous: ${label}`}>←</button>
+      <button type="button" class="w-11 h-11 border-[1.5px] border-ink bg-paper font-display text-lg hover:text-pen hover:border-pen" data-dir="1" aria-label={`Next: ${label}`}>→</button>
+    </div>
+  </div>
+  <ul class="list-none m-0 p-0 pt-1 flex gap-5 overflow-x-auto snap-x snap-mandatory pb-4" data-carousel-track tabindex="0" aria-label={label}>
+    {items.map((item, i) => (
+      <li class={`snap-start ${itemClass}`}>
+        <Photo src={item.src} alt={item.alt} caption={item.caption} frame tilt={i % 2 ? 0.8 : -0.8} ratio={ratio} sizes={sizes} widths={widths} />
+      </li>
+    ))}
+  </ul>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-carousel-root]').forEach((root) => {
+    const track = root.querySelector<HTMLElement>('[data-carousel-track]');
+    if (!track) return;
+    root.querySelectorAll<HTMLButtonElement>('button[data-dir]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const dir = Number(btn.dataset.dir);
+        track.scrollBy({ left: dir * track.clientWidth * 0.8, behavior: 'smooth' });
+      });
+    });
+  });
+</script>
