@@ -8,7 +8,7 @@ import logo from '../assets/unsaidtalks-logo.png';
 import { Image } from 'astro:assets';
 import {
   person, company, factTable, stats, tips, loopStories, sambhav, testimonials, workingWithMe,
-  programs, colleges, mentorCompanies, mentorPhotos, road, backers, teamTimeline,
+  focusAreas, colleges, mentorCompanies, mentorPhotos, road, backers, teamTimeline,
 } from '../data/site';
 
 const rounds = await Promise.all(
@@ -209,22 +209,36 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <!-- UnsaidTalks -->
   <section id="unsaidtalks" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
     <div class="flex flex-wrap items-end justify-between gap-6">
-      <SectionTitle eyebrow="What I’m building" title="UnsaidTalks Education" intro="Helping every engineering student and young professional get into the job they want, by closing the gap between what they’re taught and what companies actually look for." />
+      <SectionTitle eyebrow="What we are building" title="UnsaidTalks Education" intro="Helping every engineering student and young professional get into the job they want, by closing the gap between what they’re taught and what companies actually look for." />
       <Image src={logo} alt="UnsaidTalks logo" width={120} class="h-auto bg-ink p-3" />
     </div>
 
-    <ul class="list-none m-0 p-0 mt-10 grid gap-5 sm:grid-cols-2">
-      {programs.map((p) => (
-        <li class="bg-paper border border-rule px-6 py-7 flex flex-col gap-3">
-          <div class="flex items-baseline justify-between gap-4">
-            <h3 class="m-0 text-[1.4rem] font-bold leading-tight">{p.name}</h3>
-            <span class="font-mono text-[0.75rem] text-muted uppercase whitespace-nowrap">{p.short}</span>
+    <h3 class="mt-12 mb-0 text-[1.6rem] font-bold leading-tight">Our three focus areas</h3>
+    <ol class="list-none m-0 p-0 mt-6 flex flex-col gap-5">
+      {focusAreas.map((f) => (
+        <li class="bg-paper border border-rule px-6 py-7 sm:px-8 flex flex-wrap gap-x-10 gap-y-5 items-start">
+          <span class="flex-[0_0_3.5rem] font-display font-extrabold text-[2.6rem] leading-none text-stamp tabular-nums" aria-hidden="true">{f.number}</span>
+          <div class="flex-[1_1_220px] min-w-0 flex flex-col gap-1">
+            <h4 class="m-0 font-display text-[1.45rem] font-bold leading-tight">{f.name}</h4>
+            <span class="font-mono text-[0.75rem] uppercase tracking-wide text-muted">{f.kind}</span>
+            {f.href && <a href={f.href} target="_blank" rel="noopener" class="font-mono text-sm mt-2">{f.linkLabel} →</a>}
           </div>
-          <p class="m-0">{p.body}</p>
-          <a href={p.href} target="_blank" rel="noopener" class="font-mono text-sm mt-auto">Learn more →</a>
+          {f.tracks ? (
+            <div class="flex-[999_1_460px] min-w-0 grid gap-4 sm:grid-cols-2">
+              {f.tracks.map((t) => (
+                <div class="bg-desk border border-rule px-5 py-4 flex flex-col gap-1">
+                  <span class="font-mono text-[0.75rem] uppercase tracking-wide text-pen">{t.label}</span>
+                  <p class="m-0" set:html={t.body} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p class="flex-[999_1_460px] min-w-0 m-0 text-[1.05rem]" set:html={f.body} />
+          )}
         </li>
       ))}
-    </ul>
+    </ol>
+    <p class="mt-5 mb-0 text-sm text-muted">Along the way we have also run Build4Hire, a nine-month build-to-get-hired program, AI Summer Training on campus, workshops and hackathons.</p>
 
     <div class="mt-14 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-start">
       <div class="flex flex-col gap-4">

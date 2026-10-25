@@ -167,6 +167,35 @@ export const programs = [
   },
 ];
 
+/** "What we are building": the three focus areas, in order. Bodies may contain <strong>. */
+export const focusAreas = [
+  {
+    number: '01',
+    name: 'UnsaidTalks Mentorship Program',
+    kind: 'UMP',
+    href: 'https://unsaidtalks.com/',
+    linkLabel: 'unsaidtalks.com',
+    tracks: [
+      { label: 'B2B · Colleges', body: 'Group mentorship for colleges and universities, delivered to whole student cohorts.' },
+      { label: 'B2C · Students', body: 'A recorded program, or <strong>UMP Ultimate</strong>: highly personalised mentorship.' },
+    ],
+  },
+  {
+    number: '02',
+    name: 'SoT F.U.E.L. Program',
+    kind: 'School of Technology',
+    href: 'https://sot.unsaidtalks.com/',
+    linkLabel: 'sot.unsaidtalks.com',
+    body: 'An offline centre for students pursuing the <strong>IIT Madras online BS degree</strong>, at iHub Anubhuti, IIIT-Delhi.',
+  },
+  {
+    number: '03',
+    name: 'Tech Projects',
+    kind: 'IT services',
+    body: 'Client projects delivered by our tech team, giving <strong>SoT F.U.E.L. students real work</strong> to build on. Two clients so far, including US-based Twalkon Inc. and Dr. Shashank (PhD, MIT) in India.',
+  },
+];
+
 export const colleges = [
   { name: 'Amrita Vishwa Vidyapeetham', detail: 'UMP for 4,000+ students across 7 campuses', photo: amritaSow, alt: 'Signing the statement of work with the Director of Corporate & Industry Relations, Amrita Vishwa Vidyapeetham' },
   { name: 'Manav Rachna (MRIIRS)', detail: 'Our first college cohort (Oct 2024), then an MoU (Jan 2025)', photo: mriirsCohort, alt: 'MRIIRS students with Dr. Tapas Kumar and Ms. Meghna' },
