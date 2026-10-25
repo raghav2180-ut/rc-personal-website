@@ -201,8 +201,8 @@ export const mentorPhotos = {
 export const road = [
   { photo: roadArun, alt: 'Raghav with mentor Arun Rajesh in a car', name: 'Arun Rajesh, product leader, qikfox cybersecurity' },
   { photo: roadShubhankarRishabh, alt: 'Raghav with mentors Shubhankar Sharma and Rishabh Kaistha in a car', name: 'Shubhankar Sharma (BlackRock) & Rishabh Kaistha (STMicroelectronics)' },
-  { photo: roadMohit, alt: 'Raghav with mentor Mohit in a car', name: 'Mohit' },
-  { photo: roadDeepak, alt: 'Raghav with mentor Deepak in a car', name: 'Deepak' },
+  { photo: roadMohit, alt: 'Raghav with mentor Mohit Kumar in a car', name: 'Mohit Kumar, Senior Staff Engineer, NXP' },
+  { photo: roadDeepak, alt: 'Raghav with mentor Deepak Sood in a car', name: 'Deepak Sood, Senior AI, Data & DevOps Architect, Opstree' },
   { photo: roadKushal, alt: 'Raghav with Dr. Kushal Shah in a car', name: 'Dr. Kushal Shah, former IIT Delhi professor' },
 ];
 
