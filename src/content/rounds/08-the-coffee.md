@@ -28,7 +28,7 @@ In October 2024, two things happened in the same month. We ran our first college
 
 I hadn't spoken to him since leaving Zenatix. I sent him one message, asking for feedback on what we were building. He asked me to come and meet him.
 
-That coffee with Amarjeet was the turning point of my life. He met our mentors and understood the programs we were running. What we had built was still very small, but he saw something in it. Then he asked me a simple question: why wasn’t I doing this full time?
+That coffee with Amarjeet was the turning point of my life. He saw our amazing mentors and understood the programs we were running. What we had built was still very small, but he saw something in it. Then he asked me a simple question: why wasn’t I doing this full time?
 
 I told him the truth. I didn’t have the courage to leave my job. Kajol was already full time on UnsaidTalks, and with neither of us drawing a salary, life would get hard.
 
