@@ -192,7 +192,7 @@ export const focusAreas = [
     number: '03',
     name: 'Tech Projects',
     kind: 'IT services',
-    body: 'Client projects delivered by our tech team, giving <strong>SoT F.U.E.L. students real work</strong> to build on. Two clients so far, including US-based Twalkon Inc. and Dr. Shashank (PhD, MIT) in India.',
+    body: 'Client projects delivered by our tech team, giving <strong>SoT F.U.E.L. students real work</strong> to build on.',
   },
 ];
 
