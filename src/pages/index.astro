@@ -6,7 +6,7 @@ import SectionTitle from '../components/SectionTitle.astro';
 import logo from '../assets/unsaidtalks-logo.png';
 import { Image } from 'astro:assets';
 import {
-  person, factTable, stats, tips, loopStories, sambhav, testimonials, workingWithMe,
+  person, company, factTable, stats, tips, loopStories, sambhav, testimonials, workingWithMe,
   programs, colleges, collegePhotos, mentorCompanies, mentorPhotos, road, backers,
   fuelEventPhoto, build4hirePhoto, teamTimeline,
 } from '../data/site';
@@ -35,7 +35,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
             How I cracked the role nobody hires for: <span class="text-pen">Founder.</span>
           </h1>
           <p class="m-0 max-w-[58ch] text-[1.15rem]">
-            UnsaidTalks began by publishing seniors’ interview experiences, free, so juniors would know what was coming. This is mine, written the same way: every round, what it tested, and what I’d tell you if you were sitting next to me.
+            UnsaidTalks began by publishing <a href="https://unsaidtalks.com/interviews/" target="_blank" rel="noopener">seniors’ interview experiences</a>, free, so juniors would know what was coming. This is mine, written the same way: every round, what it tested, and what I’d tell you if you were sitting next to me.
           </p>
           <div class="flex flex-wrap gap-3 pt-1">
             <a href="#rounds" class="no-underline bg-ink text-paper hover:text-paper hover:bg-pen font-display font-semibold px-5 py-3">Read the rounds</a>
@@ -71,6 +71,17 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </li>
       ))}
     </ul>
+    <div class="bg-ink text-paper px-6 py-8 sm:px-10 sm:py-10 flex flex-wrap gap-x-10 gap-y-6 items-start">
+      <div class="flex-[0_0_auto] flex flex-col gap-3">
+        <Image src={logo} alt="UnsaidTalks logo" width={104} class="h-auto" />
+        <p class="m-0 font-mono text-[0.75rem] tracking-wide text-stamp-soft">ABOUT UNSAIDTALKS</p>
+      </div>
+      <div class="flex-[999_1_480px] min-w-0 flex flex-col gap-4">
+        <p class="m-0 text-[1.1rem] leading-relaxed">{company.about}</p>
+        <p class="m-0 text-[1.1rem] leading-relaxed text-[#CDD3DF]">{company.advisor}</p>
+        <a href={person.links.unsaidtalks} target="_blank" rel="noopener" class="font-mono text-sm text-stamp-soft hover:text-paper self-start">www.unsaidtalks.com ↗</a>
+      </div>
+    </div>
   </section>
 
   <!-- The rounds -->
@@ -169,7 +180,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
           </li>
         ))}
         <li class="snap-start flex-[0_0_220px]">
-          <Photo src={mentorPhotos.shubhankar.photo} alt={mentorPhotos.shubhankar.alt} caption="Shubhankar, school friend" frame tilt={1} ratio="4 / 5" sizes="220px" widths={[220, 440]} />
+          <Photo src={mentorPhotos.shubhankar.photo} alt={mentorPhotos.shubhankar.alt} caption="Shubhankar Sharma, BlackRock" frame tilt={1} ratio="4 / 5" sizes="220px" widths={[220, 440]} />
         </li>
       </ul>
     </div>

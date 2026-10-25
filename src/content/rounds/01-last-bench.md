@@ -12,4 +12,4 @@ He talked about his interviews candidly, as if he were letting us in on somethin
 
 By my final year, I had. More than once.
 
-Ten years later I found Naman again and thanked him for being my first inspiration at college. Today he mentors UnsaidTalks students, and he is one of the people who invested in it.
+Ten years later I found Naman again and thanked him for being my first inspiration at college. Today he is Senior Manager, Design Verification & Emulation at Sandisk. He mentors UnsaidTalks students, and he is one of the people who invested in it.

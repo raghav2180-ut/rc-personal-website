@@ -11,7 +11,7 @@ caption: "On stage at Amrita Vishwa Vidyapeetham, March 2026."
 
 The next eighteen months moved fast.
 
-We launched **Build4Hire** with Dr. Kushal Shah, a nine-month program where students build real software instead of just consuming content. We signed a statement of work with Amrita Vishwa Vidyapeetham to deliver the UnsaidTalks Mentorship Program to **4,000+ students across 7 campuses**. In March 2026 I travelled through South India and met 1,800+ students in a month. When I asked whether they wanted to join the program, 1,633 said yes.
+We launched **Build4Hire** with Dr. Kushal Shah (former professor at IIT Delhi, AI researcher and educator), a nine-month program where students build real software instead of just consuming content. We signed a statement of work with Amrita Vishwa Vidyapeetham to deliver the UnsaidTalks Mentorship Program to **4,000+ students across 7 campuses**. In March 2026 I travelled through South India and met 1,800+ students in a month. When I asked whether they wanted to join the program, 1,633 said yes.
 
 In Bangalore, Kajol and I hosted our mentors so we could thank them in person. Dr. Amarjeet made it possible for us to visit Zoho Schools of Learning and meet its founder, Sridhar Vembu, to learn how they train freshers.
 

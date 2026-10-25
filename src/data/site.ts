@@ -60,13 +60,21 @@ export const factTable = [
   { label: 'Result', value: 'Founder & CEO, UnsaidTalks' },
 ];
 
-/** Dated numbers. Keep the "as of" text honest when updating. */
+/** Headline numbers. Keep them honest when updating. */
 export const stats = [
-  { value: '4,000+', label: 'students mentored in the 15 months to July 2026' },
-  { value: '50+', label: 'industry mentors who hire for a living' },
-  { value: '1,100+', label: 'interview experiences published free' },
-  { value: '4.8/5', label: 'average session rating (2025)' },
+  { value: '5,000+', label: 'students mentored by our team of industry mentors' },
+  { value: '50+', label: 'industry mentors working across roles at top tech companies and startups' },
+  { value: '1,000+', label: 'real pieces of feedback collected from students' },
+  { value: '4.8/5', label: 'average session rating, across 2,000+ student ratings' },
 ];
+
+/** The wide block under the numbers. */
+export const company = {
+  about:
+    'UnsaidTalks Education Pvt. Ltd. is India’s leading mentorship platform, on a mission to bridge the gap between academics and industry. It started as a blog in 2017 and has grown into a company with a team of 12+, 50+ industry mentors and 10+ angel investors backing the vision of its founders, Raghav and Kajol.',
+  advisor:
+    'We build under the constant mentorship and support of our lead angel investor and key advisor, Dr. Amarjeet Singh: co-founder and CTO of Zenatix Solutions (acquired by Schneider Electric), former professor at IIIT-Delhi, IIT Delhi graduate, and M.S. and Ph.D. from UCLA.',
+};
 
 export const tips = [
   { title: 'Content is solved. Direction isn’t.', body: 'Courses, videos and roadmaps are everywhere. Ask what’s relevant to you, why it matters and how much is enough.' },
@@ -79,8 +87,8 @@ export const tips = [
 
 /** Students who became mentors and teammates: the loop that makes UnsaidTalks work. */
 export const loopStories = [
-  { name: 'Naman Rastogi', from: 'The senior on stage in 2013', to: 'Now a mentor and an angel investor in UnsaidTalks' },
-  { name: 'Smarth Singh', from: 'Mentored by Shubhankar, placed at Incedo in 2025', to: 'Now mentors UnsaidTalks students himself' },
+  { name: 'Naman Rastogi', from: 'The senior on stage in 2013. Now Senior Manager, Design Verification & Emulation, Sandisk', to: 'Now a mentor and an angel investor in UnsaidTalks' },
+  { name: 'Smarth Singh', from: 'Mentored by Shubhankar Sharma (Full Stack Developer, BlackRock). Placed as a Software Engineer at Incedo in 2025', to: 'Now mentors UnsaidTalks students himself' },
   { name: 'Bhoomi Gupta', from: 'Learned with UnsaidTalks as a student', to: 'Now a full-stack engineer on our team' },
   { name: 'Jatin', from: 'Joined UnsaidTalks in his first year of college', to: 'Still pitching in, two years after graduating' },
 ];
@@ -90,7 +98,7 @@ export const sambhav = {
   alt: 'Raghav with Sambhav, a UMP Ultimate student placed at Cadence',
   quote: 'The team is really accountable and supportive, also their focused material really helped me in cracking interviews.',
   name: 'Sambhav Mehta',
-  context: 'UMP Ultimate student, mentored by Rishabh Kaistha, placed at Cadence',
+  context: 'UMP Ultimate student, mentored by Rishabh Kaistha (Staff Engineer, STMicroelectronics), placed at Cadence',
 };
 
 export const testimonials = [
@@ -105,7 +113,7 @@ export const testimonials = [
     quote:
       'I only started actively contacting founders and cold mailing startups after getting inspired from Madhur sir’s lecture, and now I’m working at one.',
     name: 'Kshitij Thareja',
-    context: 'UnsaidTalks Mentorship Program',
+    context: 'UnsaidTalks Mentorship Program, inspired by mentor Madhur Yadav (Data Science Consultant, Saiva)',
     source: 'Google review',
   },
   {
@@ -119,7 +127,7 @@ export const testimonials = [
     quote:
       'This journey made me realize that real growth happens outside comfort zones. As I got placed as a Java Developer, I feel thankful, emotional, and motivated for the journey ahead.',
     name: 'Shruti Agrawal',
-    context: 'Mentored by Shubhankar and Anurag',
+    context: 'Mentored by Shubhankar Sharma (Full Stack Developer, BlackRock) and Anurag Khokhar (SDE, Josh Technology Group)',
     source: 'Google review',
   },
   {
@@ -186,24 +194,24 @@ export const mentorCompanies = [
 
 export const mentorPhotos = {
   bangalore: { photo: mentorsBangalore, alt: 'UnsaidTalks mentors in Bangalore doing the U sign together', caption: 'Our Bangalore mentors, March 2026. Kajol and I hosted them to say thank you in person.' },
-  shubhankar: { photo: shubhankarUSign, alt: 'Raghav and Shubhankar Sharma doing the U sign', caption: 'Shubhankar Sharma, my school friend, runs our cohorts with Kajol and me.' },
-  session: { photo: mentorSession, alt: 'Mentor Deepak Sood presenting Data Structures for Interviews', caption: 'Deepak Sood on data structures for interviews.' },
+  shubhankar: { photo: shubhankarUSign, alt: 'Raghav and Shubhankar Sharma doing the U sign', caption: 'Shubhankar Sharma (Full Stack Developer, BlackRock), my school friend, runs our cohorts with Kajol and me.' },
+  session: { photo: mentorSession, alt: 'Mentor Deepak Sood presenting Data Structures for Interviews', caption: 'Deepak Sood (Senior AI, Data & DevOps Architect, Opstree) on data structures for interviews.' },
 };
 
 export const road = [
-  { photo: roadArun, alt: 'Raghav with mentor Arun Rajesh in a car', name: 'Arun Rajesh' },
-  { photo: roadShubhankarRishabh, alt: 'Raghav with mentors Shubhankar Sharma and Rishabh Kaistha in a car', name: 'Shubhankar & Rishabh Kaistha' },
+  { photo: roadArun, alt: 'Raghav with mentor Arun Rajesh in a car', name: 'Arun Rajesh, product leader, qikfox cybersecurity' },
+  { photo: roadShubhankarRishabh, alt: 'Raghav with mentors Shubhankar Sharma and Rishabh Kaistha in a car', name: 'Shubhankar Sharma (BlackRock) & Rishabh Kaistha (STMicroelectronics)' },
   { photo: roadMohit, alt: 'Raghav with mentor Mohit in a car', name: 'Mohit' },
   { photo: roadDeepak, alt: 'Raghav with mentor Deepak in a car', name: 'Deepak' },
-  { photo: roadKushal, alt: 'Raghav with Dr. Kushal Shah in a car', name: 'Dr. Kushal Shah' },
+  { photo: roadKushal, alt: 'Raghav with Dr. Kushal Shah in a car', name: 'Dr. Kushal Shah, former IIT Delhi professor' },
 ];
 
 export const backers = {
   lead: { photo: mugAmarjeet, alt: 'Raghav handing Dr. Amarjeet Singh an UnsaidTalks mug', caption: 'Still meeting, still learning. Dr. Amarjeet Singh, 2026.' },
-  rohan: { photo: rohanGupta, alt: 'Raghav with Rohan Gupta at sunset', caption: 'Rohan Gupta, college friend, mentor and angel.' },
+  rohan: { photo: rohanGupta, alt: 'Raghav with Rohan Gupta at sunset', caption: 'Rohan Gupta (Senior Design Engineer, NVIDIA): college friend, mentor and angel.' },
   zenatix: { photo: zenatixVisit, alt: 'Raghav and Kajol with Dr. Amarjeet Singh and Vishal, co-founders of Zenatix', caption: 'Both Zenatix co-founders, Dr. Amarjeet and Vishal, came to teach our team.' },
   zoho: { photo: zohoVembu, alt: 'Raghav and Kajol with Sridhar Vembu at Zoho', caption: 'Learning how Zoho trains freshers, with Sridhar Vembu.' },
-  names: 'Dr. Amarjeet Singh (lead), Rohan Gupta, Akshit Arora, Naman Rastogi, Pratibha Ola, Shubhankar Sharma, Tarundeep Singh, Japnit Kaur Sidhu, Gifty Mehra and others',
+  names: 'Dr. Amarjeet Singh (lead), Rohan Gupta (Senior Design Engineer, NVIDIA), Akshit Arora (Senior Data Scientist, NVIDIA), Naman Rastogi (Senior Manager, Sandisk), Pratibha Ola (GPU Physical Design Engineer, Apple), Shubhankar Sharma (Full Stack Developer, BlackRock), Tarundeep Singh (A&MS Design Engineer, Synopsys), Japnit Kaur Sidhu (Associate Program Manager, Juspay), Gifty Mehra (HR Partner, InfoEdge) and others',
 };
 
 export const fuelEventPhoto = { photo: fuelEvent, alt: 'IIT Madras BS students at UnsaidTalks’ first offline event at IIIT-Delhi', caption: 'Our first offline event, for IIT Madras BS students, at IIIT-Delhi.' };

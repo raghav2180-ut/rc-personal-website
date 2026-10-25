@@ -12,4 +12,4 @@ But I was drawn to the founding team, the product and the culture of the other o
 
 At Zenatix I worked as an IoT software developer. I managed more than 1,500 edge devices across India, built the heartbeat that told us whether each one was still alive, designed how they received software updates and rewrote the gateway software. I also got to work with one of the founders, **Dr. Amarjeet Singh**.
 
-Seven years later, he became the lead angel investor in my company. That is the best return I have ever made on a pay cut.
+Seven years later, he became our lead angel investor. More than that, he was the final push that gave me the belief to leave a well-paying job and take my part-time venture full time, so we could scale it. That is the best return I have ever made on a pay cut.
