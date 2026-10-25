@@ -1,0 +1,355 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import Photo from '../components/Photo.astro';
+import SectionTitle from '../components/SectionTitle.astro';
+import logo from '../assets/unsaidtalks-logo.png';
+import { Image } from 'astro:assets';
+import {
+  person, factTable, stats, tips, loopStories, sambhav, testimonials, workingWithMe,
+  programs, colleges, collegePhotos, mentorCompanies, mentorPhotos, road, backers,
+  fuelEventPhoto, build4hirePhoto, teamTimeline,
+} from '../data/site';
+
+const rounds = await Promise.all(
+  (await getCollection('rounds'))
+    .sort((a, b) => a.data.order - b.data.order)
+    .map(async (entry) => ({ entry, Content: (await render(entry)).Content })),
+);
+
+const latestWriting = (await getCollection('writing'))
+  .sort((a, b) => b.data.order - a.data.order)
+  .slice(0, 4);
+
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+<Layout>
+
+  <!-- The post: headline, portrait, fact table -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-6">
+    <article class="relative bg-paper border border-rule px-5 py-10 sm:px-12 sm:py-14 flex flex-col gap-10">
+      <div class="flex flex-wrap gap-x-12 gap-y-14 items-start">
+        <div class="flex-[999_1_520px] min-w-0 flex flex-col gap-6">
+          <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted">INTERVIEW EXPERIENCE · SHARED BY A SENIOR</p>
+          <h1 class="m-0 font-extrabold text-[2.6rem] leading-[1.02] sm:text-[4.25rem] tracking-[-0.02em]">
+            How I cracked the role nobody hires for: <span class="text-pen">Founder.</span>
+          </h1>
+          <p class="m-0 max-w-[58ch] text-[1.15rem]">
+            UnsaidTalks began by publishing seniors’ interview experiences, free, so juniors would know what was coming. This is mine, written the same way: every round, what it tested, and what I’d tell you if you were sitting next to me.
+          </p>
+          <div class="flex flex-wrap gap-3 pt-1">
+            <a href="#rounds" class="no-underline bg-ink text-paper hover:text-paper hover:bg-pen font-display font-semibold px-5 py-3">Read the rounds</a>
+            <a href="#contact" class="no-underline border-[1.5px] border-ink text-ink hover:text-pen hover:border-pen font-display font-semibold px-5 py-3">Write to me</a>
+          </div>
+        </div>
+        <div class="flex-[1_1_260px] min-w-0 max-w-[340px] mx-auto relative">
+          <Photo src={person.photos.heroPortrait} alt="Raghav Chopra" frame tilt={1.5} ratio="4 / 5" eager sizes="(min-width: 768px) 340px, 80vw" />
+          <div class="absolute -bottom-5 -left-4 sm:-left-7 rotate-[-9deg] border-[3px] border-stamp text-stamp bg-paper/90 font-display font-extrabold tracking-[0.08em] text-xl sm:text-2xl px-3 py-1" aria-label="Selected, March 2025">
+            SELECTED · MAR 2025
+          </div>
+        </div>
+      </div>
+
+      <dl class="m-0 grid grid-cols-2 lg:grid-cols-4 border border-rule font-mono text-[0.8rem]">
+        {factTable.map((row, i) => (
+          <div class={`px-4 py-3 border-rule ${i % 2 === 0 ? 'border-r' : ''} ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i === 1 ? 'lg:border-r' : ''} ${i === 2 ? 'lg:border-r' : ''}`}>
+            <dt class="text-muted uppercase">{row.label}</dt>
+            <dd class="m-0 text-[0.95rem] text-ink">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </article>
+  </section>
+
+  <!-- Numbers -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-10" aria-label="UnsaidTalks in numbers">
+    <ul class="list-none m-0 p-0 grid grid-cols-2 lg:grid-cols-4 gap-px bg-rule border border-rule">
+      {stats.map((s) => (
+        <li class="bg-desk px-5 py-5 flex flex-col gap-1">
+          <span class="font-display font-extrabold text-4xl text-pen tabular-nums">{s.value}</span>
+          <span class="text-sm text-muted leading-snug">{s.label}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <!-- The rounds -->
+  <section id="rounds" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+    <SectionTitle eyebrow="11 rounds · 2013 to now" title="The rounds" intro="Every interview experience on UnsaidTalks lists the rounds in order. Here are mine." />
+    <ol class="list-none m-0 p-0 flex flex-col gap-5 mt-10">
+      {rounds.map(({ entry, Content }) => (
+        <li id={`round-${pad(entry.data.order)}`} class="bg-paper border border-rule px-5 py-8 sm:px-9 sm:py-10 scroll-mt-6">
+          <div class="flex flex-wrap gap-x-10 gap-y-6">
+            <div class="flex-[0_0_8rem] font-mono text-[0.8rem] leading-relaxed text-pen">
+              <div>ROUND {pad(entry.data.order)}</div>
+              <div class="uppercase">{entry.data.when}</div>
+            </div>
+            <div class="flex-[999_1_420px] min-w-0 flex flex-col gap-4">
+              <h3 class="m-0 text-[1.75rem] sm:text-[2rem] font-bold leading-tight">{entry.data.title}</h3>
+              <p class="m-0 font-mono text-[0.8rem] text-muted"><span class="text-ink">THIS ROUND ASKED:</span> {entry.data.asked}</p>
+              <div class="prose-post max-w-[62ch]"><Content /></div>
+            </div>
+            {(entry.data.photo || entry.data.tip) && (
+              <aside class="flex-[1_1_240px] min-w-0 max-w-[320px] flex flex-col gap-6 pt-1">
+                {entry.data.photo && (
+                  <Photo src={entry.data.photo} alt={entry.data.photoAlt ?? ''} caption={entry.data.caption} frame tilt={entry.data.order % 2 ? -1.2 : 1.2} sizes="(min-width: 1024px) 320px, 85vw" />
+                )}
+                {entry.data.tip && (
+                  <p class="m-0 font-hand text-[1.3rem] leading-snug text-pen rotate-[-1.5deg]">tip: {entry.data.tip}</p>
+                )}
+              </aside>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <!-- Tips for juniors -->
+  <section id="tips" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+    <div class="bg-ink text-paper px-6 py-12 sm:px-12 flex flex-wrap gap-x-12 gap-y-8">
+      <div class="flex-[1_1_260px] min-w-0">
+        <p class="m-0 font-mono text-[0.8rem] tracking-wide text-stamp-soft">TIPS FOR JUNIORS</p>
+        <h2 class="mt-3 mb-0 text-[2.2rem] font-extrabold leading-tight">What I’d tell you if you sat next to me.</h2>
+      </div>
+      <ul class="flex-[999_1_480px] min-w-0 list-none m-0 p-0 grid sm:grid-cols-2 gap-x-10 gap-y-6">
+        {tips.map((t) => (
+          <li class="flex flex-col gap-1">
+            <strong class="font-display text-lg">{t.title}</strong>
+            <span class="text-[#CDD3DF]">{t.body}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- The loop closes -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
+    <SectionTitle eyebrow="Pass it down" title="The loop closes" intro="A senior once told me what nobody else would. The best proof that UnsaidTalks works is the students who now do the same for others." />
+    <div class="mt-10 bg-paper border border-rule px-5 py-8 sm:px-10 sm:py-10 flex flex-wrap gap-10 items-center">
+      <Photo src={sambhav.photo} alt={sambhav.alt} frame tilt={-1.5} ratio="3 / 4" class="flex-[1_1_220px] max-w-[280px]" sizes="(min-width: 768px) 280px, 80vw" />
+      <div class="flex-[999_1_420px] min-w-0 flex flex-col gap-4">
+        <p class="m-0 font-mono text-[0.8rem] text-muted">ROUND 02, REVISITED</p>
+        <h3 class="m-0 text-[1.8rem] font-bold leading-tight">I interned at Cadence in 2015. A decade later, one of our students got placed there.</h3>
+        <blockquote class="m-0 text-[1.2rem] italic max-w-[56ch]">“{sambhav.quote}”</blockquote>
+        <p class="m-0 text-sm text-muted">{sambhav.name} · {sambhav.context}</p>
+      </div>
+    </div>
+    <ul class="list-none m-0 p-0 mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {loopStories.map((s) => (
+        <li class="bg-paper border border-rule px-5 py-6 flex flex-col gap-3">
+          <strong class="font-display text-lg">{s.name}</strong>
+          <span class="text-sm text-muted">{s.from}</span>
+          <span class="font-hand text-[1.15rem] leading-snug text-pen">→ {s.to}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <!-- People -->
+  <section id="people" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+    <SectionTitle eyebrow="Every U is someone who passed it on" title="The people in the story" intro="The hand sign in these photos is a U, for UnsaidTalks. You’ll see it a lot." />
+
+    <div class="mt-10 flex flex-wrap gap-8 items-start">
+      <Photo src={mentorPhotos.bangalore.photo} alt={mentorPhotos.bangalore.alt} caption={mentorPhotos.bangalore.caption} frame tilt={-0.8} class="flex-[999_1_480px] min-w-0" sizes="(min-width: 1024px) 680px, 92vw" widths={[480, 800, 1200, 1600]} />
+      <div class="flex-[1_1_300px] min-w-0 flex flex-col gap-5">
+        <h3 class="m-0 text-[1.6rem] font-bold leading-tight">50+ mentors who sit on the other side of the interview table.</h3>
+        <p class="m-0">They work full time at companies students dream about, and give their evenings to students they’ve never met. They are the heart of UnsaidTalks.</p>
+        <p class="m-0 font-mono text-[0.78rem] leading-loose text-muted uppercase">{mentorCompanies.join(' · ')}</p>
+        <a href={person.links.mentors} target="_blank" rel="noopener" class="font-mono text-sm">Meet all the mentors →</a>
+      </div>
+    </div>
+
+    <div class="mt-12">
+      <p class="m-0 font-hand text-[1.3rem] text-pen">mentors on the road, between campuses:</p>
+      <ul class="list-none m-0 p-0 mt-4 flex gap-5 overflow-x-auto snap-x snap-mandatory pb-4" aria-label="Photos with mentors on the road">
+        {road.map((r, i) => (
+          <li class="snap-start flex-[0_0_220px]">
+            <Photo src={r.photo} alt={r.alt} caption={r.name} frame tilt={i % 2 ? 1 : -1} ratio="4 / 5" sizes="220px" widths={[220, 440]} />
+          </li>
+        ))}
+        <li class="snap-start flex-[0_0_220px]">
+          <Photo src={mentorPhotos.shubhankar.photo} alt={mentorPhotos.shubhankar.alt} caption="Shubhankar, school friend" frame tilt={1} ratio="4 / 5" sizes="220px" widths={[220, 440]} />
+        </li>
+      </ul>
+    </div>
+
+    <div class="mt-16 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-start">
+      <div class="flex flex-col gap-5">
+        <p class="m-0 font-mono text-[0.8rem] text-muted">THE BACKERS</p>
+        <h3 class="m-0 text-[1.6rem] font-bold leading-tight">The people who’d seen me work were the ones who bet on me.</h3>
+        <p class="m-0">Ten angel investors back UnsaidTalks. Many of them are mentors, school and college friends, or people I once worked for: {backers.names}.</p>
+        <p class="m-0">Dr. Amarjeet Singh is still our key advisor. Through him, Kajol and I learned from founders we admire, from Zenatix to Zoho.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-5">
+        <Photo src={backers.lead.photo} alt={backers.lead.alt} caption={backers.lead.caption} frame tilt={-1} ratio="4 / 5" sizes="(min-width: 1024px) 300px, 45vw" />
+        <Photo src={backers.rohan.photo} alt={backers.rohan.alt} caption={backers.rohan.caption} frame tilt={1.2} ratio="4 / 5" sizes="(min-width: 1024px) 300px, 45vw" />
+        <Photo src={backers.zenatix.photo} alt={backers.zenatix.alt} caption={backers.zenatix.caption} frame tilt={0.8} ratio="1 / 1" sizes="(min-width: 1024px) 300px, 45vw" />
+        <Photo src={backers.zoho.photo} alt={backers.zoho.alt} caption={backers.zoho.caption} frame tilt={-0.8} ratio="1 / 1" sizes="(min-width: 1024px) 300px, 45vw" />
+      </div>
+    </div>
+  </section>
+
+  <!-- UnsaidTalks -->
+  <section id="unsaidtalks" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+    <div class="flex flex-wrap items-end justify-between gap-6">
+      <SectionTitle eyebrow="What I’m building" title="UnsaidTalks Education" intro="Helping every engineering student and young professional get into the job they want, by closing the gap between what they’re taught and what companies actually look for." />
+      <Image src={logo} alt="UnsaidTalks logo" width={120} class="h-auto bg-ink p-3" />
+    </div>
+
+    <ul class="list-none m-0 p-0 mt-10 grid gap-5 sm:grid-cols-2">
+      {programs.map((p) => (
+        <li class="bg-paper border border-rule px-6 py-7 flex flex-col gap-3">
+          <div class="flex items-baseline justify-between gap-4">
+            <h3 class="m-0 text-[1.4rem] font-bold leading-tight">{p.name}</h3>
+            <span class="font-mono text-[0.75rem] text-muted uppercase whitespace-nowrap">{p.short}</span>
+          </div>
+          <p class="m-0">{p.body}</p>
+          <a href={p.href} target="_blank" rel="noopener" class="font-mono text-sm mt-auto">Learn more →</a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="mt-14 grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-start">
+      <div class="flex flex-col gap-4">
+        <p class="m-0 font-mono text-[0.8rem] text-muted">ON CAMPUS</p>
+        <h3 class="m-0 text-[1.6rem] font-bold leading-tight">Colleges that work with us</h3>
+        <ul class="list-none m-0 p-0 flex flex-col border-t border-rule">
+          {colleges.map((c) => (
+            <li class="py-4 border-b border-rule flex flex-col gap-1">
+              <strong class="font-display text-lg">{c.name}</strong>
+              <span class="text-sm text-muted">{c.detail}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="grid grid-cols-2 gap-5">
+        {colleges.filter((c) => c.photo).map((c, i) => (
+          <Photo src={c.photo!} alt={c.alt} caption={c.name} frame tilt={i % 2 ? 1 : -1} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
+        ))}
+        {collegePhotos.map((c, i) => (
+          <Photo src={c.photo} alt={c.alt} caption={c.caption} frame tilt={i % 2 ? -1 : 1} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
+        ))}
+        <Photo src={fuelEventPhoto.photo} alt={fuelEventPhoto.alt} caption={fuelEventPhoto.caption} frame tilt={0.8} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
+        <Photo src={build4hirePhoto.photo} alt={build4hirePhoto.alt} caption={build4hirePhoto.caption} frame tilt={-0.8} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
+        <Photo src={person.photos.speakingWoodwall} alt="Raghav explaining something, in an UnsaidTalks polo" caption="Recording a session for our students." frame tilt={1} ratio="4 / 3" sizes="(min-width: 1024px) 320px, 45vw" />
+      </div>
+    </div>
+  </section>
+
+  <!-- What people say -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
+    <SectionTitle eyebrow="In their words" title="What students and colleges say" />
+    <ul class="list-none m-0 p-0 mt-10 columns-1 md:columns-2 gap-5 [&>li]:break-inside-avoid">
+      {testimonials.map((t) => (
+        <li class="bg-paper border border-rule px-6 py-7 mb-5 flex flex-col gap-4">
+          <blockquote class="m-0 text-[1.1rem]">“{t.quote}”</blockquote>
+          <p class="m-0 text-sm"><strong class="font-display">{t.name}</strong> <span class="text-muted">· {t.context} · {t.source}</span></p>
+        </li>
+      ))}
+      <li class="bg-ink text-paper px-6 py-7 mb-5 flex flex-col gap-4">
+        <p class="m-0 font-mono text-[0.75rem] text-stamp-soft">WORKING WITH ME</p>
+        <blockquote class="m-0 text-[1.1rem]">“{workingWithMe.quote}”</blockquote>
+        <p class="m-0 text-sm"><strong class="font-display">{workingWithMe.name}</strong> <span class="text-[#CDD3DF]">· {workingWithMe.context}</span></p>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Team, oldest to newest -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24" aria-labelledby="team-title">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div class="flex flex-col gap-3">
+        <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted uppercase">Seven years quietly, then together</p>
+        <h2 id="team-title" class="m-0 text-[2.4rem] font-extrabold leading-tight">The team, then and now</h2>
+      </div>
+      <div class="flex gap-2" data-carousel-controls>
+        <button type="button" class="w-11 h-11 border-[1.5px] border-ink bg-paper font-display text-lg hover:text-pen hover:border-pen" data-dir="-1" aria-label="Earlier photos">←</button>
+        <button type="button" class="w-11 h-11 border-[1.5px] border-ink bg-paper font-display text-lg hover:text-pen hover:border-pen" data-dir="1" aria-label="Later photos">→</button>
+      </div>
+    </div>
+    <ul class="list-none m-0 p-0 mt-8 flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4" data-carousel tabindex="0" aria-label="Team photos, oldest to newest">
+      {teamTimeline.map((t, i) => (
+        <li class="snap-start flex-[0_0_min(82vw,440px)]">
+          <Photo src={t.photo} alt={t.alt} caption={t.caption} frame tilt={i % 2 ? 0.8 : -0.8} ratio="4 / 3" sizes="(min-width: 640px) 440px, 82vw" widths={[440, 880]} />
+        </li>
+      ))}
+    </ul>
+    <script>
+      document.querySelectorAll('[data-carousel-controls]').forEach((controls) => {
+        const track = controls.closest('section')?.querySelector('[data-carousel]');
+        if (!track) return;
+        controls.querySelectorAll('button').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const dir = Number(btn.getAttribute('data-dir'));
+            track.scrollBy({ left: dir * track.clientWidth * 0.8, behavior: 'smooth' });
+          });
+        });
+      });
+    </script>
+  </section>
+
+  <!-- Writing -->
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <SectionTitle eyebrow="Create more than you consume" title="Writing" />
+      <a href="/writing/" class="font-mono text-sm">All writing →</a>
+    </div>
+    <ul class="list-none m-0 p-0 mt-8 grid gap-5 sm:grid-cols-2">
+      {latestWriting.map((post) => (
+        <li class="bg-paper border border-rule px-6 py-6 flex flex-col gap-2">
+          <span class="font-mono text-[0.75rem] text-muted uppercase">{post.data.when}</span>
+          <a href={`/writing/${post.id}/`} class="no-underline text-ink hover:text-pen"><h3 class="m-0 text-[1.3rem] font-bold leading-snug">{post.data.title}</h3></a>
+          <p class="m-0 text-[0.95rem] text-muted">{post.data.summary}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+    <div class="bg-paper border border-rule px-5 py-12 sm:px-12 flex flex-col gap-10">
+      <div class="flex flex-col gap-3 max-w-[60ch]">
+        <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted">YOUR ROUND</p>
+        <h2 class="m-0 text-[2.4rem] font-extrabold leading-tight">If you’ve read this far, write to me.</h2>
+        <p class="m-0">I read every message. It was one message that changed my life, so I take them seriously.</p>
+      </div>
+      <ul class="list-none m-0 p-0 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-rule border border-rule">
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Students</strong><span class="text-sm text-muted">Tell me the job you want and where you’re stuck. Our programs start at unsaidtalks.com.</span></li>
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Colleges</strong><span class="text-sm text-muted">Run mentorship, Build4Hire or a workshop for your students, with reporting your placement cell can use.</span></li>
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Mentors</strong><span class="text-sm text-muted">Teach students the things you wish someone had told you.</span></li>
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Founders & hiring teams</strong><span class="text-sm text-muted">Hire smart, humble, hardworking freshers we’ve trained.</span></li>
+      </ul>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <span class="font-display font-bold text-[1.5rem] sm:text-[2rem] break-all select-all" id="contact-email">{person.email}</span>
+        <button type="button" id="copy-email" class="min-h-11 px-4 border-[1.5px] border-ink bg-paper font-mono text-sm hover:text-pen hover:border-pen">Copy email</button>
+        <a href={`mailto:${person.email}`} class="font-mono text-sm">Open in mail app</a>
+      </div>
+      <div class="flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm">
+        <a href={person.links.linkedin} target="_blank" rel="me noopener">LinkedIn ↗</a>
+        <a href={person.links.instagram} target="_blank" rel="me noopener">Instagram @growth_with_raghav ↗</a>
+        <a href={person.links.unsaidtalks} target="_blank" rel="noopener">unsaidtalks.com ↗</a>
+      </div>
+      <p class="m-0 text-sm text-muted">{person.location}</p>
+    </div>
+    <script>
+      const btn = document.getElementById('copy-email');
+      const email = document.getElementById('contact-email');
+      btn?.addEventListener('click', async () => {
+        const text = email?.textContent?.trim() ?? '';
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = 'Copied';
+        } catch {
+          const range = document.createRange();
+          if (email) range.selectNodeContents(email);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+          btn.textContent = 'Selected: press copy';
+        }
+        setTimeout(() => { btn.textContent = 'Copy email'; }, 2000);
+      });
+    </script>
+  </section>
+
+</Layout>

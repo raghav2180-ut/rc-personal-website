@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+const posts = (await getCollection('writing')).sort((a, b) => b.data.order - a.data.order);
+---
+<Layout title="Writing · Raghav Chopra" description="Notes on careers, mentorship and building UnsaidTalks, by Raghav Chopra.">
+  <section class="mx-auto max-w-3xl px-4 sm:px-6 pt-10">
+    <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted uppercase">Create more than you consume</p>
+    <h1 class="mt-3 mb-4 text-[2.8rem] sm:text-[3.4rem] font-extrabold leading-tight">Writing</h1>
+    <p class="m-0 text-[1.1rem] max-w-[58ch]">Notes on careers, mentorship and building UnsaidTalks. Most of these first appeared on LinkedIn.</p>
+
+    <ol class="list-none m-0 p-0 mt-10 flex flex-col border-t border-rule">
+      {posts.map((post) => (
+        <li class="py-6 border-b border-rule flex flex-col gap-2">
+          <span class="font-mono text-[0.75rem] text-muted uppercase">{post.data.when}</span>
+          <a href={`/writing/${post.id}/`} class="no-underline text-ink hover:text-pen">
+            <h2 class="m-0 text-[1.5rem] font-bold leading-snug">{post.data.title}</h2>
+          </a>
+          <p class="m-0 text-muted">{post.data.summary}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+</Layout>

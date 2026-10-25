@@ -1,0 +1,35 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { person } from '../../data/site';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('writing')).sort((a, b) => b.data.order - a.data.order);
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    props: { post, newer: posts[i - 1] ?? null, older: posts[i + 1] ?? null },
+  }));
+}
+
+const { post, newer, older } = Astro.props;
+const { Content } = await render(post);
+---
+<Layout title={`${post.data.title} · Raghav Chopra`} description={post.data.summary}>
+  <article class="mx-auto max-w-3xl px-4 sm:px-6 pt-10">
+    <a href="/writing/" class="font-mono text-sm no-underline">← All writing</a>
+    <div class="mt-6 bg-paper border border-rule px-5 py-10 sm:px-12 sm:py-12">
+      <p class="m-0 font-mono text-[0.78rem] text-muted uppercase">{post.data.when} · First posted on {post.data.originallyOn}</p>
+      <h1 class="mt-3 mb-8 text-[2.2rem] sm:text-[2.8rem] font-extrabold leading-[1.08]">{post.data.title}</h1>
+      <div class="prose-post text-[1.1rem]">
+        <Content />
+      </div>
+      <p class="mt-10 mb-0 pt-6 border-t border-rule text-sm text-muted">
+        Written by {person.name}, founder of UnsaidTalks. <a href={person.links.linkedin} target="_blank" rel="me noopener">Follow on LinkedIn</a> or <a href="/#contact">write to me</a>.
+      </p>
+    </div>
+    <nav class="mt-6 flex flex-wrap justify-between gap-4 font-mono text-sm" aria-label="More writing">
+      {newer ? <a href={`/writing/${newer.id}/`}>← {newer.data.title}</a> : <span />}
+      {older && <a href={`/writing/${older.id}/`}>{older.data.title} →</a>}
+    </nav>
+  </article>
+</Layout>

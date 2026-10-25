@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/literata";
+@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource/kalam/400.css";
+
+/*
+  Direction C: "Interview Experience".
+  The site is styled like an UnsaidTalks interview-experience post:
+  white paper cards on a cool desk, ballpoint-blue notes, an orange "Selected" stamp.
+*/
+@theme {
+  --color-desk: #F3F5F9;      /* page ground */
+  --color-paper: #FFFFFF;     /* cards */
+  --color-ink: #172033;       /* text, dark panels */
+  --color-muted: #55607A;     /* secondary text (5.9:1 on paper) */
+  --color-rule: #D6DDE8;      /* borders */
+  --color-pen: #2347B8;       /* ballpoint blue: links, notes */
+  --color-pen-dark: #16307F;
+  --color-stamp: #C25609;     /* orange stamp (4.6:1 on paper) */
+  --color-stamp-soft: #F0A35E;/* orange on ink panels */
+
+  --font-display: "Bricolage Grotesque Variable", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Literata Variable", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-hand: "Kalam", "Comic Sans MS", cursive;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--color-desk);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; }
+  a { color: var(--color-pen); text-underline-offset: 3px; }
+  a:hover { color: var(--color-pen-dark); }
+  :focus-visible { outline: 2px solid var(--color-pen); outline-offset: 3px; border-radius: 2px; }
+  ::selection { background: #DCE5FB; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Long-form text inside writing posts */
+.prose-post p { margin: 0 0 1.1em; }
+.prose-post ul, .prose-post ol { margin: 0 0 1.1em; padding-left: 1.4em; }
+.prose-post li { margin-bottom: 0.35em; }
+.prose-post ul { list-style: disc; }
+.prose-post ol { list-style: decimal; }
+.prose-post h2 { font-size: 1.5rem; font-weight: 700; margin: 1.6em 0 0.5em; }
+.prose-post strong { font-weight: 600; }
+.prose-post blockquote { border-left: 3px solid var(--color-rule); padding-left: 1em; color: var(--color-muted); margin: 0 0 1.1em; }

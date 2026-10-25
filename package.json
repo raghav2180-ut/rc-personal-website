@@ -1,0 +1,26 @@
+{
+  "name": "rc-personal-website",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "chopraraghav.com: Raghav Chopra's personal website, told as an interview experience.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/bricolage-grotesque": "^5.2.0",
+    "@fontsource-variable/jetbrains-mono": "^5.2.0",
+    "@fontsource-variable/literata": "^5.2.0",
+    "@fontsource/kalam": "^5.2.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "astro": "^5.18.2",
+    "tailwindcss": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
