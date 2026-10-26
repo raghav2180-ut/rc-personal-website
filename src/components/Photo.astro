@@ -1,7 +1,7 @@
 ---
 /**
  * A photo, optimised at build time (AVIF + WebP, several widths).
- * `frame` gives it the white polaroid border used across the site;
+ * `frame` gives it a stylish polaroid border with an energetic orange chin below the image.
  * `tilt` rotates it slightly, as if pinned to the page.
  */
 import { Picture } from 'astro:assets';
@@ -33,25 +33,57 @@ const {
   class: className = '',
 } = Astro.props;
 
-const frameClass = frame ? 'bg-paper p-2 pb-2 shadow-[0_6px_18px_rgba(23,32,51,0.16)]' : '';
+const frameClass = frame
+  ? 'bg-paper p-2 pb-0 rounded-xl border-2 border-orange-200/90 shadow-[0_10px_25px_-5px_rgba(234,88,12,0.15),0_8px_10px_-6px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_35px_-5px_rgba(234,88,12,0.32),0_12px_15px_-5px_rgba(0,0,0,0.1)] hover:border-orange-500 overflow-hidden'
+  : '';
 const tiltStyle = tilt ? `transform: rotate(${tilt}deg);` : '';
 const ratioStyle = ratio ? `aspect-ratio: ${ratio};` : '';
 ---
-<figure class={`m-0 ${frameClass} ${className}`} style={tiltStyle}>
-  <Picture
-    src={src}
-    alt={alt}
-    formats={['avif', 'webp']}
-    widths={widths}
-    sizes={sizes}
-    loading={eager ? 'eager' : 'lazy'}
-    fetchpriority={eager ? 'high' : 'auto'}
-    class="block w-full h-auto object-cover"
-    style={ratioStyle}
-  />
-  {caption && (
-    <figcaption class={frame ? 'font-hand text-[1.05rem] leading-snug text-pen px-1 pt-2' : 'text-sm text-muted pt-2'}>
-      {caption}
-    </figcaption>
+<figure
+  class={`group m-0 ${frameClass} ${className} transition-all duration-300 ease-out hover:-translate-y-2 hover:rotate-0 hover:scale-[1.01] cursor-pointer`}
+  style={tiltStyle}
+>
+  <div class="overflow-hidden w-full bg-slate-950 rounded-t-lg">
+    <Picture
+      src={src}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes={sizes}
+      loading={eager ? 'eager' : 'lazy'}
+      fetchpriority={eager ? 'high' : 'auto'}
+      class="block w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+      style={ratioStyle}
+    />
+  </div>
+  {frame ? (
+    <div class="-mx-2 mt-0 bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 px-3.5 py-2.5 text-white shadow-inner border-t border-orange-400/40">
+      {caption ? (
+        <figcaption class="font-hand text-[1.1rem] leading-snug flex items-center justify-between gap-2">
+          <span class="tracking-wide text-white drop-shadow-xs font-medium">{caption}</span>
+          <span class="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-80"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-300 shadow-xs"></span>
+          </span>
+        </figcaption>
+      ) : (
+        <div class="flex items-center justify-between text-xs tracking-wider uppercase font-mono text-orange-100 font-semibold py-0.5">
+          <span class="flex items-center gap-2">
+            <span class="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-80"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-300"></span>
+            </span>
+            <span>UNSAIDTALKS</span>
+          </span>
+          <span class="text-[0.68rem] opacity-95 tracking-widest bg-orange-700/60 px-2 py-0.5 rounded font-bold border border-orange-400/30">ARCHIVE</span>
+        </div>
+      )}
+    </div>
+  ) : (
+    caption && (
+      <figcaption class="mt-2 text-sm text-white bg-gradient-to-r from-orange-500 via-orange-600 to-amber-600 px-3 py-1.5 rounded-lg border border-orange-300/40 font-medium shadow-sm">
+        {caption}
+      </figcaption>
+    )
   )}
 </figure>

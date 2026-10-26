@@ -7,7 +7,12 @@ interface Props {
 const { eyebrow, title, intro } = Astro.props;
 ---
 <div class="flex flex-col gap-3 max-w-[62ch]">
-  {eyebrow && <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted uppercase">{eyebrow}</p>}
-  <h2 class="m-0 text-[2.4rem] font-extrabold leading-tight">{title}</h2>
-  {intro && <p class="m-0 text-[1.1rem]">{intro}</p>}
+  {eyebrow && (
+    <div class="inline-flex items-center gap-2 self-start bg-orange-100/90 text-orange-950 px-3 py-1 rounded-full text-[0.75rem] font-mono tracking-wide uppercase border border-orange-200/80 shadow-xs">
+      <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" aria-hidden="true"></span>
+      <span>{eyebrow}</span>
+    </div>
+  )}
+  <h2 class="m-0 text-[2.4rem] font-extrabold leading-tight tracking-tight">{title}</h2>
+  {intro && <p class="m-0 text-[1.12rem] text-slate-700 leading-relaxed">{intro}</p>}
 </div>
