@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { person } from '../data/site';
+import Analytics from '@vercel/analytics/astro';
 
 interface Props {
   title?: string;
@@ -66,6 +67,7 @@ const nav = [
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body class="min-h-screen">
+    <Analytics />
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:bg-paper focus:px-3 focus:py-2 focus:z-50">Skip to content</a>
 
     <header class="sticky top-0 z-40 backdrop-blur-md bg-desk/85 border-b border-rule/60 transition-all duration-300">

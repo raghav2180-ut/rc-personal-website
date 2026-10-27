@@ -3,6 +3,7 @@ import '../styles/global.css';
 import '../styles/life.css';
 import type { Flash } from '../lib/life/page';
 import { env } from '../lib/life/env';
+import Analytics from '@vercel/analytics/astro';
 
 interface Props {
   title: string;
@@ -37,6 +38,7 @@ const links = [
     <title>{title} · Dream Life 2029</title>
   </head>
   <body class="life">
+    <Analytics />
     {bare ? (
       <slot />
     ) : (
