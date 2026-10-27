@@ -8,7 +8,9 @@ export default defineConfig({
   // Public pages stay static. The private Life Tracker (/life, /api/*) opts out
   // with `export const prerender = false` and runs as a Vercel function.
   output: 'static',
-  adapter: vercel(),
+  adapter: vercel({
+    webAnalytics: { enabled: true },
+  }),
   // On Vercel, Astro only trusts the incoming host when it is listed here.
   // Without this every request looks like it came from "localhost", which
   // breaks the Google sign-in redirect and the same-origin check on forms.
