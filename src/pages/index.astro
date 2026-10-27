@@ -29,7 +29,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
 <Layout>
 
   <!-- The post: headline, portrait, fact table -->
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-6">
+  <section class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-6">
     <article class="relative bg-paper border border-rule px-5 py-10 sm:px-12 sm:py-14 flex flex-col gap-10 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
       <div class="flex flex-wrap gap-x-12 gap-y-14 items-start">
         <div class="flex-[999_1_520px] min-w-0 flex flex-col gap-6">
@@ -44,18 +44,18 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
             UnsaidTalks began by publishing <a href="https://unsaidtalks.com/interviews/" target="_blank" rel="noopener" class="font-medium text-orange-600 hover:text-orange-700 underline underline-offset-4">seniors’ interview experiences</a>, free, so juniors would know what was coming. This is mine, written the same way: every round, what it tested, and what I’d tell you if you were sitting next to me.
           </p>
           <div class="flex flex-wrap gap-3 pt-1">
-            <a href="#rounds" class="no-underline bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-500 hover:to-amber-500 font-display font-semibold px-6 py-3 rounded-xl shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-200">Read the rounds</a>
+            <a href="#rounds" class="no-underline bg-gradient-to-r from-orange-500 to-amber-600 text-ink hover:from-orange-400 hover:to-amber-500 font-display font-semibold px-6 py-3 rounded-xl shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-200">Read the rounds</a>
             <a href="#contact" class="no-underline border-2 border-slate-800 text-slate-900 hover:text-white hover:bg-slate-900 hover:border-slate-900 font-display font-semibold px-6 py-3 rounded-xl shadow-xs hover:shadow-md hover:-translate-y-1 active:translate-y-0 transition-all duration-200">Write to me</a>
           </div>
         </div>
         <div class="flex-[1_1_260px] min-w-0 max-w-[340px] mx-auto relative group/hero">
           <div class="absolute -inset-4 bg-gradient-to-tr from-orange-500/20 via-amber-500/10 to-transparent blur-2xl -z-10 rounded-3xl opacity-75 group-hover/hero:opacity-100 transition-opacity duration-500" aria-hidden="true"></div>
           <Photo src={person.photos.heroPortrait} alt="Raghav Chopra" frame tilt={1.5} ratio="4 / 5" eager sizes="(min-width: 768px) 340px, 80vw" />
-          <div class="absolute -bottom-5 -left-4 sm:-left-7 rotate-[-7deg] bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 text-white font-display font-black tracking-[0.09em] text-xl sm:text-2xl px-4 py-2 rounded-xl shadow-xl shadow-orange-600/35 border-2 border-white/95 transition-all duration-300 hover:rotate-0 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/50 cursor-pointer animate-float hover-stamp-wiggle" aria-label="Selected, March 2025">
+          <div class="absolute -bottom-5 -left-4 sm:-left-7 rotate-[-7deg] bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 text-ink font-display font-black tracking-[0.09em] text-xl sm:text-2xl px-4 py-2 rounded-xl shadow-xl shadow-orange-600/35 border-2 border-white/95 transition-all duration-300 hover:rotate-0 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/50 cursor-pointer animate-float hover-stamp-wiggle" aria-label="Selected, March 2025">
             <span class="flex items-center gap-2">
               <span class="relative flex h-3 w-3">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-80"></span>
-                <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-ink opacity-60"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-ink"></span>
               </span>
               SELECTED · MAR 2025
             </span>
@@ -75,7 +75,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- Numbers -->
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-10" aria-label="UnsaidTalks in numbers">
+  <section class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-10" aria-label="UnsaidTalks in numbers">
     <ul class="list-none m-0 p-0 grid grid-cols-2 lg:grid-cols-4 gap-px bg-rule border border-rule rounded-xl overflow-hidden shadow-xs">
       {stats.map((s) => (
         <li class="bg-desk px-5 py-5 flex flex-col gap-1 transition-all duration-200 hover:bg-orange-50/50 group">
@@ -101,47 +101,87 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- The rounds -->
-  <section id="rounds" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+  <section id="rounds" class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24 scroll-mt-6">
     <SectionTitle eyebrow="11 rounds · 2013 to now" title="The rounds" intro="Every interview experience on UnsaidTalks lists the rounds in order. Here are mine." />
-    <ol class="list-none m-0 p-0 flex flex-col gap-6 mt-10">
+    <div class="flex justify-end mt-8">
+      <button type="button" data-rounds-toggle class="font-mono text-[0.8rem] text-orange-600 hover:text-orange-700 underline underline-offset-4 cursor-pointer bg-transparent border-0 p-0">Open all rounds</button>
+    </div>
+    <ol class="list-none m-0 p-0 flex flex-col gap-4 mt-3">
       {rounds.map(({ entry, Content }) => (
-        <li id={`round-${pad(entry.data.order)}`} class="bg-paper border border-rule px-5 py-8 sm:px-9 sm:py-10 scroll-mt-6 rounded-2xl shadow-xs hover:shadow-xl hover:border-orange-300/80 card-hover-lift group/round">
-          <div class="flex flex-wrap gap-x-10 gap-y-6">
-            <div class="flex-[0_0_8.5rem] font-mono text-[0.8rem] leading-relaxed">
-              <span class="inline-block bg-orange-100 text-orange-950 px-2.5 py-1 rounded-md font-bold border border-orange-200/80 group-hover/round:bg-gradient-to-r group-hover/round:from-orange-500 group-hover/round:to-amber-500 group-hover/round:text-white group-hover/round:border-transparent group-hover/round:shadow-md group-hover/round:scale-105 transition-all duration-300 origin-left">ROUND {pad(entry.data.order)}</span>
-              <div class="uppercase text-muted mt-1.5 font-medium">{entry.data.when}</div>
-            </div>
-            <div class="flex-[999_1_420px] min-w-0 flex flex-col gap-4">
-              <h3 class="m-0 text-[1.75rem] sm:text-[2rem] font-bold leading-tight">{entry.data.title}</h3>
-              <p class="m-0 font-mono text-[0.8rem] text-muted"><span class="text-ink font-semibold">THIS ROUND ASKED:</span> {entry.data.asked}</p>
-              <div class="prose-post max-w-[62ch]"><Content /></div>
-            </div>
-            {(entry.data.photo || entry.data.tip || sideGallery(entry)) && (
-              <aside class="flex-[1_1_240px] min-w-0 max-w-[320px] flex flex-col gap-6 pt-1">
-                {entry.data.photo && (
-                  <Photo src={entry.data.photo} alt={entry.data.photoAlt ?? ''} caption={entry.data.caption} frame tilt={entry.data.order % 2 ? -1.2 : 1.2} sizes="(min-width: 1024px) 320px, 85vw" />
+        <li id={`round-${pad(entry.data.order)}`} class="scroll-mt-6">
+          <details class="round bg-paper border border-rule rounded-2xl shadow-xs hover:shadow-lg hover:border-orange-300/80 open:shadow-lg open:border-orange-300/80 transition-all duration-200 group/round" data-round>
+            <summary class="list-none cursor-pointer select-none px-5 py-6 sm:px-9 sm:py-7 flex flex-wrap items-start gap-x-10 gap-y-3 rounded-2xl focus-visible:outline-2 focus-visible:outline-pen">
+              <div class="flex-[0_0_8.5rem] font-mono text-[0.8rem] leading-relaxed">
+                <span class="inline-block bg-orange-100 text-orange-950 px-2.5 py-1 rounded-md font-bold border border-orange-200/80 group-hover/round:bg-gradient-to-r group-hover/round:from-orange-500 group-hover/round:to-amber-600 group-hover/round:text-ink group-hover/round:border-transparent group-open/round:bg-gradient-to-r group-open/round:from-orange-500 group-open/round:to-amber-600 group-open/round:text-ink group-open/round:border-transparent transition-all duration-300 origin-left">ROUND {pad(entry.data.order)}</span>
+                <div class="uppercase text-muted mt-1.5 font-medium">{entry.data.when}</div>
+              </div>
+              <div class="flex-[999_1_420px] min-w-0 flex flex-col gap-3">
+                <h3 class="m-0 text-[1.6rem] sm:text-[1.9rem] font-bold leading-tight">{entry.data.title}</h3>
+                <p class="m-0 font-mono text-[0.8rem] text-muted"><span class="text-ink font-semibold">THIS ROUND ASKED:</span> {entry.data.asked}</p>
+              </div>
+              <span class="flex-[0_0_auto] self-center inline-flex items-center gap-2 font-mono text-[0.75rem] text-orange-600 font-semibold" aria-hidden="true">
+                <span class="group-open/round:hidden">READ</span><span class="hidden group-open/round:inline">CLOSE</span>
+                <svg class="w-5 h-5 transition-transform duration-200 group-open/round:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+              </span>
+            </summary>
+            <div class="px-5 pb-8 sm:px-9 sm:pb-10">
+              <div class="flex flex-wrap gap-x-10 gap-y-6 pt-6 border-t border-dashed border-rule">
+                <div class="hidden sm:block flex-[0_0_8.5rem]" aria-hidden="true"></div>
+                <div class="flex-[999_1_420px] min-w-0">
+                  <div class="prose-post max-w-[68ch]"><Content /></div>
+                </div>
+                {(entry.data.photo || entry.data.tip || sideGallery(entry)) && (
+                  <aside class="flex-[1_1_240px] min-w-0 max-w-[340px] flex flex-col gap-6 pt-1">
+                    {entry.data.photo && (
+                      <Photo src={entry.data.photo} alt={entry.data.photoAlt ?? ''} caption={entry.data.caption} frame tilt={entry.data.order % 2 ? -1.2 : 1.2} sizes="(min-width: 1024px) 340px, 85vw" />
+                    )}
+                    {sideGallery(entry) && entry.data.gallery!.map((g, i) => (
+                      <Photo src={g.src} alt={g.alt} caption={g.caption} frame tilt={(entry.data.order + i) % 2 ? 1.2 : -1.2} sizes="(min-width: 1024px) 340px, 85vw" />
+                    ))}
+                    {entry.data.tip && (
+                      <p class="m-0 font-hand text-[1.3rem] leading-snug text-pen rotate-[-1.5deg] hover:rotate-0 transition-transform duration-200 cursor-default">tip: {entry.data.tip}</p>
+                    )}
+                  </aside>
                 )}
-                {sideGallery(entry) && entry.data.gallery!.map((g, i) => (
-                  <Photo src={g.src} alt={g.alt} caption={g.caption} frame tilt={(entry.data.order + i) % 2 ? 1.2 : -1.2} sizes="(min-width: 1024px) 320px, 85vw" />
-                ))}
-                {entry.data.tip && (
-                  <p class="m-0 font-hand text-[1.3rem] leading-snug text-pen rotate-[-1.5deg] hover:rotate-0 transition-transform duration-200 cursor-default">tip: {entry.data.tip}</p>
-                )}
-              </aside>
-            )}
-          </div>
-          {entry.data.gallery && entry.data.gallery.length > 0 && !sideGallery(entry) && (
-            <div class="mt-8 pt-6 border-t border-dashed border-rule">
-              <Carousel items={entry.data.gallery} label={`Photos from round ${pad(entry.data.order)}`} heading="swipe through the photos from this round →" />
+              </div>
+              {entry.data.gallery && entry.data.gallery.length > 0 && !sideGallery(entry) && (
+                <div class="mt-8 pt-6 border-t border-dashed border-rule">
+                  <Carousel items={entry.data.gallery} label={`Photos from round ${pad(entry.data.order)}`} heading="swipe through the photos from this round →" />
+                </div>
+              )}
             </div>
-          )}
+          </details>
         </li>
       ))}
     </ol>
+    <script>
+      // Rounds open on click. A link to #round-05 (or a shared URL) opens that round,
+      // and "Open all rounds" expands or collapses every round at once.
+      const rounds = () => Array.from(document.querySelectorAll<HTMLDetailsElement>('details[data-round]'));
+      const openFromHash = () => {
+        const id = decodeURIComponent(location.hash.slice(1));
+        if (!id.startsWith('round-')) return;
+        const details = document.getElementById(id)?.querySelector<HTMLDetailsElement>('details[data-round]');
+        if (details) details.open = true;
+      };
+      openFromHash();
+      window.addEventListener('hashchange', openFromHash);
+
+      const toggle = document.querySelector<HTMLButtonElement>('[data-rounds-toggle]');
+      const sync = () => {
+        if (toggle) toggle.textContent = rounds().every((d) => d.open) ? 'Close all rounds' : 'Open all rounds';
+      };
+      toggle?.addEventListener('click', () => {
+        const openAll = !rounds().every((d) => d.open);
+        rounds().forEach((d) => (d.open = openAll));
+        sync();
+      });
+      rounds().forEach((d) => d.addEventListener('toggle', sync));
+    </script>
   </section>
 
   <!-- Tips for juniors -->
-  <section id="tips" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+  <section id="tips" class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24 scroll-mt-6">
     <div class="bg-ink text-paper px-6 py-12 sm:px-12 flex flex-wrap gap-x-12 gap-y-8 rounded-2xl shadow-xl">
       <div class="flex-[1_1_260px] min-w-0">
         <div class="inline-flex items-center gap-1.5 font-mono text-[0.75rem] tracking-wide text-orange-400">
@@ -165,7 +205,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- The loop closes -->
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
+  <section class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24">
     <SectionTitle eyebrow="Pass it down" title="The loop closes" intro="A senior once told me what nobody else would. The best proof that UnsaidTalks works is the students who now do the same for others." />
     <div class="mt-10 bg-paper border border-rule px-5 py-8 sm:px-10 sm:py-10 flex flex-wrap gap-10 items-center rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
       <Photo src={sambhav.photo} alt={sambhav.alt} frame tilt={-1.5} ratio="3 / 4" class="flex-[1_1_220px] max-w-[280px]" sizes="(min-width: 768px) 280px, 80vw" />
@@ -188,7 +228,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- People -->
-  <section id="people" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+  <section id="people" class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24 scroll-mt-6">
     <SectionTitle eyebrow="Every U is someone who passed it on" title="The people in the story" intro="The hand sign in these photos is a U, for UnsaidTalks. You’ll see it a lot." />
 
     <div class="mt-10 flex flex-wrap gap-8 items-start">
@@ -232,7 +272,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- UnsaidTalks -->
-  <section id="unsaidtalks" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+  <section id="unsaidtalks" class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24 scroll-mt-6">
     <div class="flex flex-wrap items-end justify-between gap-6">
       <SectionTitle eyebrow="What we are building" title="UnsaidTalks Education" intro="Helping every engineering student and young professional get into the job they want, by closing the gap between what they’re taught and what companies actually look for." />
       <Image src={logo} alt="UnsaidTalks logo" width={120} class="h-auto bg-ink p-3 rounded-xl shadow-md" />
@@ -287,7 +327,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- What people say -->
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
+  <section class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24">
     <SectionTitle eyebrow="In their words" title="What students and colleges say" />
     <ul class="list-none m-0 p-0 mt-10 columns-1 md:columns-2 gap-5 [&>li]:break-inside-avoid">
       {testimonials.map((t) => (
@@ -308,7 +348,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- Team, oldest to newest -->
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24" aria-labelledby="team-title">
+  <section class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24" aria-labelledby="team-title">
     <div class="flex flex-col gap-3 mb-6">
       <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted uppercase">Seven years quietly, then together</p>
       <h2 id="team-title" class="m-0 text-[2.4rem] font-extrabold leading-tight">The team, then and now</h2>
@@ -317,7 +357,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- Writing -->
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
+  <section class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <SectionTitle eyebrow="Create more than you consume" title="Writing" />
       <a href="/writing/" class="font-mono text-sm text-orange-600 hover:text-orange-700 font-semibold">All writing →</a>
@@ -334,7 +374,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   </section>
 
   <!-- Contact -->
-  <section id="contact" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
+  <section id="contact" class="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-10 pt-24 scroll-mt-6">
     <div class="bg-paper border border-rule px-5 py-12 sm:px-12 flex flex-col gap-10 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
       <div class="flex flex-col gap-3 max-w-[60ch]">
         <div class="inline-flex items-center gap-2 self-start bg-orange-100/90 text-orange-950 px-3 py-1 rounded-full text-[0.75rem] font-mono tracking-wide uppercase border border-orange-200/80 shadow-xs">
