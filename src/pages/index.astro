@@ -30,34 +30,44 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
 
   <!-- The post: headline, portrait, fact table -->
   <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-6">
-    <article class="relative bg-paper border border-rule px-5 py-10 sm:px-12 sm:py-14 flex flex-col gap-10">
+    <article class="relative bg-paper border border-rule px-5 py-10 sm:px-12 sm:py-14 flex flex-col gap-10 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
       <div class="flex flex-wrap gap-x-12 gap-y-14 items-start">
         <div class="flex-[999_1_520px] min-w-0 flex flex-col gap-6">
-          <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted">INTERVIEW EXPERIENCE · SHARED BY A SENIOR</p>
+          <div class="inline-flex items-center gap-2 self-start bg-orange-100/90 text-orange-950 px-3 py-1 rounded-full text-[0.75rem] font-mono tracking-wide uppercase border border-orange-200/80 shadow-xs">
+            <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+            <span>INTERVIEW EXPERIENCE · SHARED BY A SENIOR</span>
+          </div>
           <h1 class="m-0 font-extrabold text-[2.6rem] leading-[1.02] sm:text-[4.25rem] tracking-[-0.02em]">
-            How I cracked the role nobody hires for: <span class="text-pen">Founder.</span>
+            How I cracked the role nobody hires for: <span class="bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 bg-clip-text text-transparent animate-gradient-flow inline-block">Founder.</span>
           </h1>
-          <p class="m-0 max-w-[58ch] text-[1.15rem]">
-            UnsaidTalks began by publishing <a href="https://unsaidtalks.com/interviews/" target="_blank" rel="noopener">seniors’ interview experiences</a>, free, so juniors would know what was coming. This is mine, written the same way: every round, what it tested, and what I’d tell you if you were sitting next to me.
+          <p class="m-0 max-w-[58ch] text-[1.15rem] text-slate-700 leading-relaxed">
+            UnsaidTalks began by publishing <a href="https://unsaidtalks.com/interviews/" target="_blank" rel="noopener" class="font-medium text-orange-600 hover:text-orange-700 underline underline-offset-4">seniors’ interview experiences</a>, free, so juniors would know what was coming. This is mine, written the same way: every round, what it tested, and what I’d tell you if you were sitting next to me.
           </p>
           <div class="flex flex-wrap gap-3 pt-1">
-            <a href="#rounds" class="no-underline bg-ink text-paper hover:text-paper hover:bg-pen font-display font-semibold px-5 py-3">Read the rounds</a>
-            <a href="#contact" class="no-underline border-[1.5px] border-ink text-ink hover:text-pen hover:border-pen font-display font-semibold px-5 py-3">Write to me</a>
+            <a href="#rounds" class="no-underline bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-500 hover:to-amber-500 font-display font-semibold px-6 py-3 rounded-xl shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30 hover:-translate-y-1 active:translate-y-0 transition-all duration-200">Read the rounds</a>
+            <a href="#contact" class="no-underline border-2 border-slate-800 text-slate-900 hover:text-white hover:bg-slate-900 hover:border-slate-900 font-display font-semibold px-6 py-3 rounded-xl shadow-xs hover:shadow-md hover:-translate-y-1 active:translate-y-0 transition-all duration-200">Write to me</a>
           </div>
         </div>
-        <div class="flex-[1_1_260px] min-w-0 max-w-[340px] mx-auto relative">
+        <div class="flex-[1_1_260px] min-w-0 max-w-[340px] mx-auto relative group/hero">
+          <div class="absolute -inset-4 bg-gradient-to-tr from-orange-500/20 via-amber-500/10 to-transparent blur-2xl -z-10 rounded-3xl opacity-75 group-hover/hero:opacity-100 transition-opacity duration-500" aria-hidden="true"></div>
           <Photo src={person.photos.heroPortrait} alt="Raghav Chopra" frame tilt={1.5} ratio="4 / 5" eager sizes="(min-width: 768px) 340px, 80vw" />
-          <div class="absolute -bottom-5 -left-4 sm:-left-7 rotate-[-9deg] border-[3px] border-stamp text-stamp bg-paper/90 font-display font-extrabold tracking-[0.08em] text-xl sm:text-2xl px-3 py-1" aria-label="Selected, March 2025">
-            SELECTED · MAR 2025
+          <div class="absolute -bottom-5 -left-4 sm:-left-7 rotate-[-7deg] bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 text-white font-display font-black tracking-[0.09em] text-xl sm:text-2xl px-4 py-2 rounded-xl shadow-xl shadow-orange-600/35 border-2 border-white/95 transition-all duration-300 hover:rotate-0 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/50 cursor-pointer animate-float hover-stamp-wiggle" aria-label="Selected, March 2025">
+            <span class="flex items-center gap-2">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-80"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+              </span>
+              SELECTED · MAR 2025
+            </span>
           </div>
         </div>
       </div>
 
-      <dl class="m-0 grid grid-cols-2 lg:grid-cols-4 border border-rule font-mono text-[0.8rem]">
+      <dl class="m-0 grid grid-cols-2 lg:grid-cols-4 border border-rule font-mono text-[0.8rem] rounded-xl overflow-hidden bg-slate-50/50">
         {factTable.map((row, i) => (
-          <div class={`px-4 py-3 border-rule ${i % 2 === 0 ? 'border-r' : ''} ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i === 1 ? 'lg:border-r' : ''} ${i === 2 ? 'lg:border-r' : ''}`}>
-            <dt class="text-muted uppercase">{row.label}</dt>
-            <dd class="m-0 text-[0.95rem] text-ink">{row.value}</dd>
+          <div class={`px-4 py-3 border-rule ${i % 2 === 0 ? 'border-r' : ''} ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i === 1 ? 'lg:border-r' : ''} ${i === 2 ? 'lg:border-r' : ''} transition-colors duration-200 hover:bg-orange-500/10 group cursor-default`}>
+            <dt class="text-muted uppercase text-[0.72rem] tracking-wider group-hover:text-orange-600 transition-colors">{row.label}</dt>
+            <dd class="m-0 text-[0.95rem] text-ink font-semibold group-hover:text-orange-700 transition-colors">{row.value}</dd>
           </div>
         ))}
       </dl>
@@ -66,23 +76,26 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
 
   <!-- Numbers -->
   <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-10" aria-label="UnsaidTalks in numbers">
-    <ul class="list-none m-0 p-0 grid grid-cols-2 lg:grid-cols-4 gap-px bg-rule border border-rule">
+    <ul class="list-none m-0 p-0 grid grid-cols-2 lg:grid-cols-4 gap-px bg-rule border border-rule rounded-xl overflow-hidden shadow-xs">
       {stats.map((s) => (
-        <li class="bg-desk px-5 py-5 flex flex-col gap-1">
-          <span class="font-display font-extrabold text-4xl text-pen tabular-nums">{s.value}</span>
+        <li class="bg-desk px-5 py-5 flex flex-col gap-1 transition-all duration-200 hover:bg-orange-50/50 group">
+          <span class="font-display font-extrabold text-4xl text-pen tabular-nums group-hover:scale-105 group-hover:text-orange-600 transition-all duration-200 origin-left">{s.value}</span>
           <span class="text-sm text-muted leading-snug">{s.label}</span>
         </li>
       ))}
     </ul>
-    <div class="bg-ink text-paper px-6 py-8 sm:px-10 sm:py-10 flex flex-wrap gap-x-10 gap-y-6 items-start">
+    <div class="bg-ink text-paper px-6 py-8 sm:px-10 sm:py-10 flex flex-wrap gap-x-10 gap-y-6 items-start rounded-2xl shadow-xl mt-5">
       <div class="flex-[0_0_auto] flex flex-col gap-3">
         <Image src={logo} alt="UnsaidTalks logo" width={104} class="h-auto" />
-        <p class="m-0 font-mono text-[0.75rem] tracking-wide text-stamp-soft">ABOUT UNSAIDTALKS</p>
+        <div class="inline-flex items-center gap-1.5 font-mono text-[0.75rem] tracking-wide text-orange-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+          <span>ABOUT UNSAIDTALKS</span>
+        </div>
       </div>
       <div class="flex-[999_1_480px] min-w-0 flex flex-col gap-4">
         <p class="m-0 text-[1.1rem] leading-relaxed">{company.about}</p>
         <p class="m-0 text-[1.1rem] leading-relaxed text-[#CDD3DF]">{company.advisor}</p>
-        <a href={person.links.unsaidtalks} target="_blank" rel="noopener" class="font-mono text-sm text-stamp-soft hover:text-paper self-start">www.unsaidtalks.com ↗</a>
+        <a href={person.links.unsaidtalks} target="_blank" rel="noopener" class="font-mono text-sm text-orange-400 hover:text-orange-300 self-start transition-colors flex items-center gap-1 font-medium">www.unsaidtalks.com ↗</a>
       </div>
     </div>
   </section>
@@ -90,17 +103,17 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   <!-- The rounds -->
   <section id="rounds" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
     <SectionTitle eyebrow="11 rounds · 2013 to now" title="The rounds" intro="Every interview experience on UnsaidTalks lists the rounds in order. Here are mine." />
-    <ol class="list-none m-0 p-0 flex flex-col gap-5 mt-10">
+    <ol class="list-none m-0 p-0 flex flex-col gap-6 mt-10">
       {rounds.map(({ entry, Content }) => (
-        <li id={`round-${pad(entry.data.order)}`} class="bg-paper border border-rule px-5 py-8 sm:px-9 sm:py-10 scroll-mt-6">
+        <li id={`round-${pad(entry.data.order)}`} class="bg-paper border border-rule px-5 py-8 sm:px-9 sm:py-10 scroll-mt-6 rounded-2xl shadow-xs hover:shadow-xl hover:border-orange-300/80 card-hover-lift group/round">
           <div class="flex flex-wrap gap-x-10 gap-y-6">
-            <div class="flex-[0_0_8rem] font-mono text-[0.8rem] leading-relaxed text-pen">
-              <div>ROUND {pad(entry.data.order)}</div>
-              <div class="uppercase">{entry.data.when}</div>
+            <div class="flex-[0_0_8.5rem] font-mono text-[0.8rem] leading-relaxed">
+              <span class="inline-block bg-orange-100 text-orange-950 px-2.5 py-1 rounded-md font-bold border border-orange-200/80 group-hover/round:bg-gradient-to-r group-hover/round:from-orange-500 group-hover/round:to-amber-500 group-hover/round:text-white group-hover/round:border-transparent group-hover/round:shadow-md group-hover/round:scale-105 transition-all duration-300 origin-left">ROUND {pad(entry.data.order)}</span>
+              <div class="uppercase text-muted mt-1.5 font-medium">{entry.data.when}</div>
             </div>
             <div class="flex-[999_1_420px] min-w-0 flex flex-col gap-4">
               <h3 class="m-0 text-[1.75rem] sm:text-[2rem] font-bold leading-tight">{entry.data.title}</h3>
-              <p class="m-0 font-mono text-[0.8rem] text-muted"><span class="text-ink">THIS ROUND ASKED:</span> {entry.data.asked}</p>
+              <p class="m-0 font-mono text-[0.8rem] text-muted"><span class="text-ink font-semibold">THIS ROUND ASKED:</span> {entry.data.asked}</p>
               <div class="prose-post max-w-[62ch]"><Content /></div>
             </div>
             {(entry.data.photo || entry.data.tip || sideGallery(entry)) && (
@@ -112,7 +125,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
                   <Photo src={g.src} alt={g.alt} caption={g.caption} frame tilt={(entry.data.order + i) % 2 ? 1.2 : -1.2} sizes="(min-width: 1024px) 320px, 85vw" />
                 ))}
                 {entry.data.tip && (
-                  <p class="m-0 font-hand text-[1.3rem] leading-snug text-pen rotate-[-1.5deg]">tip: {entry.data.tip}</p>
+                  <p class="m-0 font-hand text-[1.3rem] leading-snug text-pen rotate-[-1.5deg] hover:rotate-0 transition-transform duration-200 cursor-default">tip: {entry.data.tip}</p>
                 )}
               </aside>
             )}
@@ -129,16 +142,22 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
 
   <!-- Tips for juniors -->
   <section id="tips" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
-    <div class="bg-ink text-paper px-6 py-12 sm:px-12 flex flex-wrap gap-x-12 gap-y-8">
+    <div class="bg-ink text-paper px-6 py-12 sm:px-12 flex flex-wrap gap-x-12 gap-y-8 rounded-2xl shadow-xl">
       <div class="flex-[1_1_260px] min-w-0">
-        <p class="m-0 font-mono text-[0.8rem] tracking-wide text-stamp-soft">TIPS FOR JUNIORS</p>
+        <div class="inline-flex items-center gap-1.5 font-mono text-[0.75rem] tracking-wide text-orange-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+          <span>TIPS FOR JUNIORS</span>
+        </div>
         <h2 class="mt-3 mb-0 text-[2.2rem] font-extrabold leading-tight">What I’d tell you if you sat next to me.</h2>
       </div>
       <ul class="flex-[999_1_480px] min-w-0 list-none m-0 p-0 grid sm:grid-cols-2 gap-x-10 gap-y-6">
         {tips.map((t) => (
-          <li class="flex flex-col gap-1">
-            <strong class="font-display text-lg">{t.title}</strong>
-            <span class="text-[#CDD3DF]">{t.body}</span>
+          <li class="flex flex-col gap-1 p-3 rounded-xl hover:bg-white/5 transition-colors duration-200">
+            <strong class="font-display text-lg text-white flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+              {t.title}
+            </strong>
+            <span class="text-[#CDD3DF] text-[0.98rem] leading-relaxed">{t.body}</span>
           </li>
         ))}
       </ul>
@@ -148,21 +167,21 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   <!-- The loop closes -->
   <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
     <SectionTitle eyebrow="Pass it down" title="The loop closes" intro="A senior once told me what nobody else would. The best proof that UnsaidTalks works is the students who now do the same for others." />
-    <div class="mt-10 bg-paper border border-rule px-5 py-8 sm:px-10 sm:py-10 flex flex-wrap gap-10 items-center">
+    <div class="mt-10 bg-paper border border-rule px-5 py-8 sm:px-10 sm:py-10 flex flex-wrap gap-10 items-center rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
       <Photo src={sambhav.photo} alt={sambhav.alt} frame tilt={-1.5} ratio="3 / 4" class="flex-[1_1_220px] max-w-[280px]" sizes="(min-width: 768px) 280px, 80vw" />
       <div class="flex-[999_1_420px] min-w-0 flex flex-col gap-4">
         <p class="m-0 font-mono text-[0.8rem] text-muted">ROUND 02, REVISITED</p>
         <h3 class="m-0 text-[1.8rem] font-bold leading-tight">I interned at Cadence in 2015. A decade later, one of our students got placed there.</h3>
-        <blockquote class="m-0 text-[1.2rem] italic max-w-[56ch]">“{sambhav.quote}”</blockquote>
+        <blockquote class="m-0 text-[1.2rem] italic max-w-[56ch] border-l-2 border-orange-500 pl-4 py-1">“{sambhav.quote}”</blockquote>
         <p class="m-0 text-sm text-muted">{sambhav.name} · {sambhav.context}</p>
       </div>
     </div>
     <ul class="list-none m-0 p-0 mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
       {loopStories.map((s) => (
-        <li class="bg-paper border border-rule px-5 py-6 flex flex-col gap-3">
+        <li class="bg-paper border border-rule px-5 py-6 flex flex-col gap-3 rounded-xl card-hover-lift hover:border-orange-200">
           <strong class="font-display text-lg">{s.name}</strong>
           <span class="text-sm text-muted">{s.from}</span>
-          <span class="font-hand text-[1.15rem] leading-snug text-pen">→ {s.to}</span>
+          <span class="font-hand text-[1.15rem] leading-snug text-pen font-medium">→ {s.to}</span>
         </li>
       ))}
     </ul>
@@ -216,24 +235,24 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   <section id="unsaidtalks" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
     <div class="flex flex-wrap items-end justify-between gap-6">
       <SectionTitle eyebrow="What we are building" title="UnsaidTalks Education" intro="Helping every engineering student and young professional get into the job they want, by closing the gap between what they’re taught and what companies actually look for." />
-      <Image src={logo} alt="UnsaidTalks logo" width={120} class="h-auto bg-ink p-3" />
+      <Image src={logo} alt="UnsaidTalks logo" width={120} class="h-auto bg-ink p-3 rounded-xl shadow-md" />
     </div>
 
     <h3 class="mt-12 mb-0 text-[1.6rem] font-bold leading-tight">Our three focus areas</h3>
     <ol class="list-none m-0 p-0 mt-6 flex flex-col gap-5">
       {focusAreas.map((f) => (
-        <li class="bg-paper border border-rule px-6 py-7 sm:px-8 flex flex-wrap gap-x-10 gap-y-5 items-start">
-          <span class="flex-[0_0_3.5rem] font-display font-extrabold text-[2.6rem] leading-none text-stamp tabular-nums" aria-hidden="true">{f.number}</span>
+        <li class="bg-paper border border-rule px-6 py-7 sm:px-8 flex flex-wrap gap-x-10 gap-y-5 items-start rounded-2xl card-hover-lift hover:border-orange-200">
+          <span class="flex-[0_0_3.5rem] font-display font-extrabold text-[2.6rem] leading-none text-orange-600 tabular-nums" aria-hidden="true">{f.number}</span>
           <div class="flex-[1_1_220px] min-w-0 flex flex-col gap-1">
             <h4 class="m-0 font-display text-[1.45rem] font-bold leading-tight">{f.name}</h4>
             <span class="font-mono text-[0.75rem] uppercase tracking-wide text-muted">{f.kind}</span>
-            {f.href && <a href={f.href} target="_blank" rel="noopener" class="font-mono text-sm mt-2">{f.linkLabel} →</a>}
+            {f.href && <a href={f.href} target="_blank" rel="noopener" class="font-mono text-sm mt-2 text-orange-600 hover:text-orange-700 font-semibold">{f.linkLabel} →</a>}
           </div>
           {f.tracks ? (
             <div class="flex-[999_1_460px] min-w-0 grid gap-4 sm:grid-cols-2">
               {f.tracks.map((t) => (
-                <div class="bg-desk border border-rule px-5 py-4 flex flex-col gap-1">
-                  <span class="font-mono text-[0.75rem] uppercase tracking-wide text-pen">{t.label}</span>
+                <div class="bg-desk border border-rule px-5 py-4 flex flex-col gap-1 rounded-xl">
+                  <span class="font-mono text-[0.75rem] uppercase tracking-wide text-orange-600 font-bold">{t.label}</span>
                   <p class="m-0" set:html={t.body} />
                 </div>
               ))}
@@ -272,15 +291,18 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
     <SectionTitle eyebrow="In their words" title="What students and colleges say" />
     <ul class="list-none m-0 p-0 mt-10 columns-1 md:columns-2 gap-5 [&>li]:break-inside-avoid">
       {testimonials.map((t) => (
-        <li class="bg-paper border border-rule px-6 py-7 mb-5 flex flex-col gap-4">
-          <blockquote class="m-0 text-[1.1rem]">“{t.quote}”</blockquote>
-          <p class="m-0 text-sm"><strong class="font-display">{t.name}</strong> <span class="text-muted">· {t.context} · {t.source}</span></p>
+        <li class="bg-paper border border-rule px-6 py-7 mb-5 flex flex-col gap-4 rounded-2xl card-hover-lift hover:border-orange-200">
+          <blockquote class="m-0 text-[1.1rem] leading-relaxed">“{t.quote}”</blockquote>
+          <p class="m-0 text-sm"><strong class="font-display font-semibold">{t.name}</strong> <span class="text-muted">· {t.context} · {t.source}</span></p>
         </li>
       ))}
-      <li class="bg-ink text-paper px-6 py-7 mb-5 flex flex-col gap-4">
-        <p class="m-0 font-mono text-[0.75rem] text-stamp-soft">WORKING WITH ME</p>
-        <blockquote class="m-0 text-[1.1rem]">“{workingWithMe.quote}”</blockquote>
-        <p class="m-0 text-sm"><strong class="font-display">{workingWithMe.name}</strong> <span class="text-[#CDD3DF]">· {workingWithMe.context}</span></p>
+      <li class="bg-ink text-paper px-6 py-7 mb-5 flex flex-col gap-4 rounded-2xl card-hover-lift hover:shadow-2xl border border-ink">
+        <div class="inline-flex items-center gap-1.5 font-mono text-[0.75rem] text-orange-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+          <span>WORKING WITH ME</span>
+        </div>
+        <blockquote class="m-0 text-[1.1rem] leading-relaxed">“{workingWithMe.quote}”</blockquote>
+        <p class="m-0 text-sm"><strong class="font-display font-semibold">{workingWithMe.name}</strong> <span class="text-[#CDD3DF]">· {workingWithMe.context}</span></p>
       </li>
     </ul>
   </section>
@@ -298,14 +320,14 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
   <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-24">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <SectionTitle eyebrow="Create more than you consume" title="Writing" />
-      <a href="/writing/" class="font-mono text-sm">All writing →</a>
+      <a href="/writing/" class="font-mono text-sm text-orange-600 hover:text-orange-700 font-semibold">All writing →</a>
     </div>
     <ul class="list-none m-0 p-0 mt-8 grid gap-5 sm:grid-cols-2">
       {latestWriting.map((post) => (
-        <li class="bg-paper border border-rule px-6 py-6 flex flex-col gap-2">
+        <li class="bg-paper border border-rule px-6 py-6 flex flex-col gap-2 rounded-2xl card-hover-lift hover:border-orange-200 group">
           <span class="font-mono text-[0.75rem] text-muted uppercase">{post.data.when}</span>
-          <a href={`/writing/${post.id}/`} class="no-underline text-ink hover:text-pen"><h3 class="m-0 text-[1.3rem] font-bold leading-snug">{post.data.title}</h3></a>
-          <p class="m-0 text-[0.95rem] text-muted">{post.data.summary}</p>
+          <a href={`/writing/${post.id}/`} class="no-underline text-ink group-hover:text-orange-600 transition-colors"><h3 class="m-0 text-[1.3rem] font-bold leading-snug">{post.data.title}</h3></a>
+          <p class="m-0 text-[0.95rem] text-muted leading-relaxed">{post.data.summary}</p>
         </li>
       ))}
     </ul>
@@ -313,27 +335,30 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
 
   <!-- Contact -->
   <section id="contact" class="mx-auto max-w-6xl px-4 sm:px-6 pt-24 scroll-mt-6">
-    <div class="bg-paper border border-rule px-5 py-12 sm:px-12 flex flex-col gap-10">
+    <div class="bg-paper border border-rule px-5 py-12 sm:px-12 flex flex-col gap-10 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
       <div class="flex flex-col gap-3 max-w-[60ch]">
-        <p class="m-0 font-mono text-[0.8rem] tracking-wide text-muted">YOUR ROUND</p>
+        <div class="inline-flex items-center gap-2 self-start bg-orange-100/90 text-orange-950 px-3 py-1 rounded-full text-[0.75rem] font-mono tracking-wide uppercase border border-orange-200/80 shadow-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+          <span>YOUR ROUND</span>
+        </div>
         <h2 class="m-0 text-[2.4rem] font-extrabold leading-tight">If you’ve read this far, write to me.</h2>
-        <p class="m-0">I read every message. It was one message that changed my life, so I take them seriously.</p>
+        <p class="m-0 text-[1.1rem] text-slate-700 leading-relaxed">I read every message. It was one message that changed my life, so I take them seriously.</p>
       </div>
-      <ul class="list-none m-0 p-0 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-rule border border-rule">
-        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Students</strong><span class="text-sm text-muted">Tell me the job you want and where you’re stuck. Our programs start at unsaidtalks.com.</span></li>
-        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Colleges</strong><span class="text-sm text-muted">Run mentorship, Build4Hire or a workshop for your students, with reporting your placement cell can use.</span></li>
-        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Mentors</strong><span class="text-sm text-muted">Teach students the things you wish someone had told you.</span></li>
-        <li class="bg-paper px-5 py-5 flex flex-col gap-2"><strong class="font-display">Founders & hiring teams</strong><span class="text-sm text-muted">Hire smart, humble, hardworking freshers we’ve trained.</span></li>
+      <ul class="list-none m-0 p-0 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-rule border border-rule rounded-2xl overflow-hidden">
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2 transition-colors hover:bg-orange-50/40"><strong class="font-display">Students</strong><span class="text-sm text-muted">Tell me the job you want and where you’re stuck. Our programs start at unsaidtalks.com.</span></li>
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2 transition-colors hover:bg-orange-50/40"><strong class="font-display">Colleges</strong><span class="text-sm text-muted">Run mentorship, Build4Hire or a workshop for your students, with reporting your placement cell can use.</span></li>
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2 transition-colors hover:bg-orange-50/40"><strong class="font-display">Mentors</strong><span class="text-sm text-muted">Teach students the things you wish someone had told you.</span></li>
+        <li class="bg-paper px-5 py-5 flex flex-col gap-2 transition-colors hover:bg-orange-50/40"><strong class="font-display">Founders & hiring teams</strong><span class="text-sm text-muted">Hire smart, humble, hardworking freshers we’ve trained.</span></li>
       </ul>
       <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <span class="font-display font-bold text-[1.5rem] sm:text-[2rem] break-all select-all" id="contact-email">{person.email}</span>
-        <button type="button" id="copy-email" class="min-h-11 px-4 border-[1.5px] border-ink bg-paper font-mono text-sm hover:text-pen hover:border-pen">Copy email</button>
-        <a href={`mailto:${person.email}`} class="font-mono text-sm">Open in mail app</a>
+        <span class="font-display font-bold text-[1.5rem] sm:text-[2rem] break-all select-all text-slate-900" id="contact-email">{person.email}</span>
+        <button type="button" id="copy-email" class="min-h-11 px-5 py-2.5 rounded-xl border-2 border-slate-900 bg-slate-900 text-white hover:bg-orange-600 hover:border-orange-600 active:scale-95 transition-all duration-200 shadow-sm cursor-pointer font-mono text-sm">Copy email</button>
+        <a href={`mailto:${person.email}`} class="font-mono text-sm text-orange-600 hover:text-orange-700 font-semibold">Open in mail app →</a>
       </div>
       <div class="flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm">
-        <a href={person.links.linkedin} target="_blank" rel="me noopener">LinkedIn ↗</a>
-        <a href={person.links.instagram} target="_blank" rel="me noopener">Instagram @growth_with_raghav ↗</a>
-        <a href={person.links.unsaidtalks} target="_blank" rel="noopener">unsaidtalks.com ↗</a>
+        <a href={person.links.linkedin} target="_blank" rel="me noopener" class="text-slate-700 hover:text-orange-600 transition-colors">LinkedIn ↗</a>
+        <a href={person.links.instagram} target="_blank" rel="me noopener" class="text-slate-700 hover:text-orange-600 transition-colors">Instagram @growth_with_raghav ↗</a>
+        <a href={person.links.unsaidtalks} target="_blank" rel="noopener" class="text-slate-700 hover:text-orange-600 transition-colors">unsaidtalks.com ↗</a>
       </div>
       <p class="m-0 text-sm text-muted">{person.location}</p>
     </div>
@@ -344,7 +369,7 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
         const text = email?.textContent?.trim() ?? '';
         try {
           await navigator.clipboard.writeText(text);
-          btn.textContent = 'Copied';
+          btn.textContent = 'Copied!';
         } catch {
           const range = document.createRange();
           if (email) range.selectNodeContents(email);
