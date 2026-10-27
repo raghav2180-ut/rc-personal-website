@@ -1,0 +1,144 @@
+---
+import LifeLayout from '../../layouts/LifeLayout.astro';
+import Problem from '../../components/life/Problem.astro';
+import { loadGoals, type GoalRow, type Progress } from '../../lib/life/data';
+import { errorMessage, lifeContext } from '../../lib/life/page';
+
+export const prerender = false;
+
+const { me, flash, href } = lifeContext(Astro);
+
+let data: Awaited<ReturnType<typeof loadGoals>> | null = null;
+let problem = '';
+try {
+  data = await loadGoals();
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
+/** Match a progress line ("SOT F.U.E.L students") to its goal row ("SOT F.U.E.L"). */
+function goalFor(p: Progress, goals: GoalRow[]): GoalRow | undefined {
+  const key = norm(p.label);
+  return goals.find((g) => !/^kajol$/i.test(g.owner) && g.area && key.startsWith(norm(g.area)));
+}
+
+function pace(p: Progress, daysLeft: number): string {
+  const remaining = p.target - p.current;
+  if (remaining <= 0) return 'Target reached. Hold it there.';
+  const weeks = Math.max(daysLeft / 7, 1);
+  if (/revenue/i.test(p.label)) return `₹${Number(remaining.toFixed(2))}L a month still to find`;
+  const perWeek = remaining / weeks;
+  if (perWeek >= 0.75) return `${remaining} more · about ${Number(perWeek.toFixed(1))} a week`;
+  const every = Math.round(1 / perWeek);
+  return `${remaining} more · about 1 every ${every} weeks`;
+}
+
+const companyGoals = data?.goals.filter((g) => !/^kajol$/i.test(g.owner)) ?? [];
+const kajolGoals = data?.goals.filter((g) => /^kajol$/i.test(g.owner)) ?? [];
+const revenueLines = data?.revenue.filter((r) => !r.summary) ?? [];
+const summary = data?.revenue.find((r) => r.summary);
+---
+<LifeLayout title="Goals" active="goals" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">FY 2026–27 · DEADLINE 31 MAR 2027 · <span class="hot">{data?.daysLeft ?? '–'} DAYS LEFT</span></span>
+      <h1>Goals</h1>
+    </div>
+    <span class="mono muted" style="font-size:12px">NUMBERS UPDATE IN THE <a href={href('/life/week') + '#review'}>SATURDAY REVIEW</a></span>
+  </header>
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <>
+      <div class="goal-cards">
+        {data.progress.map((p) => {
+          const g = goalFor(p, companyGoals);
+          const pct = Math.min(100, p.pct);
+          return (
+            <section class="card goal-card" aria-label={p.label}>
+              <span class="mono lbl">{p.label}</span>
+              <div class="nums"><b>{p.current}</b><span>/ {p.target}</span></div>
+              <div class="meter" role="img" aria-label={`${p.pct}% of target`}><i class:list={{ hi: pct >= 60 }} style={`width:${pct}%`}></i></div>
+              <div class="row"><b>{p.pct}%</b><span class="muted">{g?.owner ?? 'Everyone'}</span></div>
+              <p>{pace(p, data!.daysLeft)}</p>
+            </section>
+          );
+        })}
+      </div>
+
+      <div class="l-row">
+        <section class="card l-col-2" style="display:block" aria-labelledby="gdh">
+          <h2 id="gdh" style="font-size:22px;margin-bottom:8px">How each goal gets there</h2>
+          {companyGoals.map((g) => (
+            <article class="gd">
+              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                <h3>{g.area}</h3>
+                <span class="pill">{g.owner.toUpperCase()}</span>
+              </div>
+              <p class="muted" style="margin:0;font-size:15px">{g.goal}</p>
+              <dl>
+                {g.milestones && <><dt>MILESTONES</dt><dd>{g.milestones}</dd></>}
+                {g.revenue && <><dt>REVENUE</dt><dd>{g.revenue}</dd></>}
+                {g.notes && <><dt>NOTES</dt><dd class="muted">{g.notes}</dd></>}
+              </dl>
+            </article>
+          ))}
+        </section>
+
+        <div class="l-col-1">
+          {revenueLines.length > 0 && (
+            <section class="card tight stack-sm" aria-labelledby="rvh">
+              <h2 id="rvh" style="font-size:20px">Monthly revenue</h2>
+              {revenueLines.map((r) => (
+                <div class="rev-row">
+                  <div>
+                    <span style="font-weight:600">{r.name}</span>
+                    <span class="note">{r.detail}</span>
+                    {r.note && <span class="note">{r.note}</span>}
+                  </div>
+                </div>
+              ))}
+              {summary && (
+                <div class="rev-total">
+                  <span style="font-weight:800">Total</span>
+                  <span style="font-size:15px">{summary.detail}</span>
+                </div>
+              )}
+              {summary?.note && <div class="callout"><strong>{summary.note}</strong></div>}
+            </section>
+          )}
+
+          {data.collegePlan.length > 0 && (
+            <section class="card tight stack-sm" aria-labelledby="cph">
+              <h2 id="cph" style="font-size:20px">{data.collegePlanTitle.replace(/\s*\(.*\)\s*$/, '') || 'College plan'}</h2>
+              {data.collegePlan.map((c) => (
+                <div class="plan-row"><b>{c.phase}</b><span>{c.target}</span></div>
+              ))}
+              {data.collegeCheck && <p class="hand" style="margin:4px 0 0;font-size:18px">Tuesday check: {data.collegeCheck.toLowerCase()}</p>}
+            </section>
+          )}
+        </div>
+      </div>
+
+      {kajolGoals.length > 0 && (
+        <section class="card" aria-labelledby="kgh">
+          <div class="card-head" style="margin-bottom:12px">
+            <h2 id="kgh" style="font-size:22px">Kajol's goals</h2>
+            <span class="mono muted" style="font-size:12px">CO-FOUNDER &amp; CXO</span>
+          </div>
+          <div class="k-grid">
+            {kajolGoals.map((k) => (
+              <article class="k-card">
+                <span class="mono">{k.area}</span>
+                <h3>{k.goal}</h3>
+                {k.milestones && <p>{k.milestones}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </>
+  )}
+</LifeLayout>

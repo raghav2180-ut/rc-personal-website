@@ -1,0 +1,257 @@
+---
+import LifeLayout from '../../layouts/LifeLayout.astro';
+import PersonSwitch from '../../components/life/PersonSwitch.astro';
+import Problem from '../../components/life/Problem.astro';
+import { FY_GOALS, loadWeek, SCORE_AREAS, STATUSES, WEEKLY_CAP } from '../../lib/life/data';
+import { addDays, dayMonth, isIso, isoWeek, monthName, parts, shortDay, todayIST, weekStart } from '../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../lib/life/page';
+
+export const prerender = false;
+
+const { me, person, flash, href, here } = lifeContext(Astro);
+const today = todayIST();
+const thisWeek = weekStart(today);
+const asked = Astro.url.searchParams.get('w');
+const week = isIso(asked) ? weekStart(asked) : thisWeek;
+const isThisWeek = week === thisWeek;
+
+let data: Awaited<ReturnType<typeof loadWeek>> | null = null;
+let problem = '';
+try {
+  data = await loadWeek(person, week);
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const sat = addDays(week, 5);
+const ps = parts(week);
+const pe = parts(sat);
+const range =
+  ps.month === pe.month
+    ? `MON ${ps.day} – SAT ${pe.day} ${monthName(pe.month)} ${pe.year}`
+    : `MON ${ps.day} ${monthName(ps.month)} – SAT ${pe.day} ${monthName(pe.month)} ${pe.year}`;
+const prevWeek = addDays(week, -7);
+const nextWeek = addDays(week, 7);
+const weekLink = (w: string) => href('/life/week', w === thisWeek ? {} : { w });
+const nextStatus = (s: string) => STATUSES[(STATUSES.indexOf(s as (typeof STATUSES)[number]) + 1) % STATUSES.length];
+
+const goals = data?.summary.goals ?? [];
+const capCount = goals.length;
+const openSlots = Math.max(0, WEEKLY_CAP - (data?.nextWeekGoals.length ?? 0));
+const reviewSlots = Math.min(3, openSlots);
+const scoreTag = (i: number) => {
+  const s = data?.lastScores;
+  return s && s.values[i] !== null ? `LAST: ${s.values[i]} · ${dayMonth(s.date).toUpperCase()}` : 'NOT SCORED YET';
+};
+const cellClass = (v: string) => (v === 'Yes' ? 'sq y' : v === 'No' ? 'sq n' : 'sq');
+const word = (v: string) => (v === 'Yes' ? 'yes' : v === 'No' ? 'no' : 'not yet');
+const placeholders = ['e.g. Send the JKLU proposal before mid-Nov talks', 'Goal 2', 'Goal 3', 'Goal 4', 'Goal 5'];
+---
+<LifeLayout title="Week" active="week" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">WEEK {isoWeek(week)} · {range}</span>
+      <h1>{isThisWeek ? 'This week' : week > thisWeek ? 'Next week' : `Week of ${dayMonth(week)}`}</h1>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <PersonSwitch person={person} me={me} path="/life/week" params={isThisWeek ? {} : { w: week }} />
+      <a class="btn-ghost" href={weekLink(prevWeek)} aria-label="Previous week">← {dayMonth(prevWeek)}</a>
+      <a class="btn-ghost" href={weekLink(nextWeek)} aria-label="Next week" aria-disabled={nextWeek > addDays(thisWeek, 7) ? 'true' : undefined}>{dayMonth(nextWeek)} →</a>
+    </div>
+  </header>
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <>
+      <div class="l-row">
+        <section class="card l-col-2" style="display:block" aria-labelledby="wgh" data-busy>
+          <div class="card-head" style="align-items:center">
+            <h2 id="wgh">Weekly goals</h2>
+            <div class="cap">
+              <div aria-hidden="true" style="display:flex;gap:4px">
+                {Array.from({ length: WEEKLY_CAP }, (_, i) => (
+                  <i class:list={{ on: i < capCount && !(capCount >= WEEKLY_CAP && i === WEEKLY_CAP - 1), last: capCount >= WEEKLY_CAP && i === WEEKLY_CAP - 1 }} />
+                ))}
+              </div>
+              <span class:list={['mono', { full: capCount >= WEEKLY_CAP }]}>
+                {capCount} OF {WEEKLY_CAP}{capCount >= WEEKLY_CAP ? ' · AT THE CAP' : ''}
+              </span>
+            </div>
+          </div>
+          <p class="sub">3 to 5 goals a week, each tied to an FY goal. Tap a status to move it on.</p>
+
+          {goals.length === 0 && <p class="empty">No goals for this week yet.</p>}
+
+          {goals.map((g, i) => (
+            <div class="wg" id={`goal-${i + 1}`}>
+              <span class="n">{i + 1}</span>
+              <div class="body">
+                <span class="area">{g.fy || 'No FY goal'}</span>
+                <span class="goal">{g.goal}</span>
+                {g.remarks && <span class="remark">{g.remarks}</span>}
+              </div>
+              <form method="post" action="/api/life/weekly" data-enhance>
+                <input type="hidden" name="row" value={g.row} />
+                <input type="hidden" name="week" value={week} />
+                <input type="hidden" name="person" value={person} />
+                <input type="hidden" name="status" value={nextStatus(g.status)} />
+                <input type="hidden" name="next" value={`${here}#goal-${i + 1}`} />
+                <button type="submit" class="status" data-s={g.status} aria-label={`Status: ${g.status}. Change to ${nextStatus(g.status)}`}>{g.status}</button>
+              </form>
+            </div>
+          ))}
+
+          {capCount < WEEKLY_CAP && (
+            <div class="t3-add">
+              <details>
+                <summary class="btn-dashed" style="display:inline-flex;align-items:center">+ Add a goal ({WEEKLY_CAP - capCount} left)</summary>
+                <form method="post" action="/api/life/weekly" data-enhance class="next-slot" style="margin-top:12px;align-items:flex-end">
+                  <input type="hidden" name="action" value="add" />
+                  <input type="hidden" name="week" value={week} />
+                  <input type="hidden" name="person" value={person} />
+                  <input type="hidden" name="next" value={here} />
+                  <label class="label fy">FY goal
+                    <select class="field" name="fy"><option value="">Pick one</option>{FY_GOALS.map((f) => <option>{f}</option>)}</select>
+                  </label>
+                  <label class="label g">Goal
+                    <input class="field" name="goal" required maxlength="300" />
+                  </label>
+                  <button class="btn" type="submit">Add</button>
+                </form>
+              </details>
+            </div>
+          )}
+        </section>
+
+        <section class="card tight l-col-1 stack-sm" aria-labelledby="dsh">
+          <h2 id="dsh">Day by day</h2>
+          <div class="days">
+            <span></span>
+            {data.summary.days.map((d) => <a class:list={['dh', { today: d.date === today }]} href={href('/life', d.date === today ? {} : { d: d.date })}>{shortDay(d.date).toUpperCase()}</a>)}
+            <span class="muted">Top 3</span>
+            {data.summary.days.map((d) => <span class:list={['t3', { none: !d.top3Total }]}>{d.top3Total ? `${d.top3Done}/${d.top3Total}` : '–'}</span>)}
+            <span class="muted">Vision</span>
+            {data.summary.days.map((d) => <span class={cellClass(d.vision)} role="img" aria-label={`${shortDay(d.date)} vision ${word(d.vision)}`}></span>)}
+            <span class="muted">Walk</span>
+            {data.summary.days.map((d) => <span class={cellClass(d.walk)} role="img" aria-label={`${shortDay(d.date)} walk ${word(d.walk)}`}></span>)}
+            <span class="muted">Deep</span>
+            {data.summary.days.map((d) => <span class={cellClass(d.deep)} role="img" aria-label={`${shortDay(d.date)} deep work ${word(d.deep)}`}></span>)}
+          </div>
+          <div class="legend">
+            <span><i class="sq y"></i>Yes</span>
+            <span><i class="sq n"></i>No</span>
+            <span><i class="sq"></i>Not yet</span>
+          </div>
+        </section>
+      </div>
+
+      {data.trend.length > 0 && (
+        <section class="card stack" aria-labelledby="trend">
+          <div class="card-head">
+            <h2 id="trend" style="font-size:20px">Weekly goals fully done</h2>
+            <span class="mono muted" style="font-size:12px">LAST {data.trend.length} WEEKS WITH GOALS{data.average !== null ? ` · ${data.year} AVERAGE ${data.average}%` : ''}</span>
+          </div>
+          <div class="trend-wrap">
+            <div class="trend bars" style={`--cols:${data.trend.length}`}>
+              {data.trend.map((t) => (
+                <div class="bar">
+                  <span class="mono">{t.pct}%</span>
+                  <i class:list={{ hi: t.pct >= 50 }} style={`height:${Math.max(t.pct * 1.8, 3)}px`} title={`${t.total} goals`}></i>
+                </div>
+              ))}
+            </div>
+            <div class="trend labels" style={`--cols:${data.trend.length}`}>
+              {data.trend.map((t) => <span>{dayMonth(t.week)}</span>)}
+            </div>
+          </div>
+          {data.typicalGoals !== null && (
+            <p class="hand" style="margin:0;font-size:19px">Most weeks had about {data.typicalGoals} goals. Fewer goals, more of them finished.</p>
+          )}
+        </section>
+      )}
+
+      <section class="card review stack" aria-labelledby="rvh" id="review" data-busy>
+        <div class="card-head">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span class="eyebrow" style="color:var(--color-stamp)">SATURDAY {dayMonth(sat).toUpperCase()} · 4:00–5:00</span>
+            <h2 id="rvh">Saturday review</h2>
+          </div>
+          <span class="muted" style="font-size:14px">About 30 minutes</span>
+        </div>
+
+        <form method="post" action="/api/life/review" data-enhance class="stack">
+          <input type="hidden" name="week" value={week} />
+          <input type="hidden" name="person" value={person} />
+          <input type="hidden" name="next" value={`${here}#review`} />
+
+          <div class="stack-sm">
+            <h3><span class="mono">1</span>Update the numbers</h3>
+            <div class="grid-150">
+              {data.progress.map((p) => (
+                <label class="numbox">{p.label}
+                  <input type="hidden" name="numberRow" value={p.row} />
+                  <input type="number" step="any" name={`number-${p.row}`} value={p.current} />
+                  <small class="mono muted" style="font-weight:400;font-size:11px">TARGET {p.target}</small>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="stack-sm">
+            <h3><span class="mono">2</span>Life scores, 1 to 10</h3>
+            <div class="grid-150">
+              {SCORE_AREAS.map((area, i) => (
+                <label class="label scorebox" style="font-size:14px">{area}
+                  <input type="number" min="1" max="10" name={`score-${i}`} value={data!.lastScores?.values[i] ?? ''} />
+                  <small>{scoreTag(i)}</small>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="stack-sm">
+            <h3><span class="mono">3</span>What slipped, and why?</h3>
+            <textarea class="field" name="slipped" rows="3" aria-label="What slipped, and why?" placeholder="The goal that didn't happen and what got in the way"></textarea>
+          </div>
+
+          <div class="stack-sm">
+            <h3><span class="mono">4</span>Next week's goals ({dayMonth(data.nextWeek)} – {dayMonth(addDays(data.nextWeek, 5))})</h3>
+            {data.nextWeekGoals.length > 0 && (
+              <p class="muted" style="margin:0;font-size:14px">Already set: {data.nextWeekGoals.map((g) => g.goal).join(' · ')}</p>
+            )}
+            {Array.from({ length: openSlots }, (_, i) => (
+              <div class="next-slot" hidden={i >= reviewSlots} data-slot>
+                <label class="label fy">FY goal
+                  <select class="field" name="fy"><option value="">Pick one</option>{FY_GOALS.map((f) => <option>{f}</option>)}</select>
+                </label>
+                <label class="label g">Goal {data!.nextWeekGoals.length + i + 1}
+                  <input class="field" type="text" name="goal" maxlength="300" placeholder={placeholders[i]} />
+                </label>
+              </div>
+            ))}
+            {openSlots > reviewSlots && (
+              <button type="button" class="btn-dashed" style="align-self:flex-start" data-more-slots>+ Add goal (up to {WEEKLY_CAP})</button>
+            )}
+            {openSlots === 0 && <p class="muted" style="margin:0;font-size:14px">Next week is already at the cap of {WEEKLY_CAP}.</p>}
+          </div>
+
+          <div class="review-foot">
+            <span class="muted" style="font-size:14px">Saves to Goals, Scores and Weekly in one go.</span>
+            <button type="submit" class="btn">Finish review</button>
+          </div>
+        </form>
+      </section>
+    </>
+  )}
+</LifeLayout>
+
+<script>
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-more-slots]');
+    if (!btn) return;
+    const hidden = btn.parentElement?.querySelector<HTMLElement>('[data-slot][hidden]');
+    if (hidden) hidden.hidden = false;
+    if (!btn.parentElement?.querySelector('[data-slot][hidden]')) (btn as HTMLElement).hidden = true;
+  });
+</script>

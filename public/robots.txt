@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /life
+Disallow: /api/
 
 Sitemap: https://chopraraghav.com/sitemap-index.xml

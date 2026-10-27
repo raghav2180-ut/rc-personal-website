@@ -1,0 +1,62 @@
+---
+import { DISPLACED, type CheckIn } from '../../lib/life/data';
+
+interface Props {
+  checkin: CheckIn | null;
+  date: string;
+  person: string;
+  next: string;
+  phone?: boolean;
+}
+const { checkin, date, person, next, phone = false } = Astro.props;
+
+const habits = [
+  { name: 'vision', label: 'Morning vision', value: checkin?.vision ?? '' },
+  { name: 'walk', label: 'Walk', value: checkin?.walk ?? '' },
+  { name: 'deep', label: 'Deep work 9:30–11', value: checkin?.deep ?? '' },
+  { name: 'night', label: 'Night visualisation', value: checkin?.night ?? '' },
+];
+const formId = `checkin-${person}`;
+---
+<form id={formId} method="post" action="/api/life/checkin" data-enhance class={phone ? 'stack-sm' : 'stack'}>
+  <input type="hidden" name="date" value={date} />
+  <input type="hidden" name="person" value={person} />
+  <input type="hidden" name="next" value={next} />
+
+  <div class="habits" role="group" aria-label="Habits">
+    {habits.map((h) => (
+      <fieldset class="habit">
+        <legend>{h.label}</legend>
+        <div class="yn">
+          <label class="choice"><input type="radio" name={h.name} value="Yes" checked={h.value === 'Yes'} /><span class="yes">Yes</span></label>
+          <label class="choice"><input type="radio" name={h.name} value="No" checked={h.value === 'No'} /><span class="no">No</span></label>
+        </div>
+      </fieldset>
+    ))}
+  </div>
+
+  <fieldset class="chips">
+    <legend>What pushed your plan aside?</legend>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;width:100%">
+      {DISPLACED.map((d) => (
+        <label class="choice chip"><input type="radio" name="displaced" value={d} checked={checkin?.displaced === d} /><span class="chip-on">{d}</span></label>
+      ))}
+    </div>
+  </fieldset>
+
+  <div class="ci-text">
+    <label class="label">Win
+      <textarea class="field" name="win" rows={phone ? 2 : 3} maxlength="2000" placeholder="One thing that went well today">{checkin?.win ?? ''}</textarea>
+    </label>
+    <label class="label">Worry
+      <textarea class="field" name="worry" rows={phone ? 2 : 3} maxlength="2000" placeholder="What's on your mind">{checkin?.worry ?? ''}</textarea>
+    </label>
+  </div>
+
+  {!phone && (
+    <div class="ci-foot">
+      <span class="hand">{checkin ? 'Saved earlier. Saving again updates the same row.' : 'Saves straight to the CheckIns tab.'}</span>
+      <button type="submit" class="btn">Save check-in</button>
+    </div>
+  )}
+</form>

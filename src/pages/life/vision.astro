@@ -1,0 +1,119 @@
+---
+import LifeLayout from '../../layouts/LifeLayout.astro';
+import PersonSwitch from '../../components/life/PersonSwitch.astro';
+import Problem from '../../components/life/Problem.astro';
+import { loadVision, SCORE_AREAS } from '../../lib/life/data';
+import { addDays, dayMonth, todayIST, weekday } from '../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../lib/life/page';
+
+export const prerender = false;
+
+const { me, person, flash, href, here } = lifeContext(Astro);
+const today = todayIST();
+
+let data: Awaited<ReturnType<typeof loadVision>> | null = null;
+let problem = '';
+try {
+  data = await loadVision(person, today);
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+// Next Saturday review, for the scores label.
+const daysToSat = (6 - weekday(today) + 7) % 7;
+const nextSat = addDays(today, daysToSat);
+const streakClass = (s: { sunday: boolean; value: string }) => (s.sunday ? 's' : s.value === 'Yes' ? 'y' : s.value === 'No' ? 'n' : '');
+const streakWord = (s: { sunday: boolean; value: string; hasCheckIn: boolean }) =>
+  s.sunday ? 'Sunday' : s.value === 'Yes' ? 'read' : s.value === 'No' ? 'missed' : 'no check-in';
+---
+<LifeLayout title="Vision 2029" active="vision" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">OCTOBER 2029 · READ IT EVERY MORNING</span>
+      <h1>Vision 2029</h1>
+    </div>
+    <PersonSwitch person={person} me={me} path="/life/vision" />
+  </header>
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <div class="l-row">
+      <article class="card vision-text" aria-label="Vision">
+        {data.text.map((p) => <p>{p}</p>)}
+        <p class="q">{data.question}</p>
+      </article>
+
+      <aside class="l-col-1" style="flex:2 1 340px">
+        {data.board.length > 0 && (
+          <section class="card tight" aria-labelledby="sbh" data-busy>
+            <div class="card-head" style="margin-bottom:6px">
+              <h2 id="sbh" style="font-size:20px">Today → 2029</h2>
+              <span class="mono muted" style="font-size:11px">FROM THE SHEET</span>
+            </div>
+            {data.board.map((b) => (
+              <div class="board-row">
+                <span>{b.label}</span>
+                {b.now ? (
+                  <span class="now">{b.now}</span>
+                ) : (
+                  <details class="add-now">
+                    <summary>ADD</summary>
+                    <form method="post" action="/api/life/vision" data-enhance>
+                      <input type="hidden" name="row" value={b.row} />
+                      <input type="hidden" name="next" value={here} />
+                      <input name="value" required maxlength="60" aria-label={`${b.label} today`} />
+                      <button type="submit">Save</button>
+                    </form>
+                  </details>
+                )}
+                <span class="arrow" aria-hidden="true">→</span>
+                <span class="tgt">{b.target}</span>
+              </div>
+            ))}
+          </section>
+        )}
+
+        <section class="card tight stack-sm" aria-labelledby="lsh">
+          <div class="card-head">
+            <h2 id="lsh" style="font-size:20px">Life scores</h2>
+            <span class="mono muted" style="font-size:11px">
+              {data.lastScores ? `${dayMonth(data.lastScores.date).toUpperCase()} · ` : ''}NEXT SAT {dayMonth(nextSat).toUpperCase()}
+            </span>
+          </div>
+          {data.lastScores ? (
+            SCORE_AREAS.map((area, i) => {
+              const v = data!.lastScores!.values[i];
+              return (
+                <div class="score-row">
+                  <span>{area}</span>
+                  <div class="meter" role="img" aria-label={`${area} ${v ?? 'not scored'} out of 10`}>
+                    <i class:list={{ low: (v ?? 0) < 6 }} style={`width:${(v ?? 0) * 10}%`}></i>
+                  </div>
+                  <span class="mono">{v ?? '–'}</span>
+                </div>
+              );
+            })
+          ) : (
+            <p class="muted" style="margin:0">No scores yet. Add them in the <a href={href('/life/week') + '#review'}>Saturday review</a>.</p>
+          )}
+        </section>
+
+        <section class="card tight stack-sm" aria-labelledby="mvh">
+          <div class="card-head">
+            <h2 id="mvh" style="font-size:20px">Morning vision</h2>
+            <span class="mono" style="font-size:12px;color:var(--color-stamp);font-weight:600">{data.streakYes} OF {data.streakDays} WORK DAYS</span>
+          </div>
+          <div class="streak">
+            {data.streak.map((s) => (
+              <div>
+                <i class={streakClass(s)} role="img" aria-label={`${dayMonth(s.date)}: ${streakWord(s)}`}></i>
+                <span>{Number(s.date.slice(8))}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </aside>
+    </div>
+  )}
+</LifeLayout>

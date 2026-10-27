@@ -1,0 +1,73 @@
+---
+import LifeLayout from '../../layouts/LifeLayout.astro';
+import CheckInForm from '../../components/life/CheckInForm.astro';
+import Problem from '../../components/life/Problem.astro';
+import { loadToday } from '../../lib/life/data';
+import { dayMonth, dayName, isIso, timeIST, todayIST } from '../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../lib/life/page';
+
+export const prerender = false;
+
+const { me, person, flash, href, here } = lifeContext(Astro);
+const today = todayIST();
+const asked = Astro.url.searchParams.get('d');
+const date = isIso(asked) && asked <= today ? asked : today;
+
+let data: Awaited<ReturnType<typeof loadToday>> | null = null;
+let problem = '';
+try {
+  data = await loadToday(person, date);
+} catch (err) {
+  problem = errorMessage(err);
+}
+const stamp = `${dayName(date).slice(0, 3)} ${dayMonth(date)}${date === today ? ` · ${timeIST()}` : ''}`.toUpperCase();
+const formId = `checkin-${person}`;
+---
+<LifeLayout title="Check-in" name={me} flash={flash} bare>
+  <div class="phone" data-phone>
+    <header class="phone-head">
+      <div>
+        <span class="mono">{stamp}{person !== me ? ` · ${person.toUpperCase()}` : ''}</span>
+        <b>{date === today ? "Tonight's check-in" : 'Check-in'}</b>
+      </div>
+      <a href={href('/life', date === today ? {} : { d: date })}>Full view</a>
+    </header>
+
+    <div class="phone-body">
+      {problem && <Problem message={problem} />}
+      {data && (
+        <>
+          <section class="card" aria-labelledby="pt3">
+            <div class="card-head">
+              <h2 id="pt3" style="font-size:16px">Top 3</h2>
+              <span class="mono muted" style="font-size:11px">{data.mainCount ? `${data.doneCount} OF ${data.mainCount} DONE` : 'NOT SET'}</span>
+            </div>
+            {data.items.map((item) => {
+              const done = item.done === 'Yes';
+              return (
+                <form method="post" action="/api/life/top3" data-enhance class:list={['mini-t3', { done }]}>
+                  <input type="hidden" name="row" value={item.row} />
+                  <input type="hidden" name="date" value={date} />
+                  <input type="hidden" name="person" value={person} />
+                  <input type="hidden" name="done" value={done ? 'No' : 'Yes'} />
+                  <input type="hidden" name="next" value={here} />
+                  <button type="submit" class:list={['t3-box', { done, part: item.done === 'Partial' }]} aria-pressed={done ? 'true' : 'false'} aria-label={done ? `Mark "${item.task}" not done` : `Mark "${item.task}" done`}>
+                    {done && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+                  </button>
+                  <span class="txt">{item.task}</span>
+                </form>
+              );
+            })}
+          </section>
+          <CheckInForm checkin={data.checkin} date={date} person={person} next={here} phone />
+        </>
+      )}
+    </div>
+
+    {data && (
+      <div class="phone-save">
+        <button type="submit" form={formId} class="btn">Save check-in</button>
+      </div>
+    )}
+  </div>
+</LifeLayout>
