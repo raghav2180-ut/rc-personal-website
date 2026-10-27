@@ -1,0 +1,101 @@
+---
+import LifeLayout from '../../layouts/LifeLayout.astro';
+import Top3Card from '../../components/life/Top3Card.astro';
+import CheckInForm from '../../components/life/CheckInForm.astro';
+import PersonSwitch from '../../components/life/PersonSwitch.astro';
+import Problem from '../../components/life/Problem.astro';
+import { loadToday } from '../../lib/life/data';
+import { addDays, dayMonth, isIso, longDate, todayIST, weekday } from '../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../lib/life/page';
+import { env } from '../../lib/life/env';
+
+export const prerender = false;
+
+const { me, person, flash, href, here } = lifeContext(Astro);
+const today = todayIST();
+const asked = Astro.url.searchParams.get('d');
+const date = isIso(asked) && asked <= today ? asked : today;
+const isToday = date === today;
+
+let data: Awaited<ReturnType<typeof loadToday>> | null = null;
+let problem = '';
+try {
+  data = await loadToday(person, date);
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const wd = weekday(date);
+const eyebrow = wd === 0
+  ? `${longDate(date)} · REST DAY`
+  : `${longDate(date)} · WEEK OF ${dayMonth(addDays(date, 1 - wd))} · DAY ${wd} OF 6`;
+const dayLink = (d: string) => href('/life', d === today ? {} : { d });
+const summary = data?.summary;
+---
+<LifeLayout title={isToday ? 'Today' : longDate(date)} active="today" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">{eyebrow}</span>
+      <h1>{isToday ? 'Today' : longDate(date).split(' ').slice(0, 1)[0]}</h1>
+      <span class="mono" style="font-size:12px">
+        <a href={dayLink(addDays(date, -1))}>← {dayMonth(addDays(date, -1))}</a>
+        {!isToday && <> · <a href={dayLink(addDays(date, 1))}>{dayMonth(addDays(date, 1))} →</a> · <a href={dayLink(today)}>Today</a></>}
+      </span>
+    </div>
+    <PersonSwitch person={person} me={me} path="/life" params={isToday ? {} : { d: date }} />
+  </header>
+
+  {problem && <Problem message={problem} />}
+
+  {data && summary && (
+    <div class="l-row">
+      <div class="l-col-2">
+        <Top3Card items={data.items} date={date} person={person} next={here} doneCount={data.doneCount} mainCount={data.mainCount} />
+
+        <section class="card stack" aria-labelledby="cih" data-busy>
+          <div class="card-head">
+            <h2 id="cih">{isToday ? "Tonight's check-in" : 'Check-in'}</h2>
+            <span class="mono muted" style="font-size:13px">
+              {data.checkin ? 'SAVED' : 'ABOUT A MINUTE'} · <a href={href('/life/checkin', isToday ? {} : { d: date })}>Phone view</a>
+            </span>
+          </div>
+          <CheckInForm checkin={data.checkin} date={date} person={person} next={here} />
+        </section>
+      </div>
+
+      <aside class="l-col-1">
+        <section class="card tight ink deep stack-sm" aria-labelledby="dwh">
+          <span class="mono">DEEP WORK · 9:30–11:00</span>
+          <h2 id="dwh">{data.focus ? data.focus.task : data.mainCount ? 'Top 3 all done. Pick the next big thing.' : 'Set your Top 3 first.'}</h2>
+          <p>Phone off.{data.focus ? ` Top 3 #${data.focus.n}${data.focus.fy ? ` · ${data.focus.fy}` : ''}` : ''}</p>
+        </section>
+
+        <section class="card tight stack" aria-labelledby="wkh">
+          <div class="card-head">
+            <h2 id="wkh">This week</h2>
+            <a href={href('/life/week')} style="font-size:14px">Open week</a>
+          </div>
+          <div class="stat-grid">
+            <div class="stat"><b>{summary.goalsDone}<small>/{summary.goals.length}</small></b><span>Weekly goals done</span></div>
+            <div class="stat"><b>{summary.top3Done}<small>/{summary.top3Total}</small></b><span>Top 3 done</span></div>
+            <div class="stat"><b>{summary.deepDays}<small>/6</small></b><span>Deep-work days</span></div>
+            <div class="stat"><b>{summary.walkDays}<small>/6</small></b><span>Walk days</span></div>
+          </div>
+        </section>
+
+        <section class="card tight stack-sm" aria-labelledby="trh">
+          <div class="card-head">
+            <h2 id="trh">Trello · Today</h2>
+            <a href={env('TRELLO_BOARD_URL') ?? 'https://trello.com/'} target="_blank" rel="noopener" style="font-size:14px">Open board ↗</a>
+          </div>
+          <p class="muted" style="margin:0;font-size:14px">Pick today's Top 3 from the Today column. A live list and your calendar will show here in the next update.</p>
+        </section>
+
+        <section class="card tight question" aria-label="Today's question">
+          <span class="eyebrow">Today's question</span>
+          <p>What is one thing I can do today that the 2029 version of me would do?</p>
+        </section>
+      </aside>
+    </div>
+  )}
+</LifeLayout>

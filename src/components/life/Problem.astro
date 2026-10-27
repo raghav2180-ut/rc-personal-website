@@ -1,0 +1,16 @@
+---
+interface Props {
+  message: string;
+}
+const { message } = Astro.props;
+const missingEnv = /Missing environment variable/.test(message);
+---
+<section class="card problem stack-sm" role="alert">
+  <h2>Couldn't load the sheet</h2>
+  <p style="margin:0"><code>{message}</code></p>
+  {missingEnv ? (
+    <p style="margin:0">Add the missing value in Vercel → Project → Settings → Environment Variables, then redeploy.</p>
+  ) : (
+    <p style="margin:0">Check that the sheet is shared with the service account as Editor, then refresh. If Google is rate-limiting, wait a minute.</p>
+  )}
+</section>

@@ -43,6 +43,18 @@ Node 20 or newer.
 
 Optional: turn on Vercel Web Analytics in the project settings.
 
+## Private Life Tracker (`/life`)
+
+A signed-in section for Raghav and Kajol: Today, Week (with the Saturday review), Goals, Monthly and Vision 2029, plus a phone check-in at `/life/checkin`. It reads from and writes to the **Dream Life 2029 – Tracker** Google Sheet. Public pages stay static; only `/life/*` and `/api/*` run as a Vercel function.
+
+- **Sign-in:** Google, limited to the emails in `ALLOWED_EMAILS`. The session is a signed cookie (30 days).
+- **Data:** a Google Cloud service account with Editor access to the sheet. Each screen makes one read; every write re-checks the row it changes first.
+- **Settings:** see `.env.example`. Put real values in Vercel → Settings → Environment Variables only.
+- **Code:** `src/lib/life/` (auth, sheets client, data shaping, writes), `src/pages/life/`, `src/pages/api/`, `src/styles/life.css`.
+- **Local development without Google:** set `LIFE_MOCK_FILE` to a JSON copy of the sheet (`{"Top3": [[...], ...], ...}`) and run `npm run dev`. Keep that file outside the repo.
+
+Sheet tabs it uses: `Top3`, `CheckIns`, `Weekly`, `Scores` (column I holds "What slipped"), `Goals` (progress numbers in H2:J6), `Monthly`, `Vision` (text in column A; the Today → 2029 scoreboard in C1:E10).
+
 ## Design notes
 
 - Direction "Interview Experience": white paper cards on a cool desk, ballpoint-blue handwritten notes, an orange "Selected" stamp.

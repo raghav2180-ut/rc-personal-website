@@ -1,0 +1,188 @@
+---
+import LifeLayout from '../../layouts/LifeLayout.astro';
+import Problem from '../../components/life/Problem.astro';
+import { loadMonthly, type MonthEntry } from '../../lib/life/data';
+import { addDays, dayMonth, lastDayOfMonth, monthKeyOf, monthLabel, parts, todayIST } from '../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../lib/life/page';
+
+export const prerender = false;
+
+const { me, flash, href, here } = lifeContext(Astro);
+const today = todayIST();
+
+let data: Awaited<ReturnType<typeof loadMonthly>> | null = null;
+let problem = '';
+try {
+  data = await loadMonthly();
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+interface Section { head: string; items: string[] }
+function sectionsOf(text: string): Section[] {
+  const out: Section[] = [];
+  let current: Section = { head: '', items: [] };
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (/:$/.test(line) && !/^\d+[.)]/.test(line) && line.length < 90) {
+      if (current.items.length || current.head) out.push(current);
+      current = { head: line.replace(/:$/, ''), items: [] };
+    } else {
+      current.items.push(line.replace(/^(\d+[.)]|[-•*])\s*/, ''));
+    }
+  }
+  if (current.items.length || current.head) out.push(current);
+  return out;
+}
+const firstLine = (m: MonthEntry) => {
+  const first = sectionsOf(m.movements).find((x) => x.items.length);
+  const item = first ? (first.head ? `${first.head}: ` : '') + first.items[0] : '';
+  return item.length > 150 ? `${item.slice(0, 147).trimEnd()}…` : item;
+};
+const countItems = (s: Section[]) => s.reduce((n, x) => n + x.items.length, 0);
+
+const months = data?.months ?? [];
+const thisMonth = monthKeyOf(today);
+const prevMonth = monthKeyOf(addDays(`${thisMonth}-01`, -1));
+const byKey = new Map(months.map((m) => [m.key, m]));
+// In the first days of a month, the month that just ended is the one to write if it's missing.
+const target = parts(today).day <= 5 && !byKey.has(prevMonth) ? prevMonth : thisMonth;
+const targetEntry = byKey.get(target);
+const progress = data?.progress ?? [];
+const pv = (re: RegExp) => String(progress.find((p) => re.test(p.label))?.current ?? '');
+// The month in progress takes the live numbers from Goals; a finished month keeps what was logged.
+const live = target === thisMonth;
+const val = (logged: string | undefined, re: RegExp) => (live ? pv(re) || logged || '' : logged || pv(re));
+
+const [latest, second, ...earlier] = months;
+const numbersOf = (m: MonthEntry) => [
+  { value: m.revenue ? `₹${m.revenue}L` : '', label: 'Revenue / month' },
+  { value: m.fuel, label: 'SOT F.U.E.L students' },
+  { value: m.ump, label: 'UMP Ultimate active' },
+  { value: m.colleges, label: 'Colleges' },
+  { value: m.tech, label: 'Tech clients' },
+].filter((n) => n.value);
+const span = months.length ? `${months.length} MONTHS · ${monthLabel(months[months.length - 1].key, false)} – ${monthLabel(months[0].key, false)}` : 'MONTHLY LOG';
+---
+<LifeLayout title="Monthly" active="monthly" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">{span}</span>
+      <h1>Monthly log</h1>
+    </div>
+    <a class="btn" href="#write" onclick="document.getElementById('write').open = true">
+      {targetEntry ? 'Update' : 'Write'} {monthLabel(target).split(' ')[0]} · due {dayMonth(lastDayOfMonth(target))}
+    </a>
+  </header>
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <>
+      <details class="card" id="write" data-busy>
+        <summary style="cursor:pointer;font-weight:800;font-size:20px">{targetEntry ? 'Update' : 'Write'} {monthLabel(target)}</summary>
+        <form method="post" action="/api/life/monthly" data-enhance class="write-form">
+          <input type="hidden" name="month" value={target} />
+          <input type="hidden" name="next" value={here} />
+          <label class="label">Key movements
+            <textarea class="field" name="movements" rows="9" required placeholder={'Section heading:\n1. What moved\n2. What moved'}>{targetEntry?.movements ?? ''}</textarea>
+            <small>ONE PER LINE. A LINE ENDING IN ":" STARTS A SECTION.</small>
+          </label>
+          <div class="grid-150">
+            <label class="numbox">Revenue (₹L/month)<input name="revenue" type="number" step="any" value={val(targetEntry?.revenue, /revenue/i)} /></label>
+            <label class="numbox">SOT F.U.E.L students<input name="fuel" type="number" value={val(targetEntry?.fuel, /f\.?u\.?e\.?l/i)} /></label>
+            <label class="numbox">UMP Ultimate active<input name="ump" type="number" value={val(targetEntry?.ump, /ultimate/i)} /></label>
+            <label class="numbox">Colleges<input name="colleges" type="number" value={val(targetEntry?.colleges, /college/i)} /></label>
+            <label class="numbox">Tech clients<input name="tech" type="number" value={val(targetEntry?.tech, /tech/i)} /></label>
+          </div>
+          <label class="label">Notes
+            <input class="field" name="notes" maxlength="2000" value={live || !targetEntry?.notes ? `Numbers as of ${dayMonth(today)} ${parts(today).year}` : targetEntry.notes} />
+          </label>
+          <div class="review-foot">
+            <span class="muted" style="font-size:14px">Saves to the Monthly tab{targetEntry ? ', replacing this month’s row' : ' as a new row'}.</span>
+            <button class="btn" type="submit">Save month</button>
+          </div>
+        </form>
+      </details>
+
+      {latest && (
+        <section class="card stack" aria-labelledby="m-latest">
+          <div class="card-head">
+            <h2 id="m-latest" style="font-size:28px">{monthLabel(latest.key)}</h2>
+            <span class="mono" style="font-size:12px;color:var(--color-stamp);font-weight:600">
+              {latest.key === thisMonth ? 'IN PROGRESS' : 'LATEST'}{latest.notes ? ` · ${latest.notes.toUpperCase()}` : ''}
+            </span>
+          </div>
+          {numbersOf(latest).length > 0 && (
+            <div class="month-nums">{numbersOf(latest).map((n) => <div><b>{n.value}</b><span>{n.label}</span></div>)}</div>
+          )}
+          {sectionsOf(latest.movements).map((s) => (
+            <div class="stack-sm">
+              {s.head && <h3 class="mono" style="font-size:12px;letter-spacing:.06em;color:var(--color-pen-dark);text-transform:uppercase">{s.head}</h3>}
+              <ol class="mv">{s.items.map((it) => <li>{it}</li>)}</ol>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {second && (() => {
+        const secs = sectionsOf(second.movements);
+        const total = countItems(secs);
+        const preview = secs.map((s) => ({ ...s, items: s.items.slice(0, 2) }));
+        return (
+          <section class="card stack" aria-labelledby="m-second">
+            <div class="card-head">
+              <h2 id="m-second">{monthLabel(second.key)}</h2>
+              <span class="mono muted" style="font-size:12px">{numbersOf(second).length ? numbersOf(second).map((n) => `${n.value} ${n.label.split(' ')[0]}`).join(' · ').toUpperCase() : 'NO NUMBERS LOGGED'}</span>
+            </div>
+            <div class="sections">
+              {preview.map((s) => (
+                <div>
+                  {s.head && <h3>{s.head}</h3>}
+                  <ul>{s.items.map((it) => <li>{it}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+            {total > countItems(preview) && (
+              <details>
+                <summary class="link-btn" style="display:inline-flex;align-items:center">Show all {total} entries</summary>
+                <div class="sections" style="margin-top:12px">
+                  {secs.map((s) => (
+                    <div>
+                      {s.head && <h3>{s.head}</h3>}
+                      <ul>{s.items.map((it) => <li>{it}</li>)}</ul>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </section>
+        );
+      })()}
+
+      {earlier.length > 0 && (
+        <section class="card" aria-labelledby="earlier" style="padding:22px 30px">
+          <h2 id="earlier" style="font-size:20px;margin-bottom:6px">Earlier months</h2>
+          {earlier.map((m) => (
+            <details class="earlier">
+              <summary>
+                <span class="m">{monthLabel(m.key, false)}</span>
+                <span class="line">{firstLine(m)}</span>
+                <span class="open">Open</span>
+              </summary>
+              <div class="full sections">
+                {sectionsOf(m.movements).map((s) => (
+                  <div>
+                    {s.head && <h3>{s.head}</h3>}
+                    <ul>{s.items.map((it) => <li>{it}</li>)}</ul>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ))}
+        </section>
+      )}
+    </>
+  )}
+</LifeLayout>

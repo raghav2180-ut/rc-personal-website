@@ -1,0 +1,20 @@
+---
+import { PEOPLE } from '../../lib/life/env';
+
+interface Props {
+  person: string;
+  me: string;
+  path: string;
+  params?: Record<string, string>;
+}
+const { person, me, path, params = {} } = Astro.props;
+const link = (p: string) => {
+  const q = new URLSearchParams(params);
+  if (p !== me) q.set('p', p);
+  const s = q.toString();
+  return s ? `${path}?${s}` : path;
+};
+---
+<div class="switch" role="group" aria-label="Whose tracker">
+  {PEOPLE.map((p) => <a href={link(p)} aria-current={p === person ? 'true' : 'false'}>{p}</a>)}
+</div>
