@@ -27,8 +27,43 @@ export interface SheetsClient {
 const SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
 let cachedToken: { token: string; exp: number } | null = null;
 
+/**
+ * Read GOOGLE_SERVICE_ACCOUNT_JSON, accepting the usual ways it gets pasted
+ * (raw JSON, JSON wrapped in quotes, or base64), and say exactly what's wrong
+ * if it isn't a service-account key.
+ */
+function serviceAccount(): { client_email: string; private_key: string } {
+  const raw = requireEnv('GOOGLE_SERVICE_ACCOUNT_JSON').trim();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+    if (typeof parsed === 'string') parsed = JSON.parse(parsed); // pasted with extra quotes
+  } catch {
+    try {
+      parsed = JSON.parse(atob(raw)); // pasted as base64
+    } catch {
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON. Paste the whole key file, from { to }.');
+    }
+  }
+  const sa = (parsed ?? {}) as Record<string, unknown>;
+  if ('web' in sa || 'installed' in sa) {
+    throw new Error(
+      'GOOGLE_SERVICE_ACCOUNT_JSON holds the OAuth client file. Use the service account key instead: IAM & Admin → Service accounts → life-tracker → Keys → Add key → JSON.',
+    );
+  }
+  if (typeof sa.private_key !== 'string' || typeof sa.client_email !== 'string') {
+    throw new Error(
+      'GOOGLE_SERVICE_ACCOUNT_JSON has no private_key or client_email. Paste the service account key file (it has "type": "service_account").',
+    );
+  }
+  return { client_email: sa.client_email, private_key: sa.private_key };
+}
+
 function pemToPkcs8(pem: string): ArrayBuffer {
-  const body = pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+  const body = pem
+    .replace(/\\n/g, '\n') // keys pasted with literal \n
+    .replace(/-----[^-]+-----/g, '')
+    .replace(/\s+/g, '');
   const bin = atob(body);
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -39,7 +74,7 @@ async function accessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedToken.exp - 60 > now) return cachedToken.token;
 
-  const sa = JSON.parse(requireEnv('GOOGLE_SERVICE_ACCOUNT_JSON')) as { client_email: string; private_key: string };
+  const sa = serviceAccount();
   const enc = new TextEncoder();
   const header = b64url(enc.encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
   const claims = b64url(
