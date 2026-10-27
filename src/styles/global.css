@@ -7,7 +7,7 @@
 /*
   Direction C: "Interview Experience".
   The site is styled like an UnsaidTalks interview-experience post:
-  white paper cards on a cool desk, ballpoint-blue notes, an orange "Selected" stamp.
+  white paper cards on a cool desk, ballpoint-blue notes, an orange "Selected" stamp in the UnsaidTalks logo colour.
 */
 @theme {
   --color-desk: #F3F5F9;      /* page ground */
@@ -17,8 +17,38 @@
   --color-rule: #D6DDE8;      /* borders */
   --color-pen: #2347B8;       /* ballpoint blue: links, notes */
   --color-pen-dark: #16307F;
-  --color-stamp: #C25609;     /* orange stamp (4.6:1 on paper) */
-  --color-stamp-soft: #F0A35E;/* orange on ink panels */
+  --color-stamp: #B65E10;     /* UnsaidTalks orange, deep enough for text (4.6:1 on paper) */
+  --color-stamp-soft: #EC8A2F;/* UnsaidTalks logo orange, on ink panels */
+
+  /*
+    Orange and amber are remapped to the UnsaidTalks logo palette, so every
+    orange-* / amber-* utility on the site uses the brand colour.
+    500 is the logo's squares (#EC8A2F); amber-600 is the logo's arrow (#DC8A1C).
+    600 and darker are safe for text on white.
+  */
+  --color-orange-50: #FEF7EE;
+  --color-orange-100: #FDECD7;
+  --color-orange-200: #FAD6AD;
+  --color-orange-300: #F5B979;
+  --color-orange-400: #F0A04E;
+  --color-orange-500: #EC8A2F;
+  --color-orange-600: #B65E10;
+  --color-orange-700: #9A4F0E;
+  --color-orange-800: #7C3F0D;
+  --color-orange-900: #63340E;
+  --color-orange-950: #3A1C06;
+
+  --color-amber-50: #FEF8EC;
+  --color-amber-100: #FDEED3;
+  --color-amber-200: #FADCA6;
+  --color-amber-300: #F6C46F;
+  --color-amber-400: #F0AC44;
+  --color-amber-500: #E8992B;
+  --color-amber-600: #DC8A1C;
+  --color-amber-700: #B06A12;
+  --color-amber-800: #8A5212;
+  --color-amber-900: #6E4212;
+  --color-amber-950: #3D2307;
 
   --font-display: "Bricolage Grotesque Variable", "Arial Narrow", system-ui, sans-serif;
   --font-body: "Literata Variable", Georgia, "Times New Roman", serif;
@@ -60,10 +90,10 @@
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(234, 88, 12, 0.25);
+    box-shadow: 0 0 15px rgba(236, 138, 47, 0.25);
   }
   50% {
-    box-shadow: 0 0 25px rgba(234, 88, 12, 0.55);
+    box-shadow: 0 0 25px rgba(236, 138, 47, 0.55);
   }
 }
 
@@ -81,15 +111,15 @@
 @keyframes pulseRadar {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);
+    box-shadow: 0 0 0 0 rgba(236, 138, 47, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(234, 88, 12, 0);
+    box-shadow: 0 0 0 8px rgba(236, 138, 47, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);
+    box-shadow: 0 0 0 0 rgba(236, 138, 47, 0);
   }
 }
 
@@ -130,7 +160,7 @@
   height: 2px;
   bottom: -3px;
   left: 0;
-  background: linear-gradient(90deg, #ea580c, #f59e0b);
+  background: linear-gradient(90deg, #EC8A2F, #DC8A1C);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 9999px;
 }
@@ -143,7 +173,7 @@
 }
 .card-hover-lift:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 32px -6px rgba(23, 32, 51, 0.12), 0 8px 12px -6px rgba(234, 88, 12, 0.1);
+  box-shadow: 0 16px 32px -6px rgba(23, 32, 51, 0.12), 0 8px 12px -6px rgba(236, 138, 47, 0.1);
 }
 
 /* Custom sleek scrollbar */
@@ -159,7 +189,7 @@
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
+  background: #EC8A2F;
 }
 
 /* Long-form text inside writing posts */
@@ -172,3 +202,6 @@
 .prose-post strong { font-weight: 600; }
 .prose-post blockquote { border-left: 3px solid var(--color-rule); padding-left: 1em; color: var(--color-muted); margin: 0 0 1.1em; }
 
+
+/* Collapsible rounds: hide the default disclosure triangle (Safari). */
+details.round > summary::-webkit-details-marker { display: none; }
