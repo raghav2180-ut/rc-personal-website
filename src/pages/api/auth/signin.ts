@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { callbackUrl, randomToken, safeNext, STATE_COOKIE } from '../../../lib/life/auth';
+import { callbackUrl, publicOrigin, randomToken, safeNext, STATE_COOKIE } from '../../../lib/life/auth';
 import { requireEnv } from '../../../lib/life/env';
 
 export const prerender = false;
@@ -11,13 +11,13 @@ export const GET: APIRoute = ({ url, cookies, redirect }) => {
     path: '/api/auth',
     httpOnly: true,
     sameSite: 'lax',
-    secure: url.protocol === 'https:',
+    secure: publicOrigin(url).startsWith('https:'),
     maxAge: 600,
   });
 
   const params = new URLSearchParams({
     client_id: requireEnv('GOOGLE_CLIENT_ID'),
-    redirect_uri: callbackUrl(url.origin),
+    redirect_uri: callbackUrl(url),
     response_type: 'code',
     scope: 'openid email profile',
     state,

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { b64urlDecode, callbackUrl, safeNext, startSession, STATE_COOKIE } from '../../../../lib/life/auth';
+import { b64urlDecode, callbackUrl, publicOrigin, safeNext, startSession, STATE_COOKIE } from '../../../../lib/life/auth';
 import { allowedEmails, requireEnv } from '../../../../lib/life/env';
 
 export const prerender = false;
@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
       code,
       client_id: requireEnv('GOOGLE_CLIENT_ID'),
       client_secret: requireEnv('GOOGLE_CLIENT_SECRET'),
-      redirect_uri: callbackUrl(url.origin),
+      redirect_uri: callbackUrl(url),
       grant_type: 'authorization_code',
     }),
   });
@@ -54,6 +54,6 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   const email = claims.email.toLowerCase();
   if (!allowedEmails().includes(email)) return redirect(fail('not-allowed'), 302);
 
-  await startSession(cookies, email, claims.name ?? email, url.protocol === 'https:');
+  await startSession(cookies, email, claims.name ?? email, publicOrigin(url).startsWith('https:'));
   return redirect(safeNext(saved.next), 302);
 };

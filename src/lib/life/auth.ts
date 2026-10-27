@@ -89,8 +89,18 @@ export function randomToken(bytes = 24): string {
   return b64url(crypto.getRandomValues(new Uint8Array(bytes)));
 }
 
-export function callbackUrl(origin: string): string {
-  return `${origin}/api/auth/callback/google`;
+/**
+ * The public address of the site for this request. Falls back to the main
+ * domain if the server could not work out the real host.
+ */
+export function publicOrigin(url: URL): string {
+  const local = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+  if (local && import.meta.env.PROD) return 'https://chopraraghav.com';
+  return url.origin;
+}
+
+export function callbackUrl(url: URL): string {
+  return `${publicOrigin(url)}/api/auth/callback/google`;
 }
 
 /** Only allow redirects back into the tracker. */
