@@ -3,10 +3,11 @@ import '../styles/global.css';
 import '../styles/life.css';
 import type { Flash } from '../lib/life/page';
 import { env } from '../lib/life/env';
+import { canSeeMigraine } from '../lib/life/migraine';
 
 interface Props {
   title: string;
-  active?: 'today' | 'week' | 'goals' | 'monthly' | 'vision';
+  active?: 'today' | 'week' | 'goals' | 'monthly' | 'vision' | 'migraine';
   name?: string;
   flash?: Flash | null;
   href?: (path: string) => string;
@@ -14,8 +15,11 @@ interface Props {
 }
 
 const { title, active, name, flash, href = (p: string) => p, bare = false } = Astro.props;
-const sheetId = env('SHEET_ID');
+const inMigraine = active === 'migraine';
+const sheetId = env(inMigraine ? 'MIGRAINE_SHEET_ID' : 'SHEET_ID');
 const sheetUrl = sheetId ? `https://docs.google.com/spreadsheets/d/${sheetId}/edit` : 'https://docs.google.com/spreadsheets/';
+const sheetName = inMigraine ? 'Migraine Diary' : 'Dream Life 2029 – Tracker';
+const suite = inMigraine ? 'Migraine Diary' : 'Dream Life 2029';
 const yearsLeft = Math.max(0, 2029 - new Date().getFullYear());
 
 const links = [
@@ -24,6 +28,7 @@ const links = [
   { key: 'goals', n: '03', label: 'Goals', path: '/life/goals' },
   { key: 'monthly', n: '04', label: 'Monthly', path: '/life/monthly' },
   { key: 'vision', n: '05', label: 'Vision 2029', path: '/life/vision' },
+  ...(canSeeMigraine(Astro.locals.session?.email) ? [{ key: 'migraine', n: '06', label: 'Migraine', path: '/life/migraine' }] : []),
 ];
 ---
 <!doctype html>
@@ -34,7 +39,7 @@ const links = [
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#172033" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>{title} · Dream Life 2029</title>
+    <title>{title} · {suite}</title>
   </head>
   <body class="life">
     {bare ? (
@@ -61,7 +66,7 @@ const links = [
           </div>
           <div class="lnav-foot">
             <span>Signed in as {name}</span>
-            <a class="mono sheet" href={sheetUrl} target="_blank" rel="noopener">Data: Dream Life 2029 – Tracker ↗</a>
+            <a class="mono sheet" href={sheetUrl} target="_blank" rel="noopener">Data: {sheetName} ↗</a>
             <form method="post" action="/api/auth/signout"><button type="submit">Sign out</button></form>
           </div>
         </nav>

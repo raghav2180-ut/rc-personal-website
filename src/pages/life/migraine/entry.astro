@@ -1,0 +1,258 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import '../../../styles/migraine.css';
+import { dayMonth, dayName, isIso, longDate, todayIST } from '../../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+import {
+  DOSES,
+  FACTORS,
+  FEEL,
+  FOOD_TAGS,
+  LOCATIONS,
+  loadDiary,
+  MED_DEFAULT,
+  painBand,
+  QUALITY,
+  RELIEF,
+  SYMPTOMS,
+  WATER,
+  type Day,
+} from '../../../lib/life/migraine';
+
+export const prerender = false;
+
+const { me, flash } = lifeContext(Astro);
+const today = todayIST();
+const asked = Astro.url.searchParams.get('d');
+const date = isIso(asked) && asked <= today ? asked : today;
+const backAsked = Astro.url.searchParams.get('back') ?? '';
+const back = /^\/life\/migraine(\/[a-z]+)?(\?[\w=&-]*)?$/.test(backAsked) ? backAsked : '/life/migraine';
+
+let days: Day[] = [];
+let problem = '';
+try {
+  ({ days } = await loadDiary());
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const existing = days.find((d) => d.date === date && d.headache) ?? null;
+const hasClear = days.some((d) => d.date === date && !d.headache);
+const nowHHMM = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+
+const d: Omit<Day, 'row' | 'date' | 'headache'> = existing ?? {
+  start: date === today ? nowHHMM : '',
+  end: '',
+  ongoing: date === today,
+  pain: null,
+  location: [],
+  feel: [],
+  symptoms: [],
+  medTaken: true,
+  medName: MED_DEFAULT,
+  dose: '½',
+  medTime: '',
+  relief: '',
+  bed: '',
+  wake: '',
+  quality: '',
+  food: '',
+  foodTags: [],
+  water: '',
+  caffeine: null,
+  stress: null,
+  screen: null,
+  factors: [],
+  notes: '',
+};
+const medOther = d.medTaken && d.medName && d.medName !== MED_DEFAULT;
+const stamp = `${dayName(date).slice(0, 3)} ${dayMonth(date)}`.toUpperCase();
+const pains = Array.from({ length: 11 }, (_, i) => i);
+---
+<LifeLayout title={existing ? 'Edit attack' : 'Log an attack'} active="migraine" name={me} flash={flash} bare>
+  <div class="phone" data-phone>
+    <header class="phone-head">
+      <div>
+        <span class="mono">{stamp} · MIGRAINE DIARY</span>
+        <b>{existing ? 'Edit attack' : 'Log an attack'}</b>
+      </div>
+      <a href={back}>Close</a>
+    </header>
+
+    <div class="phone-body">
+      {problem && <Problem message={problem} />}
+      {!problem && (
+        <form id="attack" method="post" action="/api/life/migraine" class="stack-sm">
+          <input type="hidden" name="intent" value="attack" />
+          <input type="hidden" name="date" value={date} />
+          <input type="hidden" name="next" value={back} />
+          {hasClear && <p class="callout" style="margin:0">{longDate(date)} is marked as a clear day. Saving replaces it with this attack.</p>}
+
+          <section class="card" aria-labelledby="s1">
+            <h2 id="s1">The attack</h2>
+            <div class="attack-times stack-sm">
+              <div class="two">
+                <label class="label">Started<input class="field" type="time" name="start" value={d.start} required /></label>
+                <label class="label end-time">Ended<input class="field" type="time" name="end" value={d.end} /></label>
+              </div>
+              <fieldset class="habit">
+                <legend>Still going on?</legend>
+                <div class="yn">
+                  <label class="choice"><input type="radio" name="ongoing" value="yes" checked={d.ongoing} /><span class="yes">Yes</span></label>
+                  <label class="choice"><input type="radio" name="ongoing" value="no" checked={!d.ongoing} /><span class="no">No</span></label>
+                </div>
+              </fieldset>
+            </div>
+
+            <fieldset class="pain-pick">
+              <legend>Worst pain</legend>
+              {pains.map((p) => (
+                <label class="choice" data-pain={painBand(p)}>
+                  <input type="radio" name="pain" value={p} checked={d.pain === p} required={p === 0} aria-label={`Pain ${p}`} />
+                  <span>{p}</span>
+                </label>
+              ))}
+              <div class="pain-scale"><span>0 none</span><span>5 moderate</span><span>10 worst</span></div>
+            </fieldset>
+
+            <fieldset class="group">
+              <legend>Where it hurt</legend>
+              <div class="opts">
+                {LOCATIONS.map((o) => <label class="choice chip"><input type="checkbox" name="location" value={o} checked={d.location.includes(o)} /><span class="chip-on">{o}</span></label>)}
+              </div>
+            </fieldset>
+            <fieldset class="group">
+              <legend>How it felt</legend>
+              <div class="opts">
+                {FEEL.map((o) => <label class="choice chip"><input type="checkbox" name="feel" value={o} checked={d.feel.includes(o)} /><span class="chip-on">{o}</span></label>)}
+              </div>
+            </fieldset>
+            <fieldset class="group">
+              <legend>Other symptoms</legend>
+              <div class="opts">
+                {SYMPTOMS.map((o) => <label class="choice chip"><input type="checkbox" name="symptoms" value={o} checked={d.symptoms.includes(o)} /><span class="chip-on">{o}</span></label>)}
+              </div>
+            </fieldset>
+          </section>
+
+          <section class="card med" aria-labelledby="s2">
+            <h2 id="s2">Medicine</h2>
+            <fieldset class="habit">
+              <legend>Took medicine?</legend>
+              <div class="yn">
+                <label class="choice"><input type="radio" name="medTaken" value="yes" checked={d.medTaken} /><span class="yes">Yes</span></label>
+                <label class="choice"><input type="radio" name="medTaken" value="no" checked={!d.medTaken} /><span class="no">No</span></label>
+              </div>
+            </fieldset>
+            <div class="when-yes">
+              <fieldset class="group medname">
+                <legend>Which</legend>
+                <div class="opts">
+                  <label class="choice chip"><input type="radio" name="medName" value={MED_DEFAULT} checked={!medOther} /><span class="chip-on">{MED_DEFAULT}</span></label>
+                  <label class="choice chip"><input type="radio" name="medName" value="Other" checked={!!medOther} /><span class="chip-on">Other</span></label>
+                </div>
+                <div class="when-other" style="margin-top:10px">
+                  <label class="label">Medicine name<input class="field" type="text" name="medOther" maxlength="80" value={medOther ? d.medName : ''} /></label>
+                </div>
+              </fieldset>
+              <fieldset class="group">
+                <legend>Dose (tablets)</legend>
+                <div class="opts">
+                  {DOSES.map((o) => <label class="choice chip"><input type="radio" name="dose" value={o} checked={d.dose === o} /><span class="chip-on">{o}</span></label>)}
+                </div>
+              </fieldset>
+              <label class="label">Time taken<input class="field" type="time" name="medTime" value={d.medTime} /></label>
+              <fieldset class="group">
+                <legend>Relief after 2 hours</legend>
+                <div class="opts">
+                  {RELIEF.map((o) => <label class="choice chip"><input type="radio" name="relief" value={o} checked={d.relief === o} /><span class="chip-on">{o}</span></label>)}
+                </div>
+                <p class="fine" style="margin-top:8px">Too early to tell? Leave it and come back later.</p>
+              </fieldset>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="s3">
+            <h2 id="s3">Sleep the night before</h2>
+            <div class="two">
+              <label class="label">Went to bed<input class="field" type="time" name="bed" value={d.bed} /></label>
+              <label class="label">Woke up<input class="field" type="time" name="wake" value={d.wake} /></label>
+            </div>
+            <fieldset class="group">
+              <legend>Sleep quality</legend>
+              <div class="opts">
+                {QUALITY.map((o) => <label class="choice chip"><input type="radio" name="quality" value={o} checked={d.quality === o} /><span class="chip-on">{o}</span></label>)}
+              </div>
+            </fieldset>
+          </section>
+
+          <section class="card" aria-labelledby="s4">
+            <h2 id="s4">Food and drink</h2>
+            <label class="label">What you ate (today and last night)
+              <textarea class="field" name="food" rows="3" maxlength="2000" placeholder="e.g. dinner at 10 last night, toast and chai at 9, skipped lunch">{d.food}</textarea>
+            </label>
+            <fieldset class="group">
+              <legend>Anything from this list?</legend>
+              <div class="opts">
+                {FOOD_TAGS.map((o) => <label class="choice chip"><input type="checkbox" name="foodTags" value={o} checked={d.foodTags.includes(o)} /><span class="chip-on">{o}</span></label>)}
+              </div>
+            </fieldset>
+            <fieldset class="group">
+              <legend>Water</legend>
+              <div class="opts">
+                {WATER.map((o) => <label class="choice chip"><input type="radio" name="water" value={o} checked={d.water === o} /><span class="chip-on">{o}</span></label>)}
+              </div>
+            </fieldset>
+            <label class="label">Cups of chai, coffee or cola
+              <input class="field num-in" type="number" name="caffeine" min="0" max="20" step="1" inputmode="numeric" value={d.caffeine ?? ''} />
+            </label>
+          </section>
+
+          <section class="card" aria-labelledby="s5">
+            <h2 id="s5">Your day</h2>
+            <fieldset class="group">
+              <legend>Stress</legend>
+              <div class="opts">
+                {[1, 2, 3, 4, 5].map((o) => <label class="choice chip"><input type="radio" name="stress" value={o} checked={d.stress === o} /><span class="chip-on">{o}</span></label>)}
+              </div>
+              <p class="fine" style="margin-top:8px">1 relaxed · 5 very stressed</p>
+            </fieldset>
+            <label class="label">Screen time (hours)
+              <input class="field num-in" type="number" name="screen" min="0" max="24" step="0.5" inputmode="decimal" value={d.screen ?? ''} />
+            </label>
+            <fieldset class="group">
+              <legend>Anything else</legend>
+              <div class="opts">
+                {FACTORS.map((o) => <label class="choice chip"><input type="checkbox" name="factors" value={o} checked={d.factors.includes(o)} /><span class="chip-on">{o}</span></label>)}
+              </div>
+            </fieldset>
+            <label class="label">Notes
+              <textarea class="field" name="notes" rows="3" maxlength="4000" placeholder="Anything that felt different">{d.notes}</textarea>
+            </label>
+          </section>
+        </form>
+      )}
+
+      {existing && (
+        <details class="danger-zone">
+          <summary>Delete this attack</summary>
+          <form method="post" action="/api/life/migraine">
+            <input type="hidden" name="intent" value="delete" />
+            <input type="hidden" name="date" value={date} />
+            <input type="hidden" name="next" value={back} />
+            <span>This removes the row from the sheet.</span>
+            <button type="submit" class="btn danger">Delete</button>
+          </form>
+        </details>
+      )}
+    </div>
+
+    {!problem && (
+      <div class="phone-save">
+        <a class="btn-ghost" href={back}>Cancel</a>
+        <button type="submit" form="attack" class="btn" style="flex:1">Save attack</button>
+      </div>
+    )}
+  </div>
+</LifeLayout>

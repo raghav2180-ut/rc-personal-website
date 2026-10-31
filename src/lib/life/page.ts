@@ -12,6 +12,10 @@ const SAVED: Record<string, string> = {
   review: 'Review saved: Goals, Scores and next week',
   month: 'Monthly log saved',
   measure: 'Saved',
+  'migraine-attack': 'Attack saved to the diary',
+  'migraine-clear': 'Marked as a clear day',
+  'migraine-deleted': 'Entry deleted',
+  'migraine-profile': 'Details saved',
 };
 
 export interface Flash {
