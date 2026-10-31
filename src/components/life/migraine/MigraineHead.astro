@@ -1,0 +1,23 @@
+---
+interface Props {
+  title: string;
+  eyebrow: string;
+  tab: 'today' | 'calendar' | 'patterns' | 'log';
+}
+const { title, eyebrow, tab } = Astro.props;
+const tabs = [
+  { key: 'today', label: 'Today', path: '/life/migraine' },
+  { key: 'calendar', label: 'Calendar', path: '/life/migraine/calendar' },
+  { key: 'patterns', label: 'Patterns', path: '/life/migraine/patterns' },
+  { key: 'log', label: 'Log', path: '/life/migraine/log' },
+];
+---
+<header class="l-head">
+  <div>
+    <span class="eyebrow">{eyebrow}</span>
+    <h1>{title}</h1>
+  </div>
+  <nav class="switch m-tabs" aria-label="Migraine diary">
+    {tabs.map((t) => <a href={t.path} aria-current={tab === t.key ? 'true' : undefined}>{t.label}</a>)}
+  </nav>
+</header>
