@@ -51,6 +51,9 @@ export async function setTop3Done(input: { row: number; date: string; person: Pe
   if (ci) updates.push({ range: `CheckIns!D${ci.row}`, values: [[doneCount]] });
 
   await s.batchUpdate(updates);
+  // A Top 3 task made from a board card moves that card to Done (or back to Today).
+  const { syncTop3ToBoard } = await import('./board');
+  await syncTop3ToBoard(input.person, input.date, item.n, input.done === 'Yes');
 }
 
 export async function addTop3(input: { date: string; person: Person; task: string; fy: string }) {
@@ -95,6 +98,8 @@ export async function editTop3(input: {
   const ci = parseCheckIns(ciGrid).find((c) => c.date === input.date && c.person === input.person);
   if (ci) updates.push({ range: `CheckIns!D${ci.row}`, values: [[doneCount]] });
   await s.batchUpdate(updates);
+  const { syncTop3ToBoard } = await import('./board');
+  await syncTop3ToBoard(input.person, input.date, item.n, input.done === 'Yes');
 }
 
 // --------------------------------------------------------------- Check-in ---

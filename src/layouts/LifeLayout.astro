@@ -8,14 +8,15 @@ import { canSeeMigraine } from '../lib/life/migraine';
 
 interface Props {
   title: string;
-  active?: 'today' | 'week' | 'goals' | 'monthly' | 'vision' | 'migraine';
+  active?: 'today' | 'week' | 'board' | 'goals' | 'monthly' | 'vision' | 'migraine';
   name?: string;
   flash?: Flash | null;
   href?: (path: string) => string;
   bare?: boolean;
+  wide?: boolean;
 }
 
-const { title, active, name, flash, href = (p: string) => p, bare = false } = Astro.props;
+const { title, active, name, flash, href = (p: string) => p, bare = false, wide = false } = Astro.props;
 const inMigraine = active === 'migraine';
 const sheetId = env(inMigraine ? 'MIGRAINE_SHEET_ID' : 'SHEET_ID');
 const sheetUrl = sheetId ? `https://docs.google.com/spreadsheets/d/${sheetId}/edit` : 'https://docs.google.com/spreadsheets/';
@@ -26,10 +27,11 @@ const yearsLeft = Math.max(0, 2029 - new Date().getFullYear());
 const links = [
   { key: 'today', n: '01', label: 'Today', path: '/life' },
   { key: 'week', n: '02', label: 'Week', path: '/life/week' },
-  { key: 'goals', n: '03', label: 'Goals', path: '/life/goals' },
-  { key: 'monthly', n: '04', label: 'Monthly', path: '/life/monthly' },
-  { key: 'vision', n: '05', label: 'Vision 2029', path: '/life/vision' },
-  ...(canSeeMigraine(Astro.locals.session?.email) ? [{ key: 'migraine', n: '06', label: 'Migraine', path: '/life/migraine' }] : []),
+  { key: 'board', n: '03', label: 'Board', path: '/life/board' },
+  { key: 'goals', n: '04', label: 'Goals', path: '/life/goals' },
+  { key: 'monthly', n: '05', label: 'Monthly', path: '/life/monthly' },
+  { key: 'vision', n: '06', label: 'Vision 2029', path: '/life/vision' },
+  ...(canSeeMigraine(Astro.locals.session?.email) ? [{ key: 'migraine', n: '07', label: 'Migraine', path: '/life/migraine' }] : []),
 ];
 ---
 <!doctype html>
@@ -47,7 +49,7 @@ const links = [
     {bare ? (
       <slot />
     ) : (
-      <div class="l-shell">
+      <div class:list={['l-shell', { wide }]}>
         <nav class="lnav" aria-label="Tracker">
           <input type="checkbox" id="lnav-toggle" class="lnav-toggle sr-only" aria-label="Show menu" />
           <div class="lnav-top">

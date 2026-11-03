@@ -17,10 +17,10 @@ export type Grid = string[][];
 
 export interface SheetsClient {
   batchGet(ranges: string[]): Promise<Grid[]>;
-  /** Write several ranges at once. */
-  batchUpdate(data: { range: string; values: (string | number)[][] }[]): Promise<void>;
+  /** Write several ranges at once. `raw` stores text exactly as given (no date or formula parsing). */
+  batchUpdate(data: { range: string; values: (string | number)[][] }[], opts?: { raw?: boolean }): Promise<void>;
   /** Append rows below the last row of a table. */
-  append(range: string, values: (string | number)[][]): Promise<void>;
+  append(range: string, values: (string | number)[][], opts?: { raw?: boolean }): Promise<void>;
   /** Add a tab if the spreadsheet doesn't have one with this title yet. */
   ensureTab(title: string, header: string[]): Promise<void>;
 }
@@ -138,16 +138,17 @@ const googleClient = (sheetVar: SheetVar): SheetsClient => ({
       (vr.values ?? []).map((row) => row.map((cell) => (cell === null || cell === undefined ? '' : String(cell)))),
     );
   },
-  async batchUpdate(data) {
+  async batchUpdate(data, opts) {
     if (!data.length) return;
     await call(sheetVar, '/values:batchUpdate', {
       method: 'POST',
-      body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data }),
+      body: JSON.stringify({ valueInputOption: opts?.raw ? 'RAW' : 'USER_ENTERED', data }),
     });
   },
-  async append(range, values) {
+  async append(range, values, opts) {
     if (!values.length) return;
-    await call(sheetVar, `/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+    const input = opts?.raw ? 'RAW' : 'USER_ENTERED';
+    await call(sheetVar, `/values/${encodeURIComponent(range)}:append?valueInputOption=${input}&insertDataOption=INSERT_ROWS`, {
       method: 'POST',
       body: JSON.stringify({ values }),
     });

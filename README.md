@@ -53,6 +53,8 @@ A signed-in section for Raghav and Kajol: Today, Week (with the Saturday review)
 - **Code:** `src/lib/life/` (auth, sheets client, data shaping, writes), `src/pages/life/`, `src/pages/api/`, `src/styles/life.css`.
 - **Local development without Google:** set `LIFE_MOCK_FILE` to a JSON copy of the sheet (`{"Top3": [[...], ...], ...}`) and run `npm run dev`. Keep that file outside the repo.
 
+Board: `/life/board` is a Kanban board like Trello (Inbox, Someday, Waiting, This Week, Today, Done, Archive) with labels, dates, checklists, links and comments. Each person has their own board. Cards live in the `Board` tab and comments in `BoardComments`. "Make Top 3" on a Today card adds it to the day's Top 3, and ticking that task done moves the card to Done.
+
 Sheet tabs it uses: `Top3`, `CheckIns`, `Weekly`, `Scores` (column I holds "What slipped"), `Goals` (progress numbers in H2:J6), `Monthly`, `Vision` (text in column A; the Today → 2029 scoreboard in C1:E10).
 
 ## Migraine Diary (`/life/migraine`)

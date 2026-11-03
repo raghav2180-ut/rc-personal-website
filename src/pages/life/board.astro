@@ -1,0 +1,251 @@
+---
+import LifeLayout from '../../layouts/LifeLayout.astro';
+import BoardTile from '../../components/life/BoardTile.astro';
+import CardPanel from '../../components/life/CardPanel.astro';
+import Problem from '../../components/life/Problem.astro';
+import { loadBoard } from '../../lib/life/board';
+import { LABELS, LISTS, type Card } from '../../lib/life/board-model';
+import { dueState, dueThisWeek } from '../../lib/life/board-view';
+import { FY_GOALS } from '../../lib/life/data';
+import { personForEmail } from '../../lib/life/env';
+import { errorMessage, lifeContext } from '../../lib/life/page';
+
+export const prerender = false;
+
+const { session, flash } = lifeContext(Astro);
+// Each person sees only their own board.
+const owner = personForEmail(session.email);
+
+const q = Astro.url.searchParams;
+const filters = {
+  label: q.get('label') ?? '',
+  fy: q.get('fy') ?? '',
+  due: q.get('due') ?? '',
+  text: (q.get('q') ?? '').trim().toLowerCase(),
+};
+const showArchive = q.get('archive') === '1';
+const openId = q.get('card') ?? '';
+
+let data: Awaited<ReturnType<typeof loadBoard>> | null = null;
+let problem = '';
+try {
+  data = await loadBoard(owner);
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+/** Build a board URL keeping the current filters, with changes applied. */
+const boardUrl = (changes: Record<string, string | null>) => {
+  const p = new URLSearchParams();
+  if (filters.label) p.set('label', filters.label);
+  if (filters.fy) p.set('fy', filters.fy);
+  if (filters.due) p.set('due', filters.due);
+  if (filters.text) p.set('q', filters.text);
+  if (showArchive) p.set('archive', '1');
+  for (const [k, v] of Object.entries(changes)) {
+    if (v === null || v === '') p.delete(k);
+    else p.set(k, v);
+  }
+  const s = p.toString();
+  return s ? `/life/board?${s}` : '/life/board';
+};
+
+const matches = (c: Card) => {
+  if (filters.label && !c.labels.includes(filters.label)) return false;
+  if (filters.fy && c.fy !== filters.fy) return false;
+  if (filters.due === 'overdue' && dueState(c) !== 'overdue') return false;
+  if (filters.due === 'week' && !dueThisWeek(c)) return false;
+  if (filters.due === 'none' && c.due) return false;
+  if (filters.text && !`${c.title} ${c.desc} ${c.waiting}`.toLowerCase().includes(filters.text)) return false;
+  return true;
+};
+const filtering = !!(filters.label || filters.fy || filters.due || filters.text);
+
+const cards = data?.cards ?? [];
+const commentCount = new Map<string, number>();
+for (const c of data?.comments ?? []) commentCount.set(c.card, (commentCount.get(c.card) ?? 0) + 1);
+const columns = LISTS.filter((l) => l.key !== 'archive' || showArchive).map((l) => {
+  const inList = cards.filter((c) => c.list === l.key);
+  return { ...l, cards: inList, shown: inList.filter(matches).length };
+});
+const archivedCount = cards.filter((c) => c.list === 'archive').length;
+const openCard = openId ? cards.find((c) => c.id === openId) ?? null : null;
+const here = boardUrl({ card: openCard ? openCard.id : null });
+const boardTitle = `${owner} — Personal Work OS`;
+---
+<LifeLayout title="Board" active="board" name={owner} flash={flash} wide>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">{boardTitle.toUpperCase()} · {cards.filter((c) => c.list !== 'archive' && c.list !== 'done').length} OPEN CARDS</span>
+      <h1>Board</h1>
+    </div>
+    <a class="btn-ghost" href={boardUrl({ archive: showArchive ? null : '1', card: null })}>
+      {showArchive ? 'Hide archive' : `Show archive (${archivedCount})`}
+    </a>
+  </header>
+
+  <form class="bd-filters" method="get" action="/life/board" role="search">
+    {showArchive && <input type="hidden" name="archive" value="1" />}
+    <label class="label">Search<input class="field" name="q" value={filters.text} placeholder="Find a card" /></label>
+    <label class="label">Label
+      <select class="field" name="label"><option value="">All</option>{LABELS.map((l) => <option selected={filters.label === l.name}>{l.name}</option>)}</select>
+    </label>
+    <label class="label">FY goal
+      <select class="field" name="fy"><option value="">All</option>{FY_GOALS.map((g) => <option selected={filters.fy === g}>{g}</option>)}</select>
+    </label>
+    <label class="label">Due
+      <select class="field" name="due">
+        <option value="">Any</option>
+        <option value="overdue" selected={filters.due === 'overdue'}>Overdue</option>
+        <option value="week" selected={filters.due === 'week'}>Due this week</option>
+        <option value="none" selected={filters.due === 'none'}>No due date</option>
+      </select>
+    </label>
+    <button class="btn" type="submit">Filter</button>
+    {filtering && <a class="link-btn" href={boardUrl({ q: null, label: null, fy: null, due: null, card: null })}>Clear</a>}
+  </form>
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <div class="bd-scroll" data-board>
+      <ol class="bd-cols">
+        {columns.map((col) => (
+          <li class="bd-col" data-list={col.key}>
+            <div class="bd-col-head">
+              <h2>{col.emoji} {col.name.toUpperCase()}</h2>
+              <span class="bd-count" data-count>{filtering ? `${col.shown}/${col.cards.length}` : col.cards.length}</span>
+            </div>
+            {col.key === 'today' && col.cards.length > 5 && <p class="bd-warn">{col.cards.length} cards in Today. Your Top 3 works best with 3 to 5.</p>}
+            <ul class="bd-cards" data-drop={col.key}>
+              {col.cards.map((c) => (
+                <BoardTile card={c} comments={commentCount.get(c.id) ?? 0} href={boardUrl({ card: c.id })} hidden={!matches(c)} />
+              ))}
+            </ul>
+            {col.key !== 'archive' && (
+              <details class="bd-add">
+                <summary>+ Add a card</summary>
+                <form method="post" action="/api/life/board" data-enhance>
+                  <input type="hidden" name="action" value="create" />
+                  <input type="hidden" name="list" value={col.key} />
+                  <input type="hidden" name="next" value={boardUrl({ card: null })} />
+                  <textarea class="field" name="title" rows="2" required maxlength="500" placeholder="Enter a title for this card…" data-enter-submit></textarea>
+                  <div class="cp-actions"><button class="btn small" type="submit">Add card</button><button type="button" class="link-btn" data-close-details>Cancel</button></div>
+                </form>
+              </details>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  )}
+
+  {openId && !openCard && data && <Problem message="That card isn't on your board any more." />}
+  {openCard && (
+    <CardPanel card={openCard} comments={(data?.comments ?? []).filter((c) => c.card === openCard.id)} closeHref={boardUrl({ card: null })} here={here} />
+  )}
+</LifeLayout>
+
+<script>
+  // ---- Close helpers (work after the page swaps in fresh content) ----
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-close-details]');
+    const d = btn?.closest('details');
+    if (d) d.open = false;
+  });
+  document.addEventListener('keydown', (e) => {
+    const t = e.target as HTMLElement;
+    // Enter adds the card; Shift+Enter makes a new line.
+    if (e.key === 'Enter' && !e.shiftKey && t.matches('[data-enter-submit]')) {
+      e.preventDefault();
+      (t.closest('form') as HTMLFormElement | null)?.requestSubmit();
+    }
+    if (e.key === 'Escape' && document.querySelector('[data-modal]')) {
+      const close = document.querySelector<HTMLAnchorElement>('[data-close-modal]');
+      if (close) location.href = close.href;
+    }
+  });
+
+  // ---- Drag and drop between and within columns (mouse / trackpad) ----
+  let dragged: HTMLElement | null = null;
+  let fromList = '';
+  let dropped = false;
+  let origin: { parent: Node; next: Node | null } | null = null;
+
+  const listOf = (el: Element | null) => (el?.closest('[data-drop]') as HTMLElement | null);
+  const afterElement = (container: HTMLElement, y: number) => {
+    const tiles = Array.from(container.querySelectorAll<HTMLElement>('li[data-card]:not(.dragging):not([hidden])'));
+    return tiles.find((tile) => {
+      const box = tile.getBoundingClientRect();
+      return y < box.top + box.height / 2;
+    }) ?? null;
+  };
+  const updateCounts = () => {
+    document.querySelectorAll<HTMLElement>('.bd-col').forEach((col) => {
+      const n = col.querySelectorAll('li[data-card]').length;
+      const counter = col.querySelector<HTMLElement>('[data-count]');
+      if (counter && !counter.textContent?.includes('/')) counter.textContent = String(n);
+    });
+  };
+
+  document.addEventListener('dragstart', (e) => {
+    const tile = (e.target as HTMLElement).closest?.('li[data-card]') as HTMLElement | null;
+    if (!tile) return;
+    dragged = tile;
+    dropped = false;
+    origin = { parent: tile.parentNode!, next: tile.nextSibling };
+    fromList = listOf(tile)?.dataset.drop ?? '';
+    tile.classList.add('dragging');
+    e.dataTransfer?.setData('text/plain', tile.dataset.card ?? '');
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+  });
+  document.addEventListener('dragend', () => {
+    // Dropped outside a column: put the card back where it was.
+    if (dragged && !dropped && origin) origin.parent.insertBefore(dragged, origin.next);
+    dragged?.classList.remove('dragging');
+    document.querySelectorAll('.drop-over').forEach((el) => el.classList.remove('drop-over'));
+    dragged = null;
+  });
+  document.addEventListener('dragover', (e) => {
+    if (!dragged) return;
+    const list = listOf(e.target as Element) ?? ((e.target as Element).closest?.('.bd-col')?.querySelector('[data-drop]') as HTMLElement | null);
+    if (!list) return;
+    e.preventDefault();
+    document.querySelectorAll('.drop-over').forEach((el) => el !== list && el.classList.remove('drop-over'));
+    list.classList.add('drop-over');
+    const after = afterElement(list, e.clientY);
+    if (after) list.insertBefore(dragged, after);
+    else list.appendChild(dragged);
+  });
+  document.addEventListener('drop', async (e) => {
+    if (!dragged) return;
+    const list = listOf(dragged);
+    if (!list) return;
+    e.preventDefault();
+    dropped = true;
+    const tile = dragged;
+    const prev = tile.previousElementSibling as HTMLElement | null;
+    const next = tile.nextElementSibling as HTMLElement | null;
+    const p = prev ? Number(prev.dataset.pos) : null;
+    const n = next ? Number(next.dataset.pos) : null;
+    const pos = p !== null && n !== null ? (p + n) / 2 : p !== null ? p + 1024 : n !== null ? n - 1024 : 1024;
+    const toList = list.dataset.drop ?? '';
+    if (toList === fromList && Number(tile.dataset.pos) === pos) return;
+    tile.dataset.pos = String(pos);
+    updateCounts();
+    const body = new FormData();
+    body.set('action', 'move');
+    body.set('card', tile.dataset.card ?? '');
+    body.set('list', toList);
+    body.set('pos', String(pos));
+    body.set('next', '/life/board');
+    tile.classList.add('saving');
+    try {
+      const res = await fetch('/api/life/board', { method: 'POST', body, credentials: 'same-origin' });
+      if (!res.ok || res.url.includes('error=')) throw new Error('save failed');
+      tile.classList.remove('saving');
+    } catch {
+      location.reload();
+    }
+  });
+</script>

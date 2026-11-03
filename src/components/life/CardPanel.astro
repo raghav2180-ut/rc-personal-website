@@ -1,0 +1,279 @@
+---
+import { LABELS, LISTS, checklistProgress, labelStyle, listName, type Card, type Comment } from '../../lib/life/board-model';
+import { dueParts, dueState, formatDue, formatStamp } from '../../lib/life/board-view';
+import { renderMarkdown, shortUrl } from '../../lib/life/markdown';
+import { FY_GOALS } from '../../lib/life/data';
+import { todayIST } from '../../lib/life/dates';
+
+interface Props {
+  card: Card;
+  comments: Comment[];
+  closeHref: string;
+  here: string;
+}
+const { card, comments, closeHref, here } = Astro.props;
+const due = dueParts(card.due);
+const progress = checklistProgress(card);
+const inTop3 = card.top3.startsWith(`${todayIST()}#`);
+const sorted = [...comments].sort((a, b) => b.date.localeCompare(a.date));
+const base = { card: card.id, next: here };
+---
+<div class="modal-wrap" data-modal>
+  <a class="modal-backdrop" href={closeHref} aria-label="Close card" tabindex="-1"></a>
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="card-title" data-busy>
+    <a class="modal-close" href={closeHref} aria-label="Close card" data-close-modal>×</a>
+
+    <header class="cp-head">
+      <form method="post" action="/api/life/board" data-enhance>
+        <input type="hidden" name="action" value="complete" />
+        <input type="hidden" name="card" value={card.id} />
+        <input type="hidden" name="next" value={here} />
+        <button type="submit" class:list={['cp-complete', { on: card.complete }]} aria-pressed={card.complete ? 'true' : 'false'} title={card.complete ? 'Mark incomplete' : 'Mark complete'}>
+          {card.complete ? '✓' : ''}
+          <span class="sr-only">{card.complete ? 'Mark incomplete' : 'Mark complete'}</span>
+        </button>
+      </form>
+      <div>
+        <h2 id="card-title">{card.title}</h2>
+        <p class="cp-in">in list <b>{listName(card.list)}</b>{card.list === 'archive' && card.archivedFrom ? ` · archived from ${listName(card.archivedFrom)}` : ''}</p>
+      </div>
+    </header>
+
+    <div class="cp-body">
+      <div class="cp-main">
+        <!-- At a glance -->
+        {(card.labels.length > 0 || card.due || card.start || card.fy || card.waiting) && (
+          <div class="cp-glance">
+            {card.labels.length > 0 && (
+              <div><span class="cp-k">Labels</span><span class="cp-labels">{card.labels.map((l) => { const s = labelStyle(l); return <span class="lbl big" style={`background:${s.color};color:${s.ink}`}>{l}</span>; })}</span></div>
+            )}
+            {card.start && <div><span class="cp-k">Start</span><span>{formatDue(card.start)}</span></div>}
+            {card.due && <div><span class="cp-k">Due</span><span class:list={['badge', 'due', dueState(card)]}>{formatDue(card.due)}{card.dueDone ? ' · complete' : dueState(card) === 'overdue' ? ' · overdue' : ''}</span></div>}
+            {card.fy && <div><span class="cp-k">FY goal</span><span class="pill">{card.fy}</span></div>}
+            {card.waiting && <div><span class="cp-k">Waiting on</span><span>{card.waiting}</span></div>}
+          </div>
+        )}
+
+        <!-- Description -->
+        <section class="cp-sec">
+          <h3>Description</h3>
+          {card.desc ? <div class="md" set:html={renderMarkdown(card.desc)} /> : <p class="muted cp-empty">No description yet.</p>}
+        </section>
+
+        <!-- Edit details -->
+        <details class="cp-sec cp-edit">
+          <summary class="btn-ghost small">Edit card details</summary>
+          <form method="post" action="/api/life/board" data-enhance class="cp-form">
+            <input type="hidden" name="action" value="details" />
+            <input type="hidden" name="card" value={card.id} />
+            <input type="hidden" name="next" value={here} />
+            <label class="label">Title<input class="field" name="title" required maxlength="500" value={card.title} /></label>
+            <fieldset class="cp-fs">
+              <legend class="cp-k">Labels</legend>
+              <div class="cp-label-pick">
+                {LABELS.map((l) => (
+                  <label class="lbl-pick"><input type="checkbox" name="labels" value={l.name} checked={card.labels.includes(l.name)} /><span class="lbl big" style={`background:${l.color};color:${l.ink}`}>{l.name}</span></label>
+                ))}
+              </div>
+            </fieldset>
+            <div class="cp-row">
+              <label class="label">Start date<input class="field" type="date" name="start" value={card.start} /></label>
+              <label class="label">Due date<input class="field" type="date" name="due" value={due.date} /></label>
+              <label class="label">Due time<input class="field" type="time" name="dueTime" value={due.time} /></label>
+              <label class="cp-check"><input type="checkbox" name="dueDone" value="Yes" checked={card.dueDone} /> Due date done</label>
+            </div>
+            <div class="cp-row">
+              <label class="label">FY goal
+                <select class="field" name="fy">
+                  <option value="">None</option>
+                  {card.fy && !FY_GOALS.includes(card.fy) && <option selected>{card.fy}</option>}
+                  {FY_GOALS.map((g) => <option selected={g === card.fy}>{g}</option>)}
+                </select>
+              </label>
+              <label class="label">Waiting on<input class="field" name="waiting" maxlength="120" value={card.waiting} placeholder="e.g. Dr. Tapas" /></label>
+            </div>
+            <label class="label">Description<textarea class="field" name="desc" rows="7" maxlength="20000" placeholder="Add more detail. Links and **bold** work.">{card.desc}</textarea></label>
+            <div class="cp-actions"><button class="btn" type="submit">Save</button><button type="button" class="link-btn" data-close-details>Cancel</button></div>
+          </form>
+        </details>
+
+        <!-- Checklists -->
+        {card.checklists.map((list, li) => {
+          const done = list.items.filter((i) => i[1]).length;
+          const pct = list.items.length ? Math.round((done / list.items.length) * 100) : 0;
+          return (
+            <section class="cp-sec">
+              <div class="cp-sec-head">
+                <h3>☑ {list.name}</h3>
+                <details class="cp-mini">
+                  <summary>Delete</summary>
+                  <form method="post" action="/api/life/board" data-enhance>
+                    <input type="hidden" name="action" value="delete-list" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="list" value={li} />
+                    <button class="btn danger small" type="submit">Delete checklist</button>
+                  </form>
+                </details>
+              </div>
+              <div class="cl-bar"><span class="mono">{pct}%</span><div class="meter"><i class:list={{ hi: pct === 100 }} style={`width:${pct}%`}></i></div></div>
+              <ul class="cl-items">
+                {list.items.map((item, ii) => (
+                  <li class:list={{ done: item[1] }}>
+                    <form method="post" action="/api/life/board" data-enhance>
+                      <input type="hidden" name="action" value="toggle-item" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="list" value={li} /><input type="hidden" name="item" value={ii} />
+                      <button type="submit" class:list={['cl-box', { on: item[1] }]} aria-pressed={item[1] ? 'true' : 'false'} aria-label={item[1] ? `Untick: ${item[0]}` : `Tick: ${item[0]}`}>{item[1] ? '✓' : ''}</button>
+                    </form>
+                    <div class="cl-text">
+                      <span class="md-inline" set:html={renderMarkdown(item[0]).replace(/^<p>|<\/p>$/g, '')} />
+                      <details class="cp-mini">
+                        <summary>Edit</summary>
+                        <form method="post" action="/api/life/board" data-enhance class="cl-edit">
+                          <input type="hidden" name="action" value="edit-item" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="list" value={li} /><input type="hidden" name="item" value={ii} />
+                          <input class="field" name="text" value={item[0]} required maxlength="1000" />
+                          <button class="btn small" type="submit">Save</button>
+                        </form>
+                        <form method="post" action="/api/life/board" data-enhance>
+                          <input type="hidden" name="action" value="delete-item" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="list" value={li} /><input type="hidden" name="item" value={ii} />
+                          <button class="link-btn danger-text" type="submit">Delete item</button>
+                        </form>
+                      </details>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <details class="cp-add">
+                <summary class="btn-ghost small">Add an item</summary>
+                <form method="post" action="/api/life/board" data-enhance class="cl-edit">
+                  <input type="hidden" name="action" value="add-item" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="list" value={li} />
+                  <input class="field" name="text" required maxlength="1000" placeholder="Add an item" />
+                  <button class="btn small" type="submit">Add</button>
+                </form>
+              </details>
+            </section>
+          );
+        })}
+
+        <!-- Links and files -->
+        {card.attachments.length > 0 && (
+          <section class="cp-sec">
+            <h3>📎 Links and files</h3>
+            <ul class="att">
+              {card.attachments.map((a, ai) => (
+                <li>
+                  <a href={a.url} target="_blank" rel="noopener">{a.name.startsWith('http') ? shortUrl(a.name) : a.name}</a>
+                  <span class="muted att-host">{shortUrl(a.url).split('/')[0]}{a.url.includes('trello.com/1/cards') ? ' · file stored on Trello' : ''}</span>
+                  <form method="post" action="/api/life/board" data-enhance>
+                    <input type="hidden" name="action" value="remove-link" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="index" value={ai} />
+                    <button class="link-btn danger-text" type="submit" aria-label={`Remove ${a.name}`}>Remove</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <!-- Comments -->
+        <section class="cp-sec">
+          <h3>💬 Comments{sorted.length ? ` (${sorted.length})` : ''}</h3>
+          <form method="post" action="/api/life/board" data-enhance class="cm-new">
+            <input type="hidden" name="action" value="comment" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} />
+            <textarea class="field" name="text" rows="2" required maxlength="10000" placeholder="Write a comment…"></textarea>
+            <button class="btn small" type="submit">Save comment</button>
+          </form>
+          <ul class="cm-list">
+            {sorted.map((c) => (
+              <li>
+                <div class="cm-head"><b>{c.author}</b><span class="muted">{formatStamp(c.date)}</span></div>
+                <div class="md cm-text" set:html={renderMarkdown(c.text)} />
+                <div class="cm-actions">
+                  <details class="cp-mini">
+                    <summary>Edit</summary>
+                    <form method="post" action="/api/life/board" data-enhance class="cm-edit">
+                      <input type="hidden" name="action" value="edit-comment" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="comment" value={c.id} />
+                      <textarea class="field" name="text" rows="3" required maxlength="10000">{c.text}</textarea>
+                      <button class="btn small" type="submit">Save</button>
+                    </form>
+                  </details>
+                  <details class="cp-mini">
+                    <summary>Delete</summary>
+                    <form method="post" action="/api/life/board" data-enhance>
+                      <input type="hidden" name="action" value="delete-comment" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} /><input type="hidden" name="comment" value={c.id} />
+                      <button class="btn danger small" type="submit">Delete comment</button>
+                    </form>
+                  </details>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      <aside class="cp-side">
+        {card.list === 'today' && (
+          inTop3 ? (
+            <p class="cp-top3-on">In today’s Top 3 (#{card.top3.split('#')[1]}). Ticking it done there moves this card to Done.</p>
+          ) : (
+            <form method="post" action="/api/life/board" data-enhance>
+              <input type="hidden" name="action" value="top3" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} />
+              <button class="btn full" type="submit">★ Make Top 3</button>
+            </form>
+          )
+        )}
+
+        <form method="post" action="/api/life/board" data-enhance class="cp-move">
+          <input type="hidden" name="action" value="move" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} />
+          <label class="label">Move to
+            <select class="field" name="list">
+              {LISTS.map((l) => <option value={l.key} selected={l.key === card.list}>{l.emoji} {l.name}</option>)}
+            </select>
+          </label>
+          <button class="btn-ghost full" type="submit">Move</button>
+        </form>
+
+        <details class="cp-add">
+          <summary class="btn-ghost full">☑ Add checklist</summary>
+          <form method="post" action="/api/life/board" data-enhance class="cl-edit col">
+            <input type="hidden" name="action" value="add-list" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} />
+            <input class="field" name="text" maxlength="200" placeholder="Checklist" />
+            <button class="btn small" type="submit">Add</button>
+          </form>
+        </details>
+
+        <details class="cp-add">
+          <summary class="btn-ghost full">📎 Add a link</summary>
+          <form method="post" action="/api/life/board" data-enhance class="cl-edit col">
+            <input type="hidden" name="action" value="add-link" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} />
+            <input class="field" name="url" type="url" required placeholder="https://…" />
+            <input class="field" name="name" maxlength="200" placeholder="Name (optional)" />
+            <button class="btn small" type="submit">Add</button>
+          </form>
+        </details>
+
+        {card.list === 'archive' ? (
+          <form method="post" action="/api/life/board" data-enhance>
+            <input type="hidden" name="action" value="restore" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} />
+            <button class="btn-ghost full" type="submit">↩ Send back to {listName(card.archivedFrom || 'someday')}</button>
+          </form>
+        ) : (
+          <form method="post" action="/api/life/board" data-enhance>
+            <input type="hidden" name="action" value="archive" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={here} />
+            <button class="btn-ghost full" type="submit">🗂️ Archive</button>
+          </form>
+        )}
+
+        <details class="cp-add">
+          <summary class="btn-ghost full danger-text">Delete card</summary>
+          <form method="post" action="/api/life/board" class="cl-edit col">
+            <input type="hidden" name="action" value="delete" /><input type="hidden" name="card" value={card.id} /><input type="hidden" name="next" value={closeHref} />
+            <label class="cp-check"><input type="checkbox" name="confirm" value="yes" required /> Delete this card and its comments for good</label>
+            <button class="btn danger small" type="submit">Delete</button>
+          </form>
+        </details>
+
+        <p class="cp-meta muted">
+          Created {formatStamp(card.created)}<br />Updated {formatStamp(card.updated)}
+          {progress.total > 0 && <><br />Checklist {progress.done}/{progress.total}</>}
+          {card.trelloUrl && <><br /><a href={card.trelloUrl} target="_blank" rel="noopener">Open the original in Trello ↗</a></>}
+        </p>
+      </aside>
+    </div>
+  </section>
+</div>
