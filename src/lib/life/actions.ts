@@ -7,9 +7,7 @@ import {
   DISPLACED,
   FY_GOALS,
   parseCheckIns,
-  parseGoals,
   parseMonthly,
-  parseScores,
   parseTop3,
   parseWeekly,
   RANGES,
@@ -17,7 +15,7 @@ import {
   STATUSES,
   WEEKLY_CAP,
 } from './data';
-import { addDays, cellToIso, monthLabel, todayIST, weekStart } from './dates';
+import { cellToIso, monthLabel, weekStart } from './dates';
 import type { Person } from './env';
 import { sheets } from './sheets';
 
@@ -167,45 +165,6 @@ export async function addWeeklyGoals(person: Person, week: string, goals: { fy: 
     fresh.map((g) => [week, person, g.fy, text(g.goal), 'Not started', '']),
   );
   return fresh.length;
-}
-
-// --------------------------------------------------------- Saturday review ---
-
-export async function saveReview(input: {
-  person: Person;
-  week: string;
-  numbers: Map<number, number>; // Goals row -> current value
-  scores: (number | null)[];
-  slipped: string;
-  next: { fy: string; goal: string }[];
-}) {
-  const s = sheets();
-  const [goalsGrid, scoresGrid] = await s.batchGet([RANGES.goals, RANGES.scores]);
-  const progressRows = new Set(parseGoals(goalsGrid).progress.map((p) => p.row));
-
-  const updates: { range: string; values: (string | number)[][] }[] = [];
-  for (const [row, value] of input.numbers) {
-    if (progressRows.has(row) && Number.isFinite(value)) updates.push({ range: `Goals!I${row}`, values: [[value]] });
-  }
-
-  // Scores: one row per person per review day. A second submit updates it.
-  const date = todayIST();
-  const scoreCells = input.scores.map((v) => (v === null ? '' : Math.min(10, Math.max(1, Math.round(v)))));
-  const hasScores = scoreCells.some((v) => v !== '') || input.slipped.trim();
-  if (hasScores) {
-    if (!(scoresGrid[0]?.[8] ?? '')) updates.push({ range: 'Scores!I1', values: [['What slipped']] });
-    const existing = parseScores(scoresGrid).find((r) => r.date === date && r.person === input.person);
-    if (existing) {
-      updates.push({ range: `Scores!C${existing.row}:I${existing.row}`, values: [[...scoreCells, text(input.slipped)]] });
-    }
-    await s.batchUpdate(updates);
-    if (!existing) await s.append('Scores!A:I', [[date, input.person, ...scoreCells, text(input.slipped)]]);
-  } else {
-    await s.batchUpdate(updates);
-  }
-
-  const goals = input.next.filter((g) => g.goal.trim());
-  if (goals.length) await addWeeklyGoals(input.person, addDays(input.week, 7), goals);
 }
 
 // ---------------------------------------------------------------- Monthly ---

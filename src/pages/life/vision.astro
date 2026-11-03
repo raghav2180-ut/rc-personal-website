@@ -1,6 +1,5 @@
 ---
 import LifeLayout from '../../layouts/LifeLayout.astro';
-import PersonSwitch from '../../components/life/PersonSwitch.astro';
 import Problem from '../../components/life/Problem.astro';
 import { loadVision, SCORE_AREAS } from '../../lib/life/data';
 import { addDays, dayMonth, todayIST, weekday } from '../../lib/life/dates';
@@ -32,7 +31,6 @@ const streakWord = (s: { sunday: boolean; value: string; hasCheckIn: boolean }) 
       <span class="eyebrow">OCTOBER 2029 · READ IT EVERY MORNING</span>
       <h1>Vision 2029</h1>
     </div>
-    <PersonSwitch person={person} me={me} path="/life/vision" />
   </header>
 
   {problem && <Problem message={problem} />}
@@ -40,7 +38,9 @@ const streakWord = (s: { sunday: boolean; value: string; hasCheckIn: boolean }) 
   {data && (
     <div class="l-row">
       <article class="card vision-text" aria-label="Vision">
-        {data.text.map((p) => <p>{p}</p>)}
+        {data.text.length ? data.text.map((p) => <p>{p}</p>) : (
+          <p class="muted" style="font-size:17px">Your 2029 vision isn't written yet. Write it in the sheet's Vision tab, column G, one paragraph per row, and it will show here every morning.</p>
+        )}
         <p class="q">{data.question}</p>
       </article>
 

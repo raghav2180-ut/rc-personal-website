@@ -161,7 +161,7 @@ const googleClient = (sheetVar: SheetVar): SheetsClient => ({
     if (!titles.includes(title)) {
       await call(sheetVar, ':batchUpdate', {
         method: 'POST',
-        body: JSON.stringify({ requests: [{ addSheet: { properties: { title, gridProperties: { frozenRowCount: 1 } } } }] }),
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title, gridProperties: { frozenRowCount: 1, rowCount: 1000, columnCount: Math.max(26, header.length) } } } }] }),
       });
       await call(sheetVar, '/values:batchUpdate', {
         method: 'POST',
