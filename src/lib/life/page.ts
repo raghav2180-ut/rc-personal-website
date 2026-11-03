@@ -6,6 +6,7 @@ const SAVED: Record<string, string> = {
   'task-done': 'Marked done',
   'task-undone': 'Marked not done',
   'task-added': 'Task added',
+  'task-edited': 'Task updated',
   status: 'Status updated',
   'goals-added': 'Goals added',
   nothing: 'Nothing new to add',
