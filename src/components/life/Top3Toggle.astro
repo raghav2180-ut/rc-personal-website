@@ -1,0 +1,46 @@
+---
+/**
+ * The square status box for a Top 3 task. Each click moves the task to the next
+ * state: empty → Done → Partly done → Not done → empty. Works without JavaScript.
+ */
+import { TOP3_LABEL, TOP3_NEXT, type Top3Status } from '../../lib/life/top3-status';
+
+interface Props {
+  row: number;
+  task: string;
+  status: Top3Status;
+  date: string;
+  person: string;
+  next: string;
+  small?: boolean;
+  formClass?: string;
+}
+const { row, task, status, date, person, next, small = false, formClass = '' } = Astro.props;
+const nextStatus = TOP3_NEXT[status];
+const size = small ? 14 : 18;
+const label = `"${task}": ${TOP3_LABEL[status]}. Click to mark ${nextStatus ? TOP3_LABEL[nextStatus].toLowerCase() : 'as not marked'}.`;
+---
+<form method="post" action="/api/life/top3" data-enhance class={formClass}>
+  <input type="hidden" name="row" value={row} />
+  <input type="hidden" name="date" value={date} />
+  <input type="hidden" name="person" value={person} />
+  <input type="hidden" name="done" value={nextStatus} />
+  <input type="hidden" name="next" value={next} />
+  <button
+    type="submit"
+    class:list={['t3-box', { done: status === 'Yes', part: status === 'Partial', no: status === 'No' }]}
+    aria-label={label}
+    title={`${TOP3_LABEL[status]} · click for ${TOP3_LABEL[nextStatus].toLowerCase()}`}
+  >
+    {status === 'Yes' && (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+    )}
+    {status === 'Partial' && (
+      <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="#9A6B00" stroke-width="2.5" /><path d="M12 4a8 8 0 0 1 0 16z" fill="#9A6B00" /></svg>
+    )}
+    {status === 'No' && (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" /></svg>
+    )}
+  </button>
+  <slot />
+</form>

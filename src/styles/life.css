@@ -91,6 +91,7 @@
 .pill { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; background: var(--pen-soft); color: var(--color-pen-dark); padding: 3px 8px; border-radius: 999px; }
 .stamp { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.12em; color: var(--color-stamp); border: 2px solid var(--color-stamp); border-radius: 6px; padding: 4px 8px; transform: rotate(-6deg); align-self: center; }
 .stamp.part { color: #6B4A00; border-color: #C99A3B; border-style: dashed; }
+.stamp.no { color: #B42318; border-color: #E5A39B; letter-spacing: 0.06em; }
 
 .btn { background: var(--color-pen); color: #fff; border: none; border-radius: 10px; padding: 12px 24px; min-height: 44px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 .btn:hover { background: var(--color-pen-dark); color: #fff; }
@@ -110,7 +111,9 @@ select.field { min-height: 44px; padding: 8px; }
 .t3-box { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--quiet); background: #fff; padding: 0; margin-top: 2px; }
 .t3-box:hover { border-color: var(--color-pen); }
 .t3-box.done { background: var(--color-pen); border-color: var(--color-pen); }
-.t3-box.part { border-color: #C99A3B; border-style: dashed; background: #FFF6E5; }
+.t3-box.part { border-color: #C99A3B; background: #FFF6E5; }
+.t3-box.no { border-color: #E5A39B; background: #FFF4F2; }
+.t3-item.notdone .t3-text { color: var(--color-muted); }
 .t3-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .t3-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .t3-text { margin: 0; font-size: 18px; line-height: 1.4; }

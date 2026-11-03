@@ -1,5 +1,6 @@
 ---
 import { FY_GOALS, type Top3Item } from '../../lib/life/data';
+import Top3Toggle from './Top3Toggle.astro';
 
 interface Props {
   items: Top3Item[];
@@ -17,32 +18,17 @@ const addLabel = mainCount >= 3 ? '+ Add a bonus task' : '+ Add a task';
     <h2 id="top3h">Top 3</h2>
     <span class="mono muted" style="font-size:13px">{mainCount ? `${doneCount} OF ${mainCount} DONE` : 'NOT SET YET'}</span>
   </div>
-  <p class="sub">Picked from Trello Today in the morning. Tap the box when it's done.</p>
+  <p class="sub">Tap the box to update: done, then partly done, then not done, then clear.</p>
 
   {items.length === 0 && <p class="empty">No Top 3 for this day yet. Add the three things that matter most.</p>}
 
   {items.map((item) => {
     const done = item.done === 'Yes';
     const part = item.done === 'Partial';
+    const notDone = item.done === 'No';
     return (
-      <div class:list={['t3-item', { done }]}>
-        <form method="post" action="/api/life/top3" data-enhance>
-          <input type="hidden" name="row" value={item.row} />
-          <input type="hidden" name="date" value={date} />
-          <input type="hidden" name="person" value={person} />
-          <input type="hidden" name="done" value={done ? 'No' : 'Yes'} />
-          <input type="hidden" name="next" value={next} />
-          <button
-            type="submit"
-            class:list={['t3-box', { done, part }]}
-            aria-pressed={done ? 'true' : 'false'}
-            aria-label={done ? `Mark "${item.task}" not done` : `Mark "${item.task}" done`}
-          >
-            {done && (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-            )}
-          </button>
-        </form>
+      <div class:list={['t3-item', { done, notdone: notDone }]}>
+        <Top3Toggle row={item.row} task={item.task} status={item.done} date={date} person={person} next={next} />
         <div class="t3-body">
           <div class="t3-meta">
             <span class="mono muted" style="font-size:12px">#{item.n}{item.bonus ? ' · BONUS' : ''}</span>
@@ -84,6 +70,7 @@ const addLabel = mainCount >= 3 ? '+ Add a bonus task' : '+ Add a task';
         </div>
         {done && <span class="stamp">DONE</span>}
         {part && <span class="stamp part">PART</span>}
+        {notDone && <span class="stamp no">NOT DONE</span>}
       </div>
     );
   })}
