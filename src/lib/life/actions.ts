@@ -33,7 +33,7 @@ const ynOrBlank = (v: string | null) => (v === 'Yes' || v === 'No' ? v : '');
 
 // ------------------------------------------------------------------ Top 3 ---
 
-export async function setTop3Done(input: { row: number; date: string; person: Person; done: 'Yes' | 'No' }) {
+export async function setTop3Done(input: { row: number; date: string; person: Person; done: '' | 'Yes' | 'Partial' | 'No' }) {
   const s = sheets();
   const [top3Grid, ciGrid] = await s.batchGet([RANGES.top3, RANGES.checkins]);
   const items = parseTop3(top3Grid);

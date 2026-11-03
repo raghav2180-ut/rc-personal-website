@@ -1,6 +1,7 @@
 ---
 import LifeLayout from '../../layouts/LifeLayout.astro';
 import CheckInForm from '../../components/life/CheckInForm.astro';
+import Top3Toggle from '../../components/life/Top3Toggle.astro';
 import Problem from '../../components/life/Problem.astro';
 import { loadToday } from '../../lib/life/data';
 import { dayMonth, dayName, isIso, timeIST, todayIST } from '../../lib/life/dates';
@@ -45,17 +46,9 @@ const formId = `checkin-${person}`;
             {data.items.map((item) => {
               const done = item.done === 'Yes';
               return (
-                <form method="post" action="/api/life/top3" data-enhance class:list={['mini-t3', { done }]}>
-                  <input type="hidden" name="row" value={item.row} />
-                  <input type="hidden" name="date" value={date} />
-                  <input type="hidden" name="person" value={person} />
-                  <input type="hidden" name="done" value={done ? 'No' : 'Yes'} />
-                  <input type="hidden" name="next" value={here} />
-                  <button type="submit" class:list={['t3-box', { done, part: item.done === 'Partial' }]} aria-pressed={done ? 'true' : 'false'} aria-label={done ? `Mark "${item.task}" not done` : `Mark "${item.task}" done`}>
-                    {done && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
-                  </button>
+                <Top3Toggle row={item.row} task={item.task} status={item.done} date={date} person={person} next={here} small formClass={`mini-t3${done ? ' done' : ''}`}>
                   <span class="txt">{item.task}</span>
-                </form>
+                </Top3Toggle>
               );
             })}
           </section>

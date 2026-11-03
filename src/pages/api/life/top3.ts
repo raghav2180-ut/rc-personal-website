@@ -1,5 +1,6 @@
 import { addTop3, editTop3, setTop3Done } from '../../../lib/life/actions';
 import { formRoute } from '../../../lib/life/http';
+import { isTop3Status, TOP3_SAVED, type Top3Status } from '../../../lib/life/top3-status';
 
 export const prerender = false;
 
@@ -16,7 +17,8 @@ export const POST = formRoute(async (form) => {
     await editTop3({ row: form.int('row'), date, person, task: form.str('task', 300), fy: form.str('fy', 40), done });
     return 'task-edited';
   }
-  const done = form.str('done') === 'Yes' ? 'Yes' : 'No';
+  const raw = form.str('done', 10);
+  const done: Top3Status = isTop3Status(raw) ? raw : '';
   await setTop3Done({ row: form.int('row'), date, person, done });
-  return done === 'Yes' ? 'task-done' : 'task-undone';
+  return TOP3_SAVED[done];
 });
