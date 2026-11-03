@@ -1,0 +1,84 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import MigraineHead from '../../../components/life/migraine/MigraineHead.astro';
+import '../../../styles/migraine.css';
+import { lastDayOfMonth, monthKeyOf, monthLabel, todayIST, weekday } from '../../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+import { loadDiary, painBand, type Day } from '../../../lib/life/migraine';
+
+export const prerender = false;
+
+const { me, flash } = lifeContext(Astro);
+const today = todayIST();
+const thisMonth = monthKeyOf(today);
+const asked = Astro.url.searchParams.get('m') ?? '';
+const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(asked) && asked <= thisMonth ? asked : thisMonth;
+
+let days: Day[] = [];
+let problem = '';
+try {
+  ({ days } = await loadDiary());
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const byDate = new Map(days.map((d) => [d.date, d]));
+const shift = (key: string, n: number) => {
+  const [y, m] = key.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 7);
+};
+const prev = shift(month, -1);
+const next = shift(month, 1);
+const last = Number(lastDayOfMonth(month).slice(8));
+const lead = weekday(`${month}-01`);
+const cells = Array.from({ length: last }, (_, i) => `${month}-${String(i + 1).padStart(2, '0')}`);
+const inMonth = days.filter((d) => d.date.startsWith(month));
+const attackCount = inMonth.filter((d) => d.headache).length;
+const clearCount = inMonth.length - attackCount;
+const back = encodeURIComponent(`/life/migraine/calendar?m=${month}`);
+---
+<LifeLayout title="Calendar" active="migraine" name={me} flash={flash}>
+  <MigraineHead title="Calendar" eyebrow="Migraine diary · every day you've checked in" tab="calendar" />
+  {problem && <Problem message={problem} />}
+  {!problem && (
+    <section class="card stack" style="max-width:640px" aria-labelledby="mh">
+      <div class="cal-nav">
+        <a class="btn-ghost" href={`/life/migraine/calendar?m=${prev}`} aria-label={`Previous month, ${monthLabel(prev)}`}>‹</a>
+        <h2 id="mh">{monthLabel(month)}</h2>
+        {month < thisMonth ? (
+          <a class="btn-ghost" href={`/life/migraine/calendar?m=${next}`} aria-label={`Next month, ${monthLabel(next)}`}>›</a>
+        ) : (
+          <span class="btn-ghost" aria-disabled="true">›</span>
+        )}
+      </div>
+      <div class="mcal">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((x) => <span class="dh" aria-hidden="true">{x}</span>)}
+        {Array.from({ length: lead }, () => <span class="mcell blank" aria-hidden="true" />)}
+        {cells.map((date) => {
+          const n = Number(date.slice(8));
+          const e = byDate.get(date);
+          const isToday = date === today;
+          if (date > today) return <span class="mcell future">{n}</span>;
+          if (e?.headache)
+            return (
+              <a class:list={['mcell hit', { today: isToday }]} data-pain={painBand(e.pain)} href={`/life/migraine/entry?d=${date}&back=${back}`} aria-label={`${date}: headache, pain ${e.pain ?? 'not set'}`}>
+                {n}<small>{e.pain ?? ''}</small>
+              </a>
+            );
+          if (e) return <a class:list={['mcell clear', { today: isToday }]} href={`/life/migraine?d=${date}`} aria-label={`${date}: clear day`}>{n}</a>;
+          return <a class:list={['mcell', { today: isToday }]} href={`/life/migraine?d=${date}`} aria-label={`${date}: not logged`}>{n}</a>;
+        })}
+      </div>
+      <p style="margin:0;font-size:15px"><b>{attackCount}</b> attack{attackCount === 1 ? '' : 's'} · <b>{clearCount}</b> clear day{clearCount === 1 ? '' : 's'} logged</p>
+      <div class="legend">
+        <span><i class="sw" data-pain="mild" style="background:var(--pc)" />Pain 1–3</span>
+        <span><i class="sw" data-pain="mod" style="background:var(--pc)" />4–6</span>
+        <span><i class="sw" data-pain="sev" style="background:var(--pc)" />7–8</span>
+        <span><i class="sw" data-pain="max" style="background:var(--pc)" />9–10</span>
+        <span><i class="sw" style="background:var(--pen-soft)" />Clear</span>
+        <span><i class="sw dash" />Not logged</span>
+      </div>
+    </section>
+  )}
+</LifeLayout>

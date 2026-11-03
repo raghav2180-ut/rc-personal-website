@@ -51,13 +51,13 @@ const sideGallery = (entry: { data: { gallery?: unknown[] } }) => !!entry.data.g
         <div class="flex-[1_1_260px] min-w-0 max-w-[340px] mx-auto relative group/hero">
           <div class="absolute -inset-4 bg-gradient-to-tr from-orange-500/20 via-amber-500/10 to-transparent blur-2xl -z-10 rounded-3xl opacity-75 group-hover/hero:opacity-100 transition-opacity duration-500" aria-hidden="true"></div>
           <Photo src={person.photos.heroPortrait} alt="Raghav Chopra" frame tilt={1.5} ratio="4 / 5" eager sizes="(min-width: 768px) 340px, 80vw" />
-          <div class="absolute -bottom-5 -left-4 sm:-left-7 rotate-[-7deg] bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 text-ink font-display font-black tracking-[0.09em] text-xl sm:text-2xl px-4 py-2 rounded-xl shadow-xl shadow-orange-600/35 border-2 border-white/95 transition-all duration-300 hover:rotate-0 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/50 cursor-pointer animate-float hover-stamp-wiggle" aria-label="Selected, March 2025">
+          <div class="absolute -bottom-5 -left-4 sm:-left-7 rotate-[-7deg] bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 text-ink font-display font-black tracking-[0.09em] text-xl sm:text-2xl px-4 py-2 rounded-xl shadow-xl shadow-orange-600/35 border-2 border-white/95 transition-all duration-300 hover:rotate-0 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/50 cursor-pointer animate-float hover-stamp-wiggle" aria-label="Selected">
             <span class="flex items-center gap-2">
               <span class="relative flex h-3 w-3">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-ink opacity-60"></span>
                 <span class="relative inline-flex rounded-full h-3 w-3 bg-ink"></span>
               </span>
-              SELECTED · MAR 2025
+              SELECTED
             </span>
           </div>
         </div>

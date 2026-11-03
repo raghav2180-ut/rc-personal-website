@@ -1,0 +1,157 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import MigraineHead from '../../../components/life/migraine/MigraineHead.astro';
+import '../../../styles/migraine.css';
+import { monthName, todayIST } from '../../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+import { fmtDuration, loadDiary, patterns, type Day } from '../../../lib/life/migraine';
+
+export const prerender = false;
+
+const { me, flash } = lifeContext(Astro);
+const RANGES = [
+  { key: '30', label: '30 days', days: 30 },
+  { key: '90', label: '90 days', days: 90 },
+  { key: 'all', label: 'All', days: null },
+] as const;
+const asked = Astro.url.searchParams.get('r');
+const range = RANGES.find((r) => r.key === asked) ?? RANGES[1];
+
+let days: Day[] = [];
+let problem = '';
+try {
+  ({ days } = await loadDiary());
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const p = patterns(days, range.days, todayIST());
+const MIN = 3;
+const pct = (n: number, of: number) => (of ? Math.round((n / of) * 100) : 0);
+const tod = ['Night', 'Morning', 'Afternoon', 'Evening'];
+const dows = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const maxOf = (xs: number[]) => Math.max(1, ...xs);
+---
+<LifeLayout title="Patterns" active="migraine" name={me} flash={flash}>
+  <MigraineHead title="Patterns" eyebrow="Migraine diary · what tends to come before an attack" tab="patterns" />
+
+  {problem && <Problem message={problem} />}
+
+  {!problem && (
+    <>
+      <div class="l-head" style="align-items:center">
+        <nav class="switch" aria-label="Time range">
+          {RANGES.map((r) => <a href={`/life/migraine/patterns?r=${r.key}`} aria-current={r.key === range.key ? 'true' : undefined}>{r.label}</a>)}
+        </nav>
+        <span class="mono muted" style="font-size:12px">{p.n} ATTACK{p.n === 1 ? '' : 'S'} · {p.logged} DAYS LOGGED</span>
+      </div>
+
+      {p.n < MIN ? (
+        <section class="card stack-sm" style="max-width:720px">
+          <h2>Patterns need a few attacks</h2>
+          <p class="serif" style="margin:0">
+            You have {p.n} attack{p.n === 1 ? '' : 's'} in this range. After {MIN} or more, this page shows how often they come,
+            when they start, how you slept the night before, which foods and habits keep showing up, and how well the medicine works.
+          </p>
+          <p class="fine">At about 4 attacks a month, give it 6–8 weeks for the patterns to mean something.</p>
+        </section>
+      ) : (
+        <div class="l-row">
+          <div class="l-col-2">
+            <section class="card tight">
+              <div class="stat-grid three">
+                <div class="stat"><b>{p.perMonth.toFixed(1)}</b><span>Attacks a month</span></div>
+                <div class="stat"><b>{p.avgPain == null ? '—' : p.avgPain.toFixed(1)}</b><span>Avg pain /10</span></div>
+                <div class="stat"><b>{fmtDuration(p.avgDuration)}</b><span>Avg length</span></div>
+              </div>
+            </section>
+
+            <section class="card stack" aria-labelledby="bh">
+              <div>
+                <h2 id="bh">What's common before your attacks</h2>
+                <p class="sub">Share of attacks where each was logged.</p>
+              </div>
+              {p.before.length ? (
+                <div class="hbars">
+                  {p.before.map((b) => (
+                    <div class="hbar"><span>{b.label}</span><span class="pct">{pct(b.n, p.n)}% · {b.n}</span><div class="track"><i style={`width:${pct(b.n, p.n)}%`} /></div></div>
+                  ))}
+                </div>
+              ) : (
+                <p class="fine">No food, sleep or habit details logged yet.</p>
+              )}
+              <p class="fine">This shows what tends to come before an attack. It can't prove a cause, because only attack days have these details.</p>
+            </section>
+
+            <section class="card stack" aria-labelledby="th">
+              <h2 id="th">When attacks start</h2>
+              <div>
+                <div class="vbars" style="--cols:4">
+                  {p.timeOfDay.map((v) => <div><b>{v}</b><i class:list={{ top: v === Math.max(...p.timeOfDay) && v > 0 }} style={`height:${(v / maxOf(p.timeOfDay)) * 100}%`} /></div>)}
+                </div>
+                <div class="vlabels" style="--cols:4">{tod.map((t) => <span>{t}</span>)}</div>
+              </div>
+              <p class="fine">Night 12–6 am · Morning 6–12 · Afternoon 12–6 pm · Evening 6–12</p>
+            </section>
+
+            <section class="card stack" aria-labelledby="wh">
+              <h2 id="wh">Day of the week</h2>
+              <div>
+                <div class="vbars" style="--cols:7">
+                  {p.weekdays.map((v) => <div><b>{v}</b><i class:list={{ top: v === Math.max(...p.weekdays) && v > 0 }} style={`height:${(v / maxOf(p.weekdays)) * 100}%`} /></div>)}
+                </div>
+                <div class="vlabels" style="--cols:7">{dows.map((t) => <span>{t}</span>)}</div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="l-col-1">
+            <section class="card tight stack" aria-labelledby="sh">
+              <h2 id="sh">Sleep the night before</h2>
+              {p.sleep.logged ? (
+                <div class="stat-grid">
+                  <div class="stat"><b>{p.sleep.avg!.toFixed(1)}<small>h</small></b><span>Average sleep</span></div>
+                  <div class="stat"><b>{Math.round(p.sleep.under6! * 100)}<small>%</small></b><span>Under 6 hours</span></div>
+                </div>
+              ) : (
+                <p class="fine">Add bed and wake times to see this.</p>
+              )}
+            </section>
+
+            <section class="card tight stack" aria-labelledby="medh">
+              <h2 id="medh">Medicine</h2>
+              <p style="margin:0;font-size:15px">Taken in <b>{p.medicine.took}</b> of {p.n} attacks{p.medicine.avgLag != null && <>, about <b>{fmtDuration(p.medicine.avgLag)}</b> after it started</>}.</p>
+              {p.medicine.reliefAnswered > 0 && (
+                <div class="hbars">
+                  {p.medicine.relief.map((r) => (
+                    <div class="hbar"><span>Relief: {r.label.toLowerCase()}</span><span class="pct">{pct(r.n, p.medicine.reliefAnswered)}%</span><div class="track"><i style={`width:${pct(r.n, p.medicine.reliefAnswered)}%`} /></div></div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section class="card tight stack" aria-labelledby="symh">
+              <h2 id="symh">Where and how</h2>
+              <div class="hbars">
+                {[...p.where, ...p.symptoms].map((s) => (
+                  <div class="hbar"><span>{s.label}</span><span class="pct">{pct(s.n, p.n)}%</span><div class="track"><i style={`width:${pct(s.n, p.n)}%`} /></div></div>
+                ))}
+              </div>
+            </section>
+
+            <section class="card tight stack" aria-labelledby="moh">
+              <h2 id="moh">Last 6 months</h2>
+              <div>
+                <div class="vbars" style="--cols:6">
+                  {p.months.map((m) => <div><b>{m.n}</b><i style={`height:${(m.n / maxOf(p.months.map((x) => x.n))) * 100}%`} /></div>)}
+                </div>
+                <div class="vlabels" style="--cols:6">{p.months.map((m) => <span>{monthName(Number(m.key.slice(5)) - 1)}</span>)}</div>
+              </div>
+            </section>
+          </aside>
+        </div>
+      )}
+    </>
+  )}
+</LifeLayout>

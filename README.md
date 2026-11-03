@@ -55,6 +55,18 @@ A signed-in section for Raghav and Kajol: Today, Week (with the Saturday review)
 
 Sheet tabs it uses: `Top3`, `CheckIns`, `Weekly`, `Scores` (column I holds "What slipped"), `Goals` (progress numbers in H2:J6), `Monthly`, `Vision` (text in column A; the Today → 2029 scoreboard in C1:E10).
 
+## Migraine Diary (`/life/migraine`)
+
+A private headache diary inside the tracker, visible only to Raghav (Kajol's login gets "not found"; set `MIGRAINE_EMAILS` to change who can open it).
+
+- **Today:** one question a day, "Did you get a headache?". *No* saves a clear day in one tap; *Yes* opens the attack form (times, pain 0–10, where, symptoms, medicine and relief, last night's sleep, food, water, caffeine, stress, screen time, notes). Missed days from the past week are listed so they can be filled in.
+- **Calendar**, **Patterns** (what tends to come before attacks, timing, sleep, medicine) and **Log** (patient details, every attack, CSV download for a doctor).
+- A painkiller-days bar warns before 10 days in a month (medication-overuse headache).
+- **Data:** a separate Google Sheet (`MIGRAINE_SHEET_ID`), not the Dream Life sheet, so health data stays out of the shared sheet. One row per day on the `Days` tab; patient details on `Profile`. The app creates both tabs on first use.
+- **Code:** `src/lib/life/migraine.ts`, `src/pages/life/migraine/`, `src/pages/api/life/migraine.ts`, `src/components/life/migraine/`, `src/styles/migraine.css`.
+
+**Setup:** create a blank Google Sheet named "Migraine Diary", share it as Editor with the service account (the same email the Dream Life sheet is shared with), then add its ID as `MIGRAINE_SHEET_ID` in Vercel and redeploy.
+
 ## Design notes
 
 - Direction "Interview Experience": white paper cards on a cool desk, ballpoint-blue handwritten notes, an orange "Selected" stamp.

@@ -49,6 +49,38 @@ const addLabel = mainCount >= 3 ? '+ Add a bonus task' : '+ Add a task';
             {item.fy && <span class="pill">{item.fy.toUpperCase()}</span>}
           </div>
           <p class="t3-text">{item.task.replace(/\s*\(bonus\)\s*$/i, '')}</p>
+          <details class="t3-edit" id={`edit-${item.row}`}>
+            <summary aria-label={`Edit "${item.task}"`}>Edit</summary>
+            <form method="post" action="/api/life/top3" data-enhance>
+              <input type="hidden" name="action" value="edit" />
+              <input type="hidden" name="row" value={item.row} />
+              <input type="hidden" name="date" value={date} />
+              <input type="hidden" name="person" value={person} />
+              <input type="hidden" name="next" value={next} />
+              <label class="label t">Task
+                <textarea class="field" name="task" required maxlength="300" rows="2">{item.task.replace(/\s*\(bonus\)\s*$/i, '')}</textarea>
+              </label>
+              <label class="label fy">FY goal
+                <select class="field" name="fy">
+                  <option value="">None</option>
+                  {item.fy && !FY_GOALS.includes(item.fy) && <option selected>{item.fy}</option>}
+                  {FY_GOALS.map((g) => <option selected={g === item.fy}>{g}</option>)}
+                </select>
+              </label>
+              <label class="label st">Status
+                <select class="field" name="status">
+                  <option value="" selected={item.done === ''}>Not marked</option>
+                  <option value="Yes" selected={item.done === 'Yes'}>Done</option>
+                  <option value="Partial" selected={item.done === 'Partial'}>Partly done</option>
+                  <option value="No" selected={item.done === 'No'}>Not done</option>
+                </select>
+              </label>
+              <div class="t3-edit-actions">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" class="link-btn" data-close-edit>Cancel</button>
+              </div>
+            </form>
+          </details>
         </div>
         {done && <span class="stamp">DONE</span>}
         {part && <span class="stamp part">PART</span>}
@@ -78,3 +110,13 @@ const addLabel = mainCount >= 3 ? '+ Add a bonus task' : '+ Add a task';
     </details>
   </div>
 </section>
+
+<script>
+  // Cancel closes the edit panel. Uses delegation so it keeps working after the
+  // page swaps in fresh content following a save.
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-close-edit]');
+    const details = btn?.closest('details');
+    if (details) details.open = false;
+  });
+</script>

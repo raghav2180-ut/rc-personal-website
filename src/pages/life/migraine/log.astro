@@ -1,0 +1,98 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import MigraineHead from '../../../components/life/migraine/MigraineHead.astro';
+import AttackLine from '../../../components/life/migraine/AttackLine.astro';
+import '../../../styles/migraine.css';
+import { cellToIso, longDate } from '../../../lib/life/dates';
+import { env } from '../../../lib/life/env';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+import { ageOn, attacksOf, loadDiary, PROFILE_FIELDS, type Day, type Profile } from '../../../lib/life/migraine';
+
+export const prerender = false;
+
+const { me, flash } = lifeContext(Astro);
+
+let days: Day[] = [];
+let profile: Profile | null = null;
+let problem = '';
+try {
+  ({ days, profile } = await loadDiary());
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const attacks = attacksOf(days).reverse();
+const filled = profile ? PROFILE_FIELDS.some((f) => profile![f.key]) : false;
+const age = profile?.dob ? ageOn(profile.dob) : null;
+const dobIso = profile?.dob ? cellToIso(profile.dob) : null;
+const sheetId = env('MIGRAINE_SHEET_ID');
+const back = encodeURIComponent('/life/migraine/log');
+---
+<LifeLayout title="Log" active="migraine" name={me} flash={flash}>
+  <MigraineHead title="Log" eyebrow="Migraine diary · for you and your doctor" tab="log" />
+  {problem && <Problem message={problem} />}
+  {!problem && profile && (
+    <div class="l-row">
+      <div class="l-col-2">
+        <section class="card stack-sm" aria-labelledby="ah">
+          <div class="card-head">
+            <h2 id="ah">All attacks</h2>
+            <span class="mono muted" style="font-size:12px">{attacks.length} LOGGED</span>
+          </div>
+          {attacks.length ? (
+            <div class="alist">
+              {attacks.map((d) => (
+                <a href={`/life/migraine/entry?d=${d.date}&back=${back}`}>
+                  <AttackLine day={d} />
+                  <span class="go" aria-hidden="true">›</span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p class="fine">No attacks logged yet. When you have one, tap "Yes, log it" on Today.</p>
+          )}
+        </section>
+      </div>
+
+      <aside class="l-col-1">
+        <section class="card tight stack-sm" aria-labelledby="ph">
+          <span class="eyebrow">Patient</span>
+          {filled ? (
+            <dl class="kv" id="ph">
+              {profile.name && <><dt>Name</dt><dd>{profile.name}</dd></>}
+              {profile.sex && <><dt>Sex</dt><dd>{profile.sex}</dd></>}
+              {profile.dob && <><dt>Born</dt><dd>{dobIso ? longDate(dobIso).split(' ').slice(1).join(' ') : profile.dob}{age != null && <span class="muted"> ({age})</span>}</dd></>}
+              {profile.history && <><dt>History</dt><dd>{profile.history}</dd></>}
+              {profile.usualMed && <><dt>Usual medicine</dt><dd>{profile.usualMed}</dd></>}
+            </dl>
+          ) : (
+            <h2 id="ph">Add your details</h2>
+          )}
+          <details open={!filled}>
+            <summary class="link-btn">{filled ? 'Edit details' : 'Fill in once'}</summary>
+            <form method="post" action="/api/life/migraine" class="profile-form" data-enhance>
+              <input type="hidden" name="intent" value="profile" />
+              <input type="hidden" name="next" value="/life/migraine/log" />
+              <label class="label">Name<input class="field" name="name" maxlength="120" value={profile.name} /></label>
+              <label class="label">Sex<input class="field" name="sex" maxlength="40" value={profile.sex} /></label>
+              <label class="label">Date of birth<input class="field" type="date" name="dob" value={dobIso ?? ''} /></label>
+              <label class="label wide">Headache history<input class="field" name="history" maxlength="300" value={profile.history} placeholder="e.g. how long, how often" /></label>
+              <label class="label wide">Usual medicine<input class="field" name="usualMed" maxlength="200" value={profile.usualMed} /></label>
+              <div class="wide"><button type="submit" class="btn">Save details</button></div>
+            </form>
+          </details>
+        </section>
+
+        <section class="card tight stack-sm" aria-labelledby="eh">
+          <h2 id="eh">For your doctor</h2>
+          <p class="fine">Download every logged day as a CSV that opens in Excel, or open the Google Sheet and use File → Download.</p>
+          <div class="row-actions">
+            <a class="btn" href="/life/migraine/export.csv" download>Download CSV</a>
+            {sheetId && <a class="btn-ghost" href={`https://docs.google.com/spreadsheets/d/${sheetId}/edit`} target="_blank" rel="noopener">Open the sheet ↗</a>}
+          </div>
+        </section>
+      </aside>
+    </div>
+  )}
+</LifeLayout>

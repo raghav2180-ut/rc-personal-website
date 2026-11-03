@@ -1,0 +1,156 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import MigraineHead from '../../../components/life/migraine/MigraineHead.astro';
+import AttackLine from '../../../components/life/migraine/AttackLine.astro';
+import '../../../styles/migraine.css';
+import { dayMonth, isIso, longDate, monthName, shortDay, todayIST } from '../../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+import { attacksOf, loadDiary, MED_DAYS_LIMIT, missedDays, monthSummary, type Day } from '../../../lib/life/migraine';
+
+export const prerender = false;
+
+const { me, flash, here } = lifeContext(Astro);
+const today = todayIST();
+const asked = Astro.url.searchParams.get('d');
+const date = isIso(asked) && asked <= today ? asked : today;
+const isToday = date === today;
+
+let days: Day[] = [];
+let problem = '';
+try {
+  ({ days } = await loadDiary());
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const entry = days.find((d) => d.date === date) ?? null;
+const missed = missedDays(days, 7, today).filter((d) => d !== date);
+const month = monthSummary(days, today);
+const recent = attacksOf(days).slice(-3).reverse();
+const medPct = Math.min(100, (month.medDays / MED_DAYS_LIMIT) * 100);
+const dayWords = isToday ? 'today' : `on ${shortDay(date)} ${dayMonth(date).split(' ')[1]}`;
+const entryHref = `/life/migraine/entry?d=${date}`;
+const since =
+  month.sinceLast == null ? null : month.sinceLast === 0 ? 'today' : month.sinceLast === 1 ? 'yesterday' : `${month.sinceLast} days ago`;
+---
+<LifeLayout title="Migraine" active="migraine" name={me} flash={flash}>
+  <MigraineHead title="Migraine" eyebrow={`Migraine diary · ${longDate(today)}`} tab="today" />
+
+  {problem && <Problem message={problem} />}
+
+  {!problem && (
+    <div class="l-row">
+      <div class="l-col-2">
+        <section class="card stack" aria-labelledby="ci" data-busy>
+          {!entry && (
+            <>
+              <div class="stack-sm">
+                <span class="eyebrow">{isToday ? 'Daily check-in' : 'Missed check-in'}</span>
+                <h2 id="ci" class="ask">Did you get a headache {dayWords}?</h2>
+              </div>
+              <div class="yn-big">
+                <form method="post" action="/api/life/migraine" data-enhance>
+                  <input type="hidden" name="intent" value="clear" />
+                  <input type="hidden" name="date" value={date} />
+                  <input type="hidden" name="next" value={isToday ? '/life/migraine' : here} />
+                  <button type="submit" class="btn-ghost">No, clear day</button>
+                </form>
+                <a class="btn" href={entryHref}>Yes, log it</a>
+              </div>
+              <p class="fine">A clear day takes one tap. Logging those days too is what lets the Patterns tab compare.</p>
+            </>
+          )}
+
+          {entry && !entry.headache && (
+            <>
+              <div class="att">
+                <span class="pdot clear" aria-hidden="true">✓</span>
+                <div>
+                  <h2 id="ci" style="font-size:22px">Clear day</h2>
+                  <span>{isToday ? 'No headache today.' : `No headache on ${longDate(date)}.`}</span>
+                </div>
+              </div>
+              <div class="row-actions">
+                <a class="btn-ghost" href={entryHref}>Got one after all? Log it</a>
+                <form method="post" action="/api/life/migraine" data-enhance>
+                  <input type="hidden" name="intent" value="delete" />
+                  <input type="hidden" name="date" value={date} />
+                  <input type="hidden" name="next" value={here} />
+                  <button type="submit" class="link-btn">Undo check-in</button>
+                </form>
+              </div>
+            </>
+          )}
+
+          {entry && entry.headache && (
+            <>
+              <span class="eyebrow" id="ci">{isToday ? 'Today' : longDate(date)}</span>
+              <AttackLine day={entry} />
+              {entry.ongoing && <p class="callout" style="margin:0">Still going. When it ends, add the end time and whether the medicine helped.</p>}
+              {!entry.ongoing && entry.medTaken && !entry.relief && (
+                <p class="callout" style="margin:0">Did the medicine help? Add the relief after 2 hours.</p>
+              )}
+              <div class="row-actions">
+                <a class="btn" href={entryHref}>{entry.ongoing ? 'Update the attack' : 'Edit'}</a>
+              </div>
+            </>
+          )}
+          {!isToday && <a href="/life/migraine" style="font-size:14px">← Back to today</a>}
+        </section>
+
+        {missed.length > 0 && (
+          <section class="card tight stack-sm" aria-labelledby="mh">
+            <h2 id="mh">Days you didn't check in</h2>
+            <p class="fine">Tap a day to say whether you had a headache.</p>
+            <div class="missed">
+              {missed.map((d) => <a href={`/life/migraine?d=${d}`}>{shortDay(d)} {dayMonth(d).split(' ')[1]}</a>)}
+            </div>
+          </section>
+        )}
+
+        <section class="card tight stack-sm" aria-labelledby="rh">
+          <div class="card-head">
+            <h2 id="rh">Recent attacks</h2>
+            <a href="/life/migraine/log" style="font-size:14px">All attacks</a>
+          </div>
+          {recent.length ? (
+            <div class="alist">
+              {recent.map((d) => (
+                <a href={`/life/migraine/entry?d=${d.date}`}>
+                  <AttackLine day={d} />
+                  <span class="go" aria-hidden="true">›</span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p class="fine">None logged yet.</p>
+          )}
+        </section>
+      </div>
+
+      <aside class="l-col-1">
+        <section class="card tight stack" aria-labelledby="mo">
+          <div class="card-head">
+            <h2 id="mo">{monthName(Number(today.slice(5, 7)) - 1, true)} so far</h2>
+            {since && <span class="mono muted" style="font-size:12px">LAST ATTACK {since.toUpperCase()}</span>}
+          </div>
+          <div class="stat-grid three">
+            <div class="stat"><b>{month.attacks}</b><span>Attacks</span></div>
+            <div class="stat"><b>{month.avgPain == null ? '—' : month.avgPain.toFixed(1)}</b><span>Avg pain /10</span></div>
+            <div class="stat"><b>{month.medDays}</b><span>Painkiller days</span></div>
+          </div>
+          <div class="medbar">
+            <div class="row"><span>Painkiller days this month</span><span class="mono">{month.medDays} / {MED_DAYS_LIMIT}</span></div>
+            <div class="meter" role="img" aria-label={`${month.medDays} of ${MED_DAYS_LIMIT} days`}><i class:list={{ warn: month.medDays >= 8 }} style={`width:${medPct}%`} /></div>
+            <p class="fine">Taking painkillers on {MED_DAYS_LIMIT} or more days a month can itself cause more headaches. This bar turns orange at 8.</p>
+          </div>
+        </section>
+        <section class="card tight question" aria-label="Reminder">
+          <span class="eyebrow">Tonight</span>
+          <p>One tap before bed: headache today, or a clear day?</p>
+        </section>
+      </aside>
+    </div>
+  )}
+</LifeLayout>

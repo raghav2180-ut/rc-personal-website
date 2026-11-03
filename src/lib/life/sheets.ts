@@ -1,9 +1,10 @@
 /**
- * Tiny Google Sheets client for the Dream Life tracker.
+ * Tiny Google Sheets client for the private tracker.
  *
  * Auth: a Google Cloud service account (GOOGLE_SERVICE_ACCOUNT_JSON) that has
- * Editor access to the sheet (SHEET_ID). We sign a JWT with Web Crypto and swap
- * it for an access token, so there is no googleapis dependency.
+ * Editor access to each sheet it uses: the Dream Life tracker (SHEET_ID) and the
+ * Migraine Diary (MIGRAINE_SHEET_ID). We sign a JWT with Web Crypto and swap it
+ * for an access token, so there is no googleapis dependency.
  *
  * Local development: set LIFE_MOCK_FILE to a JSON file shaped like
  * {"Top3": [["Date", ...], ...], ...}. Reads and writes then go to memory
@@ -20,7 +21,12 @@ export interface SheetsClient {
   batchUpdate(data: { range: string; values: (string | number)[][] }[]): Promise<void>;
   /** Append rows below the last row of a table. */
   append(range: string, values: (string | number)[][]): Promise<void>;
+  /** Add a tab if the spreadsheet doesn't have one with this title yet. */
+  ensureTab(title: string, header: string[]): Promise<void>;
 }
+
+/** Which spreadsheet a client talks to, by the environment variable holding its ID. */
+export type SheetVar = 'SHEET_ID' | 'MIGRAINE_SHEET_ID';
 
 // ---------------------------------------------------------------- Google ---
 
@@ -104,45 +110,66 @@ async function accessToken(): Promise<string> {
   return json.access_token;
 }
 
-async function call(path: string, init: RequestInit = {}): Promise<any> {
-  const base = `https://sheets.googleapis.com/v4/spreadsheets/${requireEnv('SHEET_ID')}`;
+async function call(sheetVar: SheetVar, path: string, init: RequestInit = {}): Promise<any> {
+  const base = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(requireEnv(sheetVar))}`;
   const res = await fetch(base + path, {
     ...init,
     headers: { authorization: `Bearer ${await accessToken()}`, 'content-type': 'application/json', ...(init.headers ?? {}) },
   });
   if (!res.ok) {
     const text = await res.text();
-    if (res.status === 403) throw new Error('The service account cannot open the sheet. Share the sheet with its email as Editor.');
+    if (res.status === 403 || res.status === 404) {
+      throw new Error(`The service account cannot open the sheet in ${sheetVar}. Check the ID, and share the sheet with the service account's email as Editor.`);
+    }
     throw new Error(`Google Sheets error ${res.status}: ${text.slice(0, 300)}`);
   }
   return res.json();
 }
 
-const google: SheetsClient = {
+const tabsSeen = new Set<string>();
+
+const googleClient = (sheetVar: SheetVar): SheetsClient => ({
   async batchGet(ranges) {
     const qs = ranges.map((r) => `ranges=${encodeURIComponent(r)}`).join('&');
     // Unformatted values with dates as serial numbers, so a date reads the same
     // whatever display format or locale a cell happens to have.
-    const json = await call(`/values:batchGet?${qs}&valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`);
+    const json = await call(sheetVar, `/values:batchGet?${qs}&valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER`);
     return (json.valueRanges ?? []).map((vr: { values?: unknown[][] }) =>
       (vr.values ?? []).map((row) => row.map((cell) => (cell === null || cell === undefined ? '' : String(cell)))),
     );
   },
   async batchUpdate(data) {
     if (!data.length) return;
-    await call('/values:batchUpdate', {
+    await call(sheetVar, '/values:batchUpdate', {
       method: 'POST',
       body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data }),
     });
   },
   async append(range, values) {
     if (!values.length) return;
-    await call(`/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+    await call(sheetVar, `/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
       method: 'POST',
       body: JSON.stringify({ values }),
     });
   },
-};
+  async ensureTab(title, header) {
+    const key = `${sheetVar}:${title}`;
+    if (tabsSeen.has(key)) return;
+    const meta = await call(sheetVar, '?fields=sheets.properties.title');
+    const titles: string[] = (meta.sheets ?? []).map((sh: { properties: { title: string } }) => sh.properties.title);
+    if (!titles.includes(title)) {
+      await call(sheetVar, ':batchUpdate', {
+        method: 'POST',
+        body: JSON.stringify({ requests: [{ addSheet: { properties: { title, gridProperties: { frozenRowCount: 1 } } } }] }),
+      });
+      await call(sheetVar, '/values:batchUpdate', {
+        method: 'POST',
+        body: JSON.stringify({ valueInputOption: 'RAW', data: [{ range: `${title}!A1`, values: [header] }] }),
+      });
+    }
+    tabsSeen.add(key);
+  },
+});
 
 // ------------------------------------------------------------------ Mock ---
 
@@ -223,9 +250,14 @@ const mock: SheetsClient = {
     const grid = (data[a.tab] ??= []);
     for (const row of values) grid.push([...Array(a.c0).fill(''), ...row.map(String)]);
   },
+  async ensureTab(title, header) {
+    const data = await mockSheets();
+    data[title] ??= [header];
+  },
 };
 
-export function sheets(): SheetsClient {
+/** A client for one spreadsheet. Defaults to the Dream Life tracker. */
+export function sheets(sheetVar: SheetVar = 'SHEET_ID'): SheetsClient {
   if (import.meta.env.DEV && env('LIFE_MOCK_FILE')) return mock;
-  return google;
+  return googleClient(sheetVar);
 }

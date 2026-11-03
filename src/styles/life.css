@@ -115,6 +115,16 @@ select.field { min-height: 44px; padding: 8px; }
 .t3-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .t3-text { margin: 0; font-size: 18px; line-height: 1.4; }
 .t3-item.done .t3-text { color: var(--color-muted); text-decoration: line-through; text-decoration-color: var(--quiet); }
+.t3-edit summary { display: inline-flex; align-items: center; min-height: 32px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--color-pen); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-transform: uppercase; }
+.t3-edit summary:hover { color: var(--color-pen-dark); }
+.t3-edit[open] summary { display: none; }
+.t3-body:has(.t3-edit[open]) .t3-text { display: none; }
+.t3-edit form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; padding: 12px; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; }
+.t3-edit .label { font-size: 13px; color: var(--color-muted); font-weight: 600; }
+.t3-edit .label.t { flex: 1 1 100%; }
+.t3-edit .label.t textarea { font-family: var(--font-display); font-size: 16px; font-weight: 400; color: var(--color-ink); }
+.t3-edit .label.fy, .t3-edit .label.st { flex: 1 1 160px; }
+.t3-edit-actions { display: flex; gap: 12px; align-items: center; }
 .t3-add { border-top: 1px solid var(--line); padding-top: 16px; }
 .t3-add form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-top: 12px; }
 .t3-add form .label { flex: 1 1 260px; font-size: 13px; color: var(--color-muted); font-weight: 600; }
