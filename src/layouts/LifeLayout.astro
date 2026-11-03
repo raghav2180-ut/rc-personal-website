@@ -29,7 +29,7 @@ const links = [
   { key: 'week', n: '02', label: 'Week', path: '/life/week' },
   { key: 'board', n: '03', label: 'Board', path: '/life/board' },
   { key: 'goals', n: '04', label: 'Goals', path: '/life/goals' },
-  { key: 'monthly', n: '05', label: 'Monthly', path: '/life/monthly' },
+  ...(name === 'Kajol' ? [] : [{ key: 'monthly', n: '05', label: 'Monthly', path: '/life/monthly' }]),
   { key: 'vision', n: '06', label: 'Vision 2029', path: '/life/vision' },
   ...(canSeeMigraine(Astro.locals.session?.email) ? [{ key: 'migraine', n: '07', label: 'Migraine', path: '/life/migraine' }] : []),
 ];
@@ -122,7 +122,10 @@ const links = [
           const doc = new DOMParser().parseFromString(html, 'text/html');
           const fresh = doc.querySelector('[data-life-main]');
           const current = document.querySelector('[data-life-main]');
-          if (fresh && current) current.replaceWith(fresh);
+          // On an error, keep what was typed: show the message, leave the form alone.
+          const failed = new URL(res.url).searchParams.has('error');
+          if (failed) block.classList.remove('busy');
+          else if (fresh && current) current.replaceWith(fresh);
           else {
             const phone = doc.querySelector('[data-phone]');
             const here = document.querySelector('[data-phone]');

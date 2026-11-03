@@ -2,7 +2,6 @@
 import LifeLayout from '../../layouts/LifeLayout.astro';
 import Top3Card from '../../components/life/Top3Card.astro';
 import CheckInForm from '../../components/life/CheckInForm.astro';
-import PersonSwitch from '../../components/life/PersonSwitch.astro';
 import Problem from '../../components/life/Problem.astro';
 import { loadToday } from '../../lib/life/data';
 import { addDays, dayMonth, isIso, longDate, todayIST, weekday } from '../../lib/life/dates';
@@ -11,7 +10,7 @@ import { env } from '../../lib/life/env';
 
 export const prerender = false;
 
-const { me, person, flash, href, here } = lifeContext(Astro);
+const { me, person, partner, flash, href, here } = lifeContext(Astro);
 const today = todayIST();
 const asked = Astro.url.searchParams.get('d');
 const date = isIso(asked) && asked <= today ? asked : today;
@@ -20,7 +19,7 @@ const isToday = date === today;
 let data: Awaited<ReturnType<typeof loadToday>> | null = null;
 let problem = '';
 try {
-  data = await loadToday(person, date);
+  data = await loadToday(person, date, partner);
 } catch (err) {
   problem = errorMessage(err);
 }
@@ -42,7 +41,6 @@ const summary = data?.summary;
         {!isToday && <> · <a href={dayLink(addDays(date, 1))}>{dayMonth(addDays(date, 1))} →</a> · <a href={dayLink(today)}>Today</a></>}
       </span>
     </div>
-    <PersonSwitch person={person} me={me} path="/life" params={isToday ? {} : { d: date }} />
   </header>
 
   {problem && <Problem message={problem} />}
@@ -89,6 +87,25 @@ const summary = data?.summary;
             <a href={env('TRELLO_BOARD_URL') ?? 'https://trello.com/'} target="_blank" rel="noopener" style="font-size:14px">Open board ↗</a>
           </div>
           <p class="muted" style="margin:0;font-size:14px">Pick today's Top 3 from the Today column. A live list and your calendar will show here in the next update.</p>
+        </section>
+
+        <section class="card tight stack-sm" aria-labelledby="ph3">
+          <div class="card-head">
+            <h2 id="ph3">{partner}'s Top 3</h2>
+            <span class="mono muted" style="font-size:12px">VIEW ONLY</span>
+          </div>
+          {data.partnerItems.length === 0 ? (
+            <p class="muted" style="margin:0;font-size:14px">Not set yet for {isToday ? 'today' : 'this day'}.</p>
+          ) : (
+            <ul class="partner-t3">
+              {data.partnerItems.map((t) => (
+                <li class:list={[{ done: t.done === 'Yes', part: t.done === 'Partial', no: t.done === 'No' }]}>
+                  <span class="pt-mark" aria-label={t.done === 'Yes' ? 'Done' : t.done === 'Partial' ? 'Partly done' : t.done === 'No' ? 'Not done' : 'Not marked'}>{t.done === 'Yes' ? '✓' : t.done === 'Partial' ? '◐' : t.done === 'No' ? '✕' : ''}</span>
+                  <span>{t.task.replace(/\s*\(bonus\)\s*$/i, '')}{t.bonus ? <span class="muted"> · bonus</span> : ''}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section class="card tight question" aria-label="Today's question">

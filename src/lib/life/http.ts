@@ -2,11 +2,11 @@ import type { APIContext, APIRoute } from 'astro';
 import { UserError } from './actions';
 import { safeNext } from './auth';
 import { isIso } from './dates';
-import { isPerson, type Person } from './env';
+import { personForEmail, type Person } from './env';
 
 /** Helpers for reading a submitted form safely. */
 export class Form {
-  constructor(private data: FormData) {}
+  constructor(private data: FormData, private me: Person) {}
   str(name: string, max = 4000): string {
     const v = this.data.get(name);
     return typeof v === 'string' ? v.slice(0, max) : '';
@@ -31,10 +31,11 @@ export class Form {
     if (!isIso(v)) throw new UserError('That date looks wrong. Refresh and try again.');
     return v;
   }
+  /** Always the signed-in person. A form naming someone else is refused. */
   person(): Person {
     const v = this.str('person', 20);
-    if (!isPerson(v)) throw new UserError('Pick Raghav or Kajol.');
-    return v;
+    if (v && v !== this.me) throw new UserError('You can only change your own tracker.');
+    return this.me;
   }
   all(name: string): string[] {
     return this.data.getAll(name).map((v) => (typeof v === 'string' ? v : ''));
@@ -59,7 +60,7 @@ export function formRoute(handler: (form: Form, ctx: APIContext) => Promise<stri
     const data = await ctx.request.formData();
     const next = safeNext(typeof data.get('next') === 'string' ? (data.get('next') as string) : null);
     try {
-      const saved = await handler(new Form(data), ctx);
+      const saved = await handler(new Form(data, personForEmail(ctx.locals.session!.email)), ctx);
       return ctx.redirect(withParam(next, 'saved', saved), 303);
     } catch (err) {
       const message = err instanceof UserError ? err.message : 'Could not reach the sheet. Try again in a minute.';

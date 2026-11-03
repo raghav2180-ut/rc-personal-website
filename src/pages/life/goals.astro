@@ -50,7 +50,7 @@ const summary = data?.revenue.find((r) => r.summary);
 
   {problem && <Problem message={problem} />}
 
-  {data && (
+  {data && me === 'Raghav' && (
     <>
       <div class="goal-cards">
         {data.progress.map((p) => {
@@ -122,23 +122,24 @@ const summary = data?.revenue.find((r) => r.summary);
         </div>
       </div>
 
-      {kajolGoals.length > 0 && (
-        <section class="card" aria-labelledby="kgh">
-          <div class="card-head" style="margin-bottom:12px">
-            <h2 id="kgh" style="font-size:22px">Kajol's goals</h2>
-            <span class="mono muted" style="font-size:12px">CO-FOUNDER &amp; CXO</span>
-          </div>
-          <div class="k-grid">
-            {kajolGoals.map((k) => (
-              <article class="k-card">
-                <span class="mono">{k.area}</span>
-                <h3>{k.goal}</h3>
-                {k.milestones && <p>{k.milestones}</p>}
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
     </>
   )}
+{data && me === 'Kajol' && (
+      <section class="card" aria-labelledby="kgh">
+        <div class="card-head" style="margin-bottom:12px">
+          <h2 id="kgh" style="font-size:22px">Your goals</h2>
+          <span class="mono muted" style="font-size:12px">FY 2026–27</span>
+        </div>
+        <div class="k-grid">
+          {kajolGoals.length === 0 && <p class="muted" style="margin:0">No goals yet. Add rows with Owner = Kajol in the sheet's Goals tab.</p>}
+          {kajolGoals.map((k) => (
+            <article class="k-card">
+              <span class="mono">{k.area}</span>
+              <h3>{k.goal}</h3>
+              {k.milestones && <p>{k.milestones}</p>}
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
 </LifeLayout>

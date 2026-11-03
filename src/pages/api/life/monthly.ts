@@ -1,9 +1,11 @@
+import { UserError } from '../../../lib/life/actions';
 import { saveMonth } from '../../../lib/life/actions';
 import { formRoute } from '../../../lib/life/http';
 
 export const prerender = false;
 
 export const POST = formRoute(async (form) => {
+  if (form.person() !== 'Raghav') throw new UserError('This part of the tracker is Raghav’s.');
   await saveMonth({
     key: form.str('month', 7),
     movements: form.str('movements', 20000),

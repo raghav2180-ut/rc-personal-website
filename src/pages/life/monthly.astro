@@ -8,6 +8,8 @@ import { errorMessage, lifeContext } from '../../lib/life/page';
 export const prerender = false;
 
 const { me, flash, href, here } = lifeContext(Astro);
+// The monthly log is Raghav's company log.
+if (me !== 'Raghav') return Astro.redirect('/life');
 const today = todayIST();
 
 let data: Awaited<ReturnType<typeof loadMonthly>> | null = null;

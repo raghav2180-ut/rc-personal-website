@@ -1,8 +1,9 @@
 ---
 import LifeLayout from '../../layouts/LifeLayout.astro';
-import PersonSwitch from '../../components/life/PersonSwitch.astro';
 import Problem from '../../components/life/Problem.astro';
-import { FY_GOALS, loadWeek, SCORE_AREAS, STATUSES, WEEKLY_CAP } from '../../lib/life/data';
+import SaturdayReview from '../../components/life/SaturdayReview.astro';
+import { loadReview } from '../../lib/life/review';
+import { FY_GOALS, loadWeek, STATUSES, WEEKLY_CAP } from '../../lib/life/data';
 import { addDays, dayMonth, isIso, isoWeek, monthName, parts, shortDay, todayIST, weekStart } from '../../lib/life/dates';
 import { errorMessage, lifeContext } from '../../lib/life/page';
 
@@ -23,6 +24,17 @@ try {
   problem = errorMessage(err);
 }
 
+// The Saturday review is for this week or a past one, never a week still to come.
+let review: Awaited<ReturnType<typeof loadReview>> | null = null;
+let reviewProblem = '';
+if (data && week <= thisWeek) {
+  try {
+    review = await loadReview(person, week);
+  } catch (err) {
+    reviewProblem = errorMessage(err);
+  }
+}
+
 const sat = addDays(week, 5);
 const ps = parts(week);
 const pe = parts(sat);
@@ -37,15 +49,8 @@ const nextStatus = (s: string) => STATUSES[(STATUSES.indexOf(s as (typeof STATUS
 
 const goals = data?.summary.goals ?? [];
 const capCount = goals.length;
-const openSlots = Math.max(0, WEEKLY_CAP - (data?.nextWeekGoals.length ?? 0));
-const reviewSlots = Math.min(3, openSlots);
-const scoreTag = (i: number) => {
-  const s = data?.lastScores;
-  return s && s.values[i] !== null ? `LAST: ${s.values[i]} · ${dayMonth(s.date).toUpperCase()}` : 'NOT SCORED YET';
-};
 const cellClass = (v: string) => (v === 'Yes' ? 'sq y' : v === 'No' ? 'sq n' : 'sq');
 const word = (v: string) => (v === 'Yes' ? 'yes' : v === 'No' ? 'no' : 'not yet');
-const placeholders = ['e.g. Send the JKLU proposal before mid-Nov talks', 'Goal 2', 'Goal 3', 'Goal 4', 'Goal 5'];
 ---
 <LifeLayout title="Week" active="week" name={me} flash={flash} href={href}>
   <header class="l-head">
@@ -54,7 +59,6 @@ const placeholders = ['e.g. Send the JKLU proposal before mid-Nov talks', 'Goal 
       <h1>{isThisWeek ? 'This week' : week > thisWeek ? 'Next week' : `Week of ${dayMonth(week)}`}</h1>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      <PersonSwitch person={person} me={me} path="/life/week" params={isThisWeek ? {} : { w: week }} />
       <a class="btn-ghost" href={weekLink(prevWeek)} aria-label="Previous week">← {dayMonth(prevWeek)}</a>
       <a class="btn-ghost" href={weekLink(nextWeek)} aria-label="Next week" aria-disabled={nextWeek > addDays(thisWeek, 7) ? 'true' : undefined}>{dayMonth(nextWeek)} →</a>
     </div>
@@ -89,6 +93,9 @@ const placeholders = ['e.g. Send the JKLU proposal before mid-Nov talks', 'Goal 
               <div class="body">
                 <span class="area">{g.fy || 'No FY goal'}</span>
                 <span class="goal">{g.goal}</span>
+                {(g.day || g.firstStep || g.priority) && (
+                  <span class="remark">{g.priority && <b class="mono">{g.priority.toUpperCase()} · </b>}{g.day && `${shortDay(g.day)} deep work`}{g.day && g.firstStep && ' · '}{g.firstStep && `First step: ${g.firstStep}`}</span>
+                )}
                 {g.remarks && <span class="remark">{g.remarks}</span>}
               </div>
               <form method="post" action="/api/life/weekly" data-enhance>
@@ -171,87 +178,8 @@ const placeholders = ['e.g. Send the JKLU proposal before mid-Nov talks', 'Goal 
         </section>
       )}
 
-      <section class="card review stack" aria-labelledby="rvh" id="review" data-busy>
-        <div class="card-head">
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <span class="eyebrow" style="color:var(--color-stamp)">SATURDAY {dayMonth(sat).toUpperCase()} · 4:00–5:00</span>
-            <h2 id="rvh">Saturday review</h2>
-          </div>
-          <span class="muted" style="font-size:14px">About 30 minutes</span>
-        </div>
-
-        <form method="post" action="/api/life/review" data-enhance class="stack">
-          <input type="hidden" name="week" value={week} />
-          <input type="hidden" name="person" value={person} />
-          <input type="hidden" name="next" value={`${here}#review`} />
-
-          <div class="stack-sm">
-            <h3><span class="mono">1</span>Update the numbers</h3>
-            <div class="grid-150">
-              {data.progress.map((p) => (
-                <label class="numbox">{p.label}
-                  <input type="hidden" name="numberRow" value={p.row} />
-                  <input type="number" step="any" name={`number-${p.row}`} value={p.current} />
-                  <small class="mono muted" style="font-weight:400;font-size:11px">TARGET {p.target}</small>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div class="stack-sm">
-            <h3><span class="mono">2</span>Life scores, 1 to 10</h3>
-            <div class="grid-150">
-              {SCORE_AREAS.map((area, i) => (
-                <label class="label scorebox" style="font-size:14px">{area}
-                  <input type="number" min="1" max="10" name={`score-${i}`} value={data!.lastScores?.values[i] ?? ''} />
-                  <small>{scoreTag(i)}</small>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div class="stack-sm">
-            <h3><span class="mono">3</span>What slipped, and why?</h3>
-            <textarea class="field" name="slipped" rows="3" aria-label="What slipped, and why?" placeholder="The goal that didn't happen and what got in the way"></textarea>
-          </div>
-
-          <div class="stack-sm">
-            <h3><span class="mono">4</span>Next week's goals ({dayMonth(data.nextWeek)} – {dayMonth(addDays(data.nextWeek, 5))})</h3>
-            {data.nextWeekGoals.length > 0 && (
-              <p class="muted" style="margin:0;font-size:14px">Already set: {data.nextWeekGoals.map((g) => g.goal).join(' · ')}</p>
-            )}
-            {Array.from({ length: openSlots }, (_, i) => (
-              <div class="next-slot" hidden={i >= reviewSlots} data-slot>
-                <label class="label fy">FY goal
-                  <select class="field" name="fy"><option value="">Pick one</option>{FY_GOALS.map((f) => <option>{f}</option>)}</select>
-                </label>
-                <label class="label g">Goal {data!.nextWeekGoals.length + i + 1}
-                  <input class="field" type="text" name="goal" maxlength="300" placeholder={placeholders[i]} />
-                </label>
-              </div>
-            ))}
-            {openSlots > reviewSlots && (
-              <button type="button" class="btn-dashed" style="align-self:flex-start" data-more-slots>+ Add goal (up to {WEEKLY_CAP})</button>
-            )}
-            {openSlots === 0 && <p class="muted" style="margin:0;font-size:14px">Next week is already at the cap of {WEEKLY_CAP}.</p>}
-          </div>
-
-          <div class="review-foot">
-            <span class="muted" style="font-size:14px">Saves to Goals, Scores and Weekly in one go.</span>
-            <button type="submit" class="btn">Finish review</button>
-          </div>
-        </form>
-      </section>
+      {review ? <SaturdayReview data={review} here={here} /> : reviewProblem && <Problem message={reviewProblem} />}
     </>
   )}
 </LifeLayout>
 
-<script>
-  document.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('[data-more-slots]');
-    if (!btn) return;
-    const hidden = btn.parentElement?.querySelector<HTMLElement>('[data-slot][hidden]');
-    if (hidden) hidden.hidden = false;
-    if (!btn.parentElement?.querySelector('[data-slot][hidden]')) (btn as HTMLElement).hidden = true;
-  });
-</script>

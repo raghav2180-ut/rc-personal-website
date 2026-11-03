@@ -1,0 +1,324 @@
+---
+import { AREAS, BIG_ROCKS, GOAL_AREAS, NUMBERS, RESULTS, WHY, reviewValue, type loadReview } from '../../lib/life/review';
+import { WEEKLY_CAP } from '../../lib/life/data';
+import { addDays, dayMonth, shortDay } from '../../lib/life/dates';
+
+interface Props {
+  data: Awaited<ReturnType<typeof loadReview>>;
+  here: string;
+}
+const { data, here } = Astro.props;
+const r = data.review;
+const done = (n: number) => !!r?.steps.has(n);
+const firstOpen = [1, 2, 3, 4, 5].find((n) => !done(n)) ?? 0;
+const v = (h: string) => reviewValue(r, h);
+const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
+// After a save, land on the step that comes next.
+const next = (n: number) => `${here}#${n < 5 ? `review-${n + 1}` : 'review'}`;
+const nextDays = [0, 1, 2, 3, 4, 5].map((i) => addDays(data.nextWeek, i));
+const now = data.now;
+
+// Step 3: scores to show — this week's if saved, else last week's as a start.
+const scoreNow = data.thisScore?.values ?? data.lastScore?.values ?? AREAS.map(() => null);
+const scoreLast = data.lastScore?.values ?? AREAS.map(() => null);
+const lowest = (() => {
+  const vals = (data.thisScore?.values ?? data.lastScore?.values ?? []).map((x, i) => ({ x, i })).filter((o) => o.x !== null) as { x: number; i: number }[];
+  if (!vals.length) return null;
+  return vals.sort((a, b) => a.x - b.x)[0].i;
+})();
+
+const openGoals = data.goals;
+const decided = (g: (typeof openGoals)[number]) => ['Done', 'Partially done', 'Not done'].includes(g.status);
+const nextSlots = Math.max(0, WEEKLY_CAP - data.nextGoals.length);
+const placeholders = ['The most important outcome of the week', 'Second big goal', 'Third big goal', 'Extra (optional)', 'Extra (optional)'];
+const steps = [
+  { n: 1, title: 'Look back', mins: 5 },
+  { n: 2, title: 'Close every goal', mins: 5 },
+  { n: 3, title: 'Vision check', mins: 7 },
+  { n: 4, title: 'The numbers', mins: 5 },
+  { n: 5, title: 'Plan next week', mins: 8 },
+];
+---
+<section class="card review2" aria-labelledby="rvh" id="review">
+  <div class="card-head">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <span class="eyebrow" style="color:var(--color-stamp)">SATURDAY {dayMonth(data.sat).toUpperCase()} · ABOUT 30 MINUTES</span>
+      <h2 id="rvh">Saturday review</h2>
+    </div>
+    <ol class="rv-steps" aria-label="Progress">
+      {steps.map((s) => <li class:list={{ on: done(s.n) }}><a href={`#review-${s.n}`}>{done(s.n) ? '✓' : s.n}</a><span>{s.title}</span></li>)}
+    </ol>
+  </div>
+  <p class="sub" style="margin-top:8px">Close the week honestly, check it against Vision 2029, and set up next week so it actually happens. Each step saves on its own.</p>
+
+  <!-- 1 Look back -->
+  <details class="rv-step" id="review-1" open={firstOpen === 1}>
+    <summary><span class="rv-n">1</span><b>Look back</b><span class="rv-meta">{done(1) ? 'Saved' : '5 min'}</span></summary>
+    <div class="rv-body" data-busy>
+      <div class="rv-score">
+        <div><b>{now.goalsDone}<small>/{now.goals}</small></b><span>Weekly goals done</span></div>
+        <div><b>{now.top3Done}<small>/{now.top3}</small></b><span>Top 3 done{now.top3Part ? ` · ${now.top3Part} partly` : ''}</span></div>
+        <div><b>{now.deep}<small>/6</small></b><span>Deep-work days</span></div>
+        <div><b>{now.walk}<small>/6</small></b><span>Walk days</span></div>
+        <div><b>{now.vision}<small>/6</small></b><span>Morning vision</span></div>
+      </div>
+      <div class="rv-trend" role="table" aria-label="Last 4 weeks">
+        <div role="row" class="rv-tr head"><span role="columnheader">Week of</span><span role="columnheader">Goals done</span><span role="columnheader">Top 3 done</span><span role="columnheader">Deep work</span></div>
+        {data.trend.map((t) => (
+          <div role="row" class:list={['rv-tr', { cur: t.week === data.week }]}>
+            <span role="cell">{dayMonth(t.week)}</span>
+            <span role="cell">{t.goals ? `${pct(t.goalsDone, t.goals)}%` : '–'}</span>
+            <span role="cell">{t.top3 ? `${pct(t.top3Done, t.top3)}%` : '–'}</span>
+            <span role="cell">{t.deep}/6</span>
+          </div>
+        ))}
+      </div>
+      {data.displaced.length > 0 && (
+        <p class="rv-line"><span class="cp-k">What pushed plans aside</span> {data.displaced.map(([k, n]) => <span class="rv-chip">{k} ×{n}</span>)}</p>
+      )}
+      <form method="post" action="/api/life/review" data-enhance class="rv-form">
+        <input type="hidden" name="step" value="1" /><input type="hidden" name="week" value={data.week} /><input type="hidden" name="next" value={next(1)} />
+        <div class="rv-two">
+          <div class="stack-sm">
+            <label class="label">Win of the week
+              <textarea class="field" name="win" rows="2" maxlength="1000" placeholder="The one win you're proudest of">{v('Win of the week')}</textarea>
+            </label>
+            {data.wins.length > 0 && (
+              <ul class="rv-refs">{data.wins.map((w) => <li><span class="mono">{shortDay(w.date)}</span> {w.text}</li>)}</ul>
+            )}
+          </div>
+          <div class="stack-sm">
+            <label class="label">Worry that keeps coming back
+              <textarea class="field" name="worry" rows="2" maxlength="1000" placeholder="Name it so next week can deal with it">{v('Worry that keeps coming back')}</textarea>
+            </label>
+            {data.worries.length > 0 && (
+              <ul class="rv-refs">{data.worries.map((w) => <li><span class="mono">{shortDay(w.date)}</span> {w.text}</li>)}</ul>
+            )}
+          </div>
+        </div>
+        <div class="rv-foot"><button class="btn" type="submit">Save and continue</button></div>
+      </form>
+    </div>
+  </details>
+
+  <!-- 2 Close every goal -->
+  <details class="rv-step" id="review-2" open={firstOpen === 2}>
+    <summary><span class="rv-n">2</span><b>Close every goal</b><span class="rv-meta">{done(2) ? 'Saved' : `${openGoals.length} goals · 5 min`}</span></summary>
+    <div class="rv-body" data-busy>
+      {openGoals.length === 0 ? (
+        <p class="muted" style="margin:0">No goals were set for this week.</p>
+      ) : (
+        <form method="post" action="/api/life/review" data-enhance class="rv-form">
+          <input type="hidden" name="step" value="2" /><input type="hidden" name="week" value={data.week} /><input type="hidden" name="next" value={next(2)} />
+          <p class="muted" style="margin:0;font-size:14px">Nothing rolls over quietly. Every unfinished goal gets a decision.</p>
+          {openGoals.map((g) => {
+            const res = decided(g) ? g.status : '';
+            const handTo = g.next.startsWith('Hand to:') ? g.next.replace('Hand to:', '').trim() : '';
+            const nx = g.next.startsWith('Hand to') ? 'Hand to' : g.next;
+            return (
+              <fieldset class="rv-goal" data-goal>
+                <input type="hidden" name="goalRow" value={g.row} />
+                <legend><span class="area">{g.fy || 'No area'}</span>{g.goal}</legend>
+                <div class="rv-goal-row">
+                  <div class="seg" role="radiogroup" aria-label="Result">
+                    {RESULTS.map((o) => (
+                      <label class="choice"><input type="radio" name={`result-${g.row}`} value={o.value} checked={res === o.value} required /><span class:list={['res', o.value === 'Done' ? 'yes' : o.value === 'Not done' ? 'no' : 'part']}>{o.label}</span></label>
+                    ))}
+                  </div>
+                  <label class="label sm" data-if-not-done>Why
+                    <select class="field" name={`why-${g.row}`}>
+                      <option value="">—</option>
+                      {WHY.map((w) => <option selected={g.why === w}>{w}</option>)}
+                    </select>
+                  </label>
+                  <label class="label sm" data-if-not-done>What next
+                    <select class="field" name={`next-${g.row}`}>
+                      <option value="">—</option>
+                      <option selected={nx === 'Carry over'}>Carry over</option>
+                      <option selected={nx === 'Drop'}>Drop</option>
+                      <option value="Hand to" selected={nx === 'Hand to'}>Hand to…</option>
+                    </select>
+                  </label>
+                  <label class="label sm" data-if-not-done>Hand to<input class="field" name={`hand-${g.row}`} value={handTo} maxlength="60" placeholder="Name" /></label>
+                </div>
+              </fieldset>
+            );
+          })}
+          <div class="rv-foot"><span class="muted" style="font-size:13px">“Carry over” adds the goal to next week.</span><button class="btn" type="submit">Save and continue</button></div>
+        </form>
+      )}
+    </div>
+  </details>
+
+  <!-- 3 Vision check -->
+  <details class="rv-step" id="review-3" open={firstOpen === 3}>
+    <summary><span class="rv-n">3</span><b>Vision check</b><span class="rv-meta">{done(3) ? 'Saved' : '7 min'}</span></summary>
+    <div class="rv-body" data-busy>
+      <form method="post" action="/api/life/review" data-enhance class="rv-form">
+        <input type="hidden" name="step" value="3" /><input type="hidden" name="week" value={data.week} /><input type="hidden" name="next" value={next(3)} />
+        <p class="muted" style="margin:0;font-size:14px">Score each part of your 2029 life from 1 to 10, then one line on what moved it closer this week.</p>
+        {AREAS.map((a, i) => {
+          const last = scoreLast[i];
+          const cur = scoreNow[i];
+          const arrow = data.thisScore && last !== null && cur !== null ? (cur > last ? '▲' : cur < last ? '▼' : '=') : '';
+          return (
+            <div class:list={['rv-area', { low: lowest === i }]}>
+              <div class="rv-area-head">
+                <b>{a.name}</b>
+                {lowest === i && <span class="rv-flag">LOWEST · PUT ONE GOAL ON IT</span>}
+                <span class="muted rv-2029">2029: {a.vision}</span>
+              </div>
+              <div class="rv-area-row">
+                <label class="label sm">Score
+                  <input class="field rv-num" type="number" min="1" max="10" name={`score-${i}`} value={cur ?? ''} />
+                  <small>{last !== null ? `LAST ${last}${arrow ? ` ${arrow}` : ''}` : 'FIRST TIME'}</small>
+                </label>
+                <label class="label sm grow">What moved me closer this week?
+                  <input class="field" name={`closer-${i}`} maxlength="500" value={v(`Closer: ${a.name}`)} placeholder="One line, or leave empty" />
+                </label>
+              </div>
+            </div>
+          );
+        })}
+        <div class="rv-foot"><button class="btn" type="submit">Save and continue</button></div>
+      </form>
+    </div>
+  </details>
+
+  <!-- 4 Numbers -->
+  <details class="rv-step" id="review-4" open={firstOpen === 4}>
+    <summary><span class="rv-n">4</span><b>The numbers</b><span class="rv-meta">{done(4) ? 'Saved' : '5 min'}</span></summary>
+    <div class="rv-body" data-busy>
+      <form method="post" action="/api/life/review" data-enhance class="rv-form">
+        <input type="hidden" name="step" value="4" /><input type="hidden" name="week" value={data.week} /><input type="hidden" name="next" value={next(4)} />
+        <p class="muted" style="margin:0;font-size:14px">What came in this week. Add a note to each: who, which deal, what's close.</p>
+        {NUMBERS.map((n) => (
+          <div class="rv-numrow">
+            <label class="label sm">{n.label}
+              <span class="rv-unit">{n.unit && <i>{n.unit}</i>}<input class="field rv-num" name={`num-${n.key}`} inputmode="decimal" value={v(n.label)} placeholder="0" /></span>
+            </label>
+            <label class="label sm grow">Remarks
+              <input class="field" name={`note-${n.key}`} maxlength="500" value={v(`${n.label}: note`)} placeholder="Notes" />
+            </label>
+          </div>
+        ))}
+        {data.progress.length > 0 && (
+          <details class="rv-fy">
+            <summary>FY totals: change only if they moved</summary>
+            <div class="grid-150" style="margin-top:10px">
+              {data.progress.map((p) => (
+                <label class="numbox">{p.label}
+                  <input type="hidden" name="fyRow" value={p.row} />
+                  <input type="number" step="any" name={`fy-${p.row}`} value={p.current} />
+                  <small class="mono muted" style="font-weight:400;font-size:11px">TARGET {p.target}</small>
+                </label>
+              ))}
+            </div>
+          </details>
+        )}
+        <div class="rv-foot"><button class="btn" type="submit">Save and continue</button></div>
+      </form>
+    </div>
+  </details>
+
+  <!-- 5 Plan next week -->
+  <details class="rv-step" id="review-5" open={firstOpen === 5 || firstOpen === 0}>
+    <summary><span class="rv-n">5</span><b>Plan next week</b><span class="rv-meta">{done(5) ? 'Saved' : `${dayMonth(data.nextWeek)} – ${dayMonth(addDays(data.nextWeek, 5))} · 8 min`}</span></summary>
+    <div class="rv-body" data-busy>
+      <form method="post" action="/api/life/review" data-enhance class="rv-form">
+        <input type="hidden" name="step" value="5" /><input type="hidden" name="week" value={data.week} /><input type="hidden" name="next" value={next(5)} />
+        <label class="label">The ONE thing: if only one thing happens next week, what is it?
+          <input class="field rv-one" name="one" required maxlength="500" value={v('ONE thing')} />
+        </label>
+
+        <div class="stack-sm">
+          <h4 class="rv-h">Goals: {BIG_ROCKS} big goals, plus up to {WEEKLY_CAP - BIG_ROCKS} more</h4>
+          <p class="muted" style="margin:0;font-size:13px">Give each goal a day for its 9:30–11 deep-work block and a first step. At least one should be for health, family, money or brand.</p>
+          {data.nextGoals.map((g, i) => (
+            <div class="rv-plan">
+              <input type="hidden" name="erow" value={g.row} />
+              <span class="rv-rank">{i < BIG_ROCKS ? `BIG ${i + 1}` : 'EXTRA'}</span>
+              <label class="label sm area">Area
+                <select class="field" name={`earea-${g.row}`}>
+                  {g.fy && !GOAL_AREAS.includes(g.fy) && <option selected>{g.fy}</option>}
+                  {GOAL_AREAS.map((a) => <option selected={a === g.fy}>{a}</option>)}
+                </select>
+              </label>
+              <label class="label sm grow">Goal<input class="field" name={`egoal-${g.row}`} value={g.goal} maxlength="300" /></label>
+              <label class="label sm day">Day
+                <select class="field" name={`eday-${g.row}`}><option value="">—</option>{nextDays.map((d) => <option value={d} selected={g.day === d}>{shortDay(d)}</option>)}</select>
+              </label>
+              <label class="label sm grow">First step<input class="field" name={`estep-${g.row}`} value={g.firstStep} maxlength="300" /></label>
+              <label class="cp-check small"><input type="checkbox" name={`eremove-${g.row}`} value="yes" /> Remove</label>
+              {g.remarks && <span class="muted rv-note">{g.remarks}</span>}
+            </div>
+          ))}
+          {Array.from({ length: nextSlots }, (_, k) => {
+            const i = data.nextGoals.length + k;
+            return (
+              <div class="rv-plan" hidden={k >= Math.max(1, BIG_ROCKS - data.nextGoals.length) && k > 0 ? true : undefined} data-slot>
+                <span class="rv-rank">{i < BIG_ROCKS ? `BIG ${i + 1}` : 'EXTRA'}</span>
+                <label class="label sm area">Area
+                  <select class="field" name="area"><option value="">Pick one</option>{GOAL_AREAS.map((a) => <option>{a}</option>)}</select>
+                </label>
+                <label class="label sm grow">Goal<input class="field" name="goal" maxlength="300" placeholder={placeholders[i]} /></label>
+                <label class="label sm day">Day
+                  <select class="field" name="day"><option value="">—</option>{nextDays.map((d) => <option value={d}>{shortDay(d)}</option>)}</select>
+                </label>
+                <label class="label sm grow">First step<input class="field" name="firstStep" maxlength="300" placeholder="The very first action" /></label>
+              </div>
+            );
+          })}
+          {nextSlots > 0 && <button type="button" class="btn-dashed" style="align-self:flex-start" data-more-slots>+ Add a goal</button>}
+          <label class="cp-check small"><input type="checkbox" name="workOnly" value="yes" /> Work-only week (skip the health, family, money or brand goal)</label>
+        </div>
+
+        <div class="rv-two">
+          <label class="label">Say no to: one thing I won't do next week
+            <input class="field" name="sayNo" maxlength="500" value={v('Say no to')} />
+          </label>
+          <label class="label">Energy right now (1–10)
+            <input class="field rv-num" type="number" min="1" max="10" name="energy" value={v('Energy')} />
+          </label>
+        </div>
+        <label class="label">One lesson from this week
+          <input class="field" name="lesson" maxlength="1000" value={v('Lesson')} />
+        </label>
+        <label class="label hand-q">What would the 2029 version of me do differently next week?
+          <textarea class="field" name="future" rows="2" maxlength="1000">{v('What 2029 me would do differently')}</textarea>
+        </label>
+        <div class="rv-foot">
+          <span class="muted" style="font-size:13px">Saves next week's goals to the Weekly tab.</span>
+          <button class="btn" type="submit">Finish review</button>
+        </div>
+        {done(5) && v('Summary') && <p class="rv-summary"><span class="cp-k">This week in one line</span> {v('Summary')}</p>}
+      </form>
+    </div>
+  </details>
+</section>
+
+<script>
+  // Show "why / what next" only for goals that weren't done, and reveal extra goal slots.
+  const sync = (root: ParentNode = document) => {
+    root.querySelectorAll<HTMLElement>('[data-goal]').forEach((fs) => {
+      const picked = fs.querySelector<HTMLInputElement>('input[type=radio]:checked')?.value;
+      const show = picked && picked !== 'Done';
+      fs.querySelectorAll<HTMLElement>('[data-if-not-done]').forEach((el) => (el.hidden = !show));
+      const next = fs.querySelector<HTMLSelectElement>('select[name^="next-"]')?.value;
+      const hand = fs.querySelector<HTMLElement>('input[name^="hand-"]')?.closest('label');
+      if (hand) hand.hidden = !show || next !== 'Hand to';
+    });
+  };
+  sync();
+  document.addEventListener('change', (e) => {
+    if ((e.target as HTMLElement).closest('[data-goal]')) sync();
+  });
+  new MutationObserver(() => sync()).observe(document.body, { childList: true, subtree: true });
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-more-slots]');
+    if (!btn) return;
+    const hidden = btn.parentElement?.querySelector<HTMLElement>('[data-slot][hidden]');
+    if (hidden) hidden.hidden = false;
+    if (!btn.parentElement?.querySelector('[data-slot][hidden]')) (btn as HTMLElement).hidden = true;
+  });
+</script>

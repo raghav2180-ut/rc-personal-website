@@ -1,5 +1,5 @@
 import type { AstroGlobal } from 'astro';
-import { isPerson, personForEmail, type Person } from './env';
+import { personForEmail, type Person } from './env';
 
 const SAVED: Record<string, string> = {
   checkin: 'Check-in saved to the sheet',
@@ -27,6 +27,11 @@ const SAVED: Record<string, string> = {
   'goals-added': 'Goals added',
   nothing: 'Nothing new to add',
   review: 'Review saved: Goals, Scores and next week',
+  'review-1': 'Step 1 saved: look back',
+  'review-2': 'Step 2 saved: goals closed',
+  'review-3': 'Step 3 saved: vision check',
+  'review-4': 'Step 4 saved: numbers',
+  'review-5': 'Review complete. Next week is planned',
   month: 'Monthly log saved',
   measure: 'Saved',
   'migraine-attack': 'Attack saved to the diary',
@@ -44,8 +49,10 @@ export interface Flash {
 export function lifeContext(Astro: AstroGlobal) {
   const session = Astro.locals.session!;
   const me: Person = personForEmail(session.email);
-  const asked = Astro.url.searchParams.get('p');
-  const person: Person = isPerson(asked) ? asked : me;
+  // Each person only ever sees their own tracker (the Today screen also shows the
+  // other person's Top 3, read-only).
+  const person: Person = me;
+  const partner: Person = me === 'Raghav' ? 'Kajol' : 'Raghav';
 
   const saved = Astro.url.searchParams.get('saved');
   const error = Astro.url.searchParams.get('error');
@@ -58,7 +65,6 @@ export function lifeContext(Astro: AstroGlobal) {
   /** Keep the chosen person when moving between screens. */
   const href = (path: string, extra: Record<string, string> = {}) => {
     const params = new URLSearchParams(extra);
-    if (person !== me) params.set('p', person);
     const qs = params.toString();
     return qs ? `${path}?${qs}` : path;
   };
@@ -72,7 +78,7 @@ export function lifeContext(Astro: AstroGlobal) {
     return qs ? `?${qs}` : '';
   })();
 
-  return { session, me, person, flash, href, here };
+  return { session, me, person, partner, flash, href, here };
 }
 
 export function errorMessage(err: unknown): string {

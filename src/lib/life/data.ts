@@ -16,11 +16,11 @@ export const WEEKLY_CAP = 5;
 const R = {
   top3: 'Top3!A2:F',
   checkins: 'CheckIns!A2:K',
-  weekly: 'Weekly!A2:F',
+  weekly: 'Weekly!A2:K',
   scores: 'Scores!A1:I',
   goals: 'Goals!A1:K40',
   monthly: 'Monthly!A2:H',
-  vision: 'Vision!A1:E15',
+  vision: 'Vision!A1:G15',
 };
 
 const cell = (row: string[] | undefined, i: number) => (row?.[i] ?? '').toString().trim();
@@ -62,6 +62,11 @@ export interface WeeklyGoal {
   goal: string;
   status: string;
   remarks: string;
+  why: string; // G: why it wasn't done
+  next: string; // H: Carry over / Drop / Hand to: name
+  day: string; // I: planned day (YYYY-MM-DD)
+  firstStep: string; // J
+  priority: string; // K: Big / Extra
 }
 
 export interface ScoreEntry {
@@ -154,6 +159,11 @@ function parseWeekly(grid: Grid): WeeklyGoal[] {
         goal: cell(r, 3),
         status: cell(r, 4) || 'Not started',
         remarks: cell(r, 5),
+        why: cell(r, 6),
+        next: cell(r, 7),
+        day: cellToIso(cell(r, 8)) ?? '',
+        firstStep: cell(r, 9),
+        priority: cell(r, 10),
       };
     })
     .filter((x): x is WeeklyGoal => !!x);
@@ -292,7 +302,7 @@ function weekSummary(person: string, week: string, top3: Top3Item[], checkins: C
 
 // ---------------------------------------------------------------- screens ---
 
-export async function loadToday(person: Person, date = todayIST()) {
+export async function loadToday(person: Person, date = todayIST(), partner?: Person) {
   const [top3Grid, ciGrid, weeklyGrid] = await sheets().batchGet([R.top3, R.checkins, R.weekly]);
   const top3 = parseTop3(top3Grid);
   const checkins = parseCheckIns(ciGrid);
@@ -312,6 +322,7 @@ export async function loadToday(person: Person, date = todayIST()) {
     mainCount: main.length,
     focus: main.find((t) => t.done !== 'Yes') ?? null,
     nextNumber: items.reduce((m, t) => Math.max(m, t.n), 0) + 1,
+    partnerItems: partner ? top3.filter((t) => t.date === date && t.person === partner).sort((a, b) => a.n - b.n) : [],
   };
 }
 
@@ -365,7 +376,8 @@ export async function loadMonthly() {
 
 export async function loadVision(person: Person, date = todayIST()) {
   const [visionGrid, scoresGrid, ciGrid] = await sheets().batchGet([R.vision, R.scores, R.checkins]);
-  const paragraphs = visionGrid.map((r) => cell(r, 0)).filter(Boolean);
+  // Raghav's vision is in column A; Kajol's in column G.
+  const paragraphs = visionGrid.map((r) => cell(r, person === 'Kajol' ? 6 : 0)).filter(Boolean);
   const questionIndex = paragraphs.findIndex((p) => /^today'?s question/i.test(p));
   const question =
     questionIndex >= 0
@@ -376,7 +388,7 @@ export async function loadVision(person: Person, date = todayIST()) {
   // Scoreboard lives in Vision!C1:E (Measure, Today, 2029).
   const board = visionGrid
     .map((r, i) => ({ row: i + 1, label: cell(r, 2), now: cell(r, 3), target: cell(r, 4) }))
-    .filter((b, i) => i > 0 && b.label);
+    .filter((b, i) => i > 0 && b.label && person === 'Raghav');
 
   const scores = parseScores(scoresGrid).filter((s) => s.person === person);
   const checkins = parseCheckIns(ciGrid).filter((c) => c.person === person);
