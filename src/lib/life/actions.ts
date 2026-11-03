@@ -65,6 +65,38 @@ export async function addTop3(input: { date: string; person: Person; task: strin
   await s.append('Top3!A:F', [[input.date, input.person, n, text(label), '', fy]]);
 }
 
+export async function editTop3(input: {
+  row: number;
+  date: string;
+  person: Person;
+  task: string;
+  fy: string;
+  done: '' | 'Yes' | 'No' | 'Partial';
+}) {
+  const task = input.task.trim().replace(/\s*\(bonus\)\s*$/i, '');
+  if (!task) throw new UserError('The task can\'t be empty.');
+  const s = sheets();
+  const [top3Grid, ciGrid] = await s.batchGet([RANGES.top3, RANGES.checkins]);
+  const items = parseTop3(top3Grid);
+  const item = items.find((t) => t.row === input.row);
+  if (!item || item.date !== input.date || item.person !== input.person) {
+    throw new UserError('That task moved in the sheet. Refresh and try again.');
+  }
+  // Keep the "(bonus)" label on extra tasks, and keep an FY goal typed in the sheet
+  // even if it isn't one of the dropdown options.
+  const label = item.bonus ? `${task} (bonus)` : task;
+  const fy = FY_GOALS.includes(input.fy) || input.fy === item.fy ? input.fy : '';
+  item.done = input.done;
+
+  const updates: { range: string; values: (string | number)[][] }[] = [
+    { range: `Top3!D${item.row}:F${item.row}`, values: [[text(label), input.done, fy]] },
+  ];
+  const doneCount = items.filter((t) => t.date === input.date && t.person === input.person && !t.bonus && t.done === 'Yes').length;
+  const ci = parseCheckIns(ciGrid).find((c) => c.date === input.date && c.person === input.person);
+  if (ci) updates.push({ range: `CheckIns!D${ci.row}`, values: [[doneCount]] });
+  await s.batchUpdate(updates);
+}
+
 // --------------------------------------------------------------- Check-in ---
 
 export interface CheckInInput {
