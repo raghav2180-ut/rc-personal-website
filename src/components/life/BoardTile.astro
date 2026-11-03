@@ -1,0 +1,44 @@
+---
+import { checklistProgress, labelStyle, type Card } from '../../lib/life/board-model';
+import { dueState, formatDue } from '../../lib/life/board-view';
+import { todayIST } from '../../lib/life/dates';
+
+interface Props {
+  card: Card;
+  comments: number;
+  href: string;
+  hidden?: boolean;
+}
+const { card, comments, href, hidden = false } = Astro.props;
+const progress = checklistProgress(card);
+const due = dueState(card);
+const inTop3 = card.top3.startsWith(`${todayIST()}#`);
+---
+<li class:list={['tile', { complete: card.complete }]} data-card={card.id} data-pos={card.pos} draggable="true" hidden={hidden}>
+  <a href={href} class="tile-link" aria-label={`Open card: ${card.title}`}>
+    {card.labels.length > 0 && (
+      <span class="tile-labels">
+        {card.labels.map((l) => {
+          const s = labelStyle(l);
+          return <span class="lbl" style={`background:${s.color};color:${s.ink}`}>{l}</span>;
+        })}
+      </span>
+    )}
+    <span class="tile-title">
+      {card.complete && <span class="tick" aria-label="Complete">✓</span>}
+      {card.title}
+    </span>
+    {(card.due || card.desc || comments || progress.total || card.attachments.length || card.waiting || inTop3 || card.fy) && (
+      <span class="badges">
+        {card.due && <span class:list={['badge', 'due', due]} title="Due">◷ {formatDue(card.due)}</span>}
+        {card.desc && <span class="badge" title="Has a description" aria-label="Has a description">☰</span>}
+        {comments > 0 && <span class="badge" title="Comments">💬 {comments}</span>}
+        {progress.total > 0 && <span class:list={['badge', { done: progress.done === progress.total }]} title="Checklist">☑ {progress.done}/{progress.total}</span>}
+        {card.attachments.length > 0 && <span class="badge" title="Links and files">📎 {card.attachments.length}</span>}
+        {card.waiting && <span class="badge wait" title="Waiting on">⏳ {card.waiting}</span>}
+        {card.fy && <span class="badge fy">{card.fy}</span>}
+        {inTop3 && <span class="badge top3">TOP 3</span>}
+      </span>
+    )}
+  </a>
+</li>
