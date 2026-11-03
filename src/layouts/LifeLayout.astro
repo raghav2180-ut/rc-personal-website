@@ -3,6 +3,7 @@ import '../styles/global.css';
 import '../styles/life.css';
 import type { Flash } from '../lib/life/page';
 import { env } from '../lib/life/env';
+import Analytics from '@vercel/analytics/astro';
 import { canSeeMigraine } from '../lib/life/migraine';
 
 interface Props {
@@ -42,6 +43,7 @@ const links = [
     <title>{title} · {suite}</title>
   </head>
   <body class="life">
+    <Analytics />
     {bare ? (
       <slot />
     ) : (
