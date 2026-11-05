@@ -23,6 +23,8 @@ export interface SheetsClient {
   append(range: string, values: (string | number)[][], opts?: { raw?: boolean }): Promise<void>;
   /** Add a tab if the spreadsheet doesn't have one with this title yet. */
   ensureTab(title: string, header: string[]): Promise<void>;
+  /** Insert empty rows below a row (1-based), shifting everything under it down. */
+  insertRows(tab: string, afterRow: number, count: number): Promise<void>;
 }
 
 /** Which spreadsheet a client talks to, by the environment variable holding its ID. */
@@ -170,6 +172,18 @@ const googleClient = (sheetVar: SheetVar): SheetsClient => ({
     }
     tabsSeen.add(key);
   },
+  async insertRows(tab, afterRow, count) {
+    if (count < 1) return;
+    const meta = await call(sheetVar, '?fields=sheets.properties(sheetId,title)');
+    const sheet = (meta.sheets ?? []).find((sh: { properties: { title: string } }) => sh.properties.title === tab);
+    if (!sheet) throw new Error(`The sheet has no ${tab} tab.`);
+    await call(sheetVar, ':batchUpdate', {
+      method: 'POST',
+      body: JSON.stringify({
+        requests: [{ insertDimension: { range: { sheetId: sheet.properties.sheetId, dimension: 'ROWS', startIndex: afterRow, endIndex: afterRow + count }, inheritFromBefore: true } }],
+      }),
+    });
+  },
 });
 
 // ------------------------------------------------------------------ Mock ---
@@ -254,6 +268,12 @@ const mock: SheetsClient = {
   async ensureTab(title, header) {
     const data = await mockSheets();
     data[title] ??= [header];
+  },
+  async insertRows(tab, afterRow, count) {
+    const data = await mockSheets();
+    const grid = (data[tab] ??= []);
+    while (grid.length < afterRow) grid.push([]);
+    grid.splice(afterRow, 0, ...Array.from({ length: count }, () => []));
   },
 };
 

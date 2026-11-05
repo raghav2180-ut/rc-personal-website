@@ -1,0 +1,56 @@
+---
+/** A form that adds goals to an FY or quarter table (creating the table if needed). */
+import type { Person } from '../../lib/life/env';
+
+interface Props {
+  me: Person;
+  kind: 'FY' | 'Q';
+  fy: string;
+  q: number | null;
+  label: string; // "Q4" / "FY 2027–28"
+  rows: { area: string; owner: string; goal: string; baseline: string }[];
+  blanks?: number;
+  here: string;
+  submit?: string;
+}
+const { me, kind, fy, q, label, rows, blanks = 2, here, submit = `Save ${label} goals` } = Astro.props;
+const kajol = me === 'Kajol';
+const slots = [...rows, ...Array.from({ length: blanks }, () => ({ area: '', owner: kajol ? 'Kajol' : 'Raghav', goal: '', baseline: '' }))];
+const listId = `areas-${kind}-${q ?? fy}`;
+const ownerId = `owners-${kind}-${q ?? fy}`;
+---
+<form method="post" action="/api/life/goals" data-enhance class="gs-form">
+  <input type="hidden" name="action" value="add" />
+  <input type="hidden" name="kind" value={kind} />
+  <input type="hidden" name="fy" value={fy} />
+  {q !== null && <input type="hidden" name="q" value={q} />}
+  <input type="hidden" name="next" value={here} />
+  <datalist id={listId}>{['Colleges', 'Tech clients', 'SOT F.U.E.L', 'UMP Ultimate', 'UMP B2B', 'Revenue (₹L/month)', 'Team & ops'].map((a) => <option value={a} />)}</datalist>
+  {!kajol && <datalist id={ownerId}>{['Raghav', 'Raghav + Uttam', 'Uttam + Raghav', 'Uttam'].map((a) => <option value={a} />)}</datalist>}
+  {slots.map((r) => (
+    <div class:list={['gs-row', { kajol }]}>
+      <label class="label sm area">Area<input class="field" name="area" list={listId} value={r.area} maxlength="60" /></label>
+      {kajol ? <input type="hidden" name="owner" value="Kajol" /> : (
+        <label class="label sm owner">Owner<input class="field" name="owner" list={ownerId} value={r.owner} maxlength="60" /></label>
+      )}
+      <label class="label sm grow">Goal<input class="field" name="goal" value={r.goal} maxlength="300" placeholder={kind === 'Q' ? 'e.g. 25 new UMP Ultimate closes' : 'e.g. Grow F.U.E.L from 30 to 60'} /></label>
+      {kajol ? (
+        <>
+          <input type="hidden" name="baseline" value="" />
+          <input type="hidden" name="target" value="" />
+          <label class="label sm grow">Steps, each with a date<input class="field" name="milestones" maxlength="1000" placeholder="SOPs by 30 Nov; dry run by 31 Jan" /></label>
+        </>
+      ) : (
+        <>
+          <label class="label sm num">{kind === 'Q' ? 'Start' : 'Baseline'}<input class="field" name="baseline" inputmode="decimal" value={r.baseline} /></label>
+          <label class="label sm num">Target<input class="field" name="target" inputmode="decimal" /></label>
+          <input type="hidden" name="milestones" value="" />
+        </>
+      )}
+    </div>
+  ))}
+  <div class="rv-foot">
+    <span class="muted" style="font-size:13px">Empty rows are skipped. {kajol ? '' : 'Leave Target empty for a goal without a number.'}</span>
+    <button class="btn" type="submit">{submit}</button>
+  </div>
+</form>
