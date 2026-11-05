@@ -1,0 +1,57 @@
+---
+/** An editable list of Life Vision or Bucket list lines. */
+import type { Item, ListName } from '../../lib/life/lifevision';
+import { dayMonth } from '../../lib/life/dates';
+
+interface Props {
+  items: Item[];
+  list: ListName;
+  here: string;
+  numbered?: boolean;
+  checks?: boolean;
+  placeholder: string;
+}
+const { items, list, here, numbered = false, checks = false, placeholder } = Astro.props;
+---
+<ol class:list={['lv-list', { checks, numbered }]}>
+  {items.map((it, i) => (
+    <li class:list={{ done: it.done }} data-busy>
+      {checks && (
+        <form method="post" action="/api/life/lifevision" data-enhance>
+          <input type="hidden" name="action" value="toggle" /><input type="hidden" name="id" value={it.id} /><input type="hidden" name="next" value={here} />
+          <button type="submit" class="g-tick" aria-label={it.done ? `Mark not done: ${it.text}` : `Mark done: ${it.text}`}>{it.done ? '✓' : ''}</button>
+        </form>
+      )}
+      {numbered && <span class="lv-n mono">{i + 1}</span>}
+      <div class="lv-body">
+        <span class="lv-text">{it.text}</span>
+        {checks && it.done && it.doneOn && <small class="mono">DONE {dayMonth(it.doneOn).toUpperCase()} {it.doneOn.slice(0, 4)}</small>}
+        <details class="lv-edit">
+          <summary>Edit</summary>
+          <form method="post" action="/api/life/lifevision" data-enhance class="lv-form">
+            <input type="hidden" name="action" value="edit" /><input type="hidden" name="id" value={it.id} /><input type="hidden" name="next" value={here} />
+            <input class="field" name="text" value={it.text} maxlength="500" required aria-label="Edit line" />
+            <button class="btn" type="submit">Save</button>
+          </form>
+          <div class="lv-tools">
+            {['up', 'down'].map((dir) => (
+              <form method="post" action="/api/life/lifevision" data-enhance>
+                <input type="hidden" name="action" value={dir} /><input type="hidden" name="id" value={it.id} /><input type="hidden" name="next" value={here} />
+                <button type="submit" class="link-btn" disabled={(dir === 'up' && i === 0) || (dir === 'down' && i === items.length - 1)}>{dir === 'up' ? '↑ Move up' : '↓ Move down'}</button>
+              </form>
+            ))}
+            <form method="post" action="/api/life/lifevision" data-enhance>
+              <input type="hidden" name="action" value="delete" /><input type="hidden" name="id" value={it.id} /><input type="hidden" name="next" value={here} />
+              <button type="submit" class="link-btn danger">Delete</button>
+            </form>
+          </div>
+        </details>
+      </div>
+    </li>
+  ))}
+</ol>
+<form method="post" action="/api/life/lifevision" data-enhance class="lv-form lv-add" data-busy>
+  <input type="hidden" name="action" value="add" /><input type="hidden" name="list" value={list} /><input type="hidden" name="next" value={here} />
+  <input class="field" name="text" maxlength="500" required placeholder={placeholder} aria-label={placeholder} />
+  <button class="btn" type="submit">Add</button>
+</form>

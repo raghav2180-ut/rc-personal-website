@@ -1,0 +1,15 @@
+---
+interface Props {
+  active: 'life' | '2029' | 'bucket';
+  href: (p: string) => string;
+}
+const { active, href } = Astro.props;
+const tabs = [
+  { key: 'life', label: 'Life Vision', path: '/life/vision' },
+  { key: '2029', label: 'Vision 2029', path: '/life/vision/2029' },
+  { key: 'bucket', label: 'Bucket list', path: '/life/vision/bucket' },
+];
+---
+<nav class="v-tabs" aria-label="Life Vision">
+  {tabs.map((t) => <a href={href(t.path)} aria-current={active === t.key ? 'page' : undefined}>{t.label}</a>)}
+</nav>

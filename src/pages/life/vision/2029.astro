@@ -1,9 +1,10 @@
 ---
-import LifeLayout from '../../layouts/LifeLayout.astro';
-import Problem from '../../components/life/Problem.astro';
-import { loadVision, SCORE_AREAS } from '../../lib/life/data';
-import { addDays, dayMonth, todayIST, weekday } from '../../lib/life/dates';
-import { errorMessage, lifeContext } from '../../lib/life/page';
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import VisionTabs from '../../../components/life/VisionTabs.astro';
+import { loadVision, SCORE_AREAS } from '../../../lib/life/data';
+import { addDays, dayMonth, todayIST, weekday } from '../../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
 
 export const prerender = false;
 
@@ -29,9 +30,10 @@ const streakWord = (s: { sunday: boolean; value: string; hasCheckIn: boolean }) 
   <header class="l-head">
     <div>
       <span class="eyebrow">OCTOBER 2029 · READ IT EVERY MORNING</span>
-      <h1>Vision 2029</h1>
+      <h1>Life Vision</h1>
     </div>
   </header>
+  <VisionTabs active="2029" href={href} />
 
   {problem && <Problem message={problem} />}
 
@@ -39,9 +41,23 @@ const streakWord = (s: { sunday: boolean; value: string; hasCheckIn: boolean }) 
     <div class="l-row">
       <article class="card vision-text" aria-label="Vision">
         {data.text.length ? data.text.map((p) => <p>{p}</p>) : (
-          <p class="muted" style="font-size:17px">Your 2029 vision isn't written yet. Write it in the sheet's Vision tab, column G, one paragraph per row, and it will show here every morning.</p>
+          <p class="muted" style="font-size:17px">Your 2029 vision isn't written yet. Use Edit below to write it, and it will show here every morning.</p>
         )}
         <p class="q">{data.question}</p>
+        <details class="lv-edit v29-edit" data-busy>
+          <summary>Edit</summary>
+          <form method="post" action="/api/life/lifevision" data-enhance class="stack-sm">
+            <input type="hidden" name="action" value="vision2029" />
+            <input type="hidden" name="next" value={here} />
+            <label class="label">Your 2029 vision. Leave a blank line between paragraphs.
+              <textarea class="field" name="body" rows="14" maxlength="12000" required>{data.text.join('\n\n')}</textarea>
+            </label>
+            <label class="label">Today's question
+              <input class="field" name="question" maxlength="500" value={data.question} />
+            </label>
+            <div class="rv-foot"><button class="btn" type="submit">Save vision</button></div>
+          </form>
+        </details>
       </article>
 
       <aside class="l-col-1" style="flex:2 1 340px">
