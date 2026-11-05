@@ -45,12 +45,7 @@ export const POST = formRoute(async (form) => {
       break;
     case '4': {
       const numbers = Object.fromEntries(NUMBERS.map((n) => [n.key, { value: form.str(`num-${n.key}`, 20), note: form.str(`note-${n.key}`, 500) }]));
-      const fy = new Map<number, number>();
-      for (const r of form.all('fyRow')) {
-        const v = form.num(`fy-${r}`);
-        if (v !== null) fy.set(Number(r), v);
-      }
-      await saveNumbers(person, week, numbers, fy);
+      await saveNumbers(person, week, numbers);
       break;
     }
     case '5': {
