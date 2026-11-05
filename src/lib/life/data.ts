@@ -2,15 +2,15 @@
  * Reads the Dream Life 2029 – Tracker sheet and shapes it for each screen.
  * Row numbers are kept on every record so writes can target the exact row.
  */
-import { addDays, cellToIso, cellToMonthKey, daysBetween, monthKeyOf, todayIST, weekday, weekStart } from './dates';
+import { addDays, cellToIso, cellToMonthKey, monthKeyOf, todayIST, weekday, weekStart } from './dates';
 import type { Person } from './env';
 import { sheets, type Grid } from './sheets';
+import { fyProgress, GOALS_RANGE } from './goals';
 
 export const FY_GOALS = ['Colleges', 'Tech clients', 'SOT F.U.E.L', 'UMP Ultimate', 'UMP B2B', 'Revenue', 'Team & ops', 'Personal'];
 export const STATUSES = ['Not started', 'In progress', 'Done', 'Partially done', 'Not done'] as const;
 export const DISPLACED = ['Nothing', 'Meetings', 'Team', 'Ops & admin', 'Travel', 'Other'];
 export const SCORE_AREAS = ['UnsaidTalks', 'Personal money', 'Family', 'Health & energy', 'Personal brand', 'Calm & confidence'];
-export const FY_END = '2027-03-31';
 export const WEEKLY_CAP = 5;
 
 const R = {
@@ -18,7 +18,6 @@ const R = {
   checkins: 'CheckIns!A2:K',
   weekly: 'Weekly!A2:K',
   scores: 'Scores!A1:I',
-  goals: 'Goals!A1:K40',
   monthly: 'Monthly!A2:H',
   vision: 'Vision!A1:G15',
 };
@@ -83,16 +82,6 @@ export interface Progress {
   current: number;
   target: number;
   pct: number;
-}
-
-export interface GoalRow {
-  row: number;
-  owner: string;
-  area: string;
-  goal: string;
-  milestones: string;
-  revenue: string;
-  notes: string;
 }
 
 export interface MonthEntry {
@@ -189,52 +178,6 @@ function num(v: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function parseGoals(grid: Grid) {
-  const progress: Progress[] = [];
-  const goals: GoalRow[] = [];
-  const revenue: { name: string; detail: string; note: string; summary: boolean }[] = [];
-  const collegePlan: { phase: string; target: string; check: string }[] = [];
-  let collegePlanTitle = '';
-  let collegeCheck = '';
-
-  // Progress block H1:K6 (row 1 is the header).
-  for (let i = 1; i < grid.length; i++) {
-    const label = cell(grid[i], 7);
-    if (!label) continue;
-    const current = num(cell(grid[i], 8));
-    const target = num(cell(grid[i], 9));
-    progress.push({ row: i + 1, label, current, target, pct: target ? Math.round((current / target) * 100) : 0 });
-  }
-
-  let section: 'goals' | 'revenue' | 'plan' = 'goals';
-  for (let i = 1; i < grid.length; i++) {
-    const r = grid[i];
-    const a = cell(r, 0);
-    const b = cell(r, 1);
-    if (/^revenue baseline/i.test(a)) {
-      section = 'revenue';
-      continue;
-    }
-    if (/^college goal plan/i.test(a)) {
-      section = 'plan';
-      collegePlanTitle = a;
-      continue;
-    }
-    if (section === 'goals') {
-      if (!a || !cell(r, 2)) continue;
-      goals.push({ row: i + 1, owner: a, area: b, goal: cell(r, 2), milestones: cell(r, 3), revenue: cell(r, 4), notes: cell(r, 5) });
-    } else if (section === 'revenue') {
-      if (!a) continue;
-      revenue.push({ name: a, detail: b, note: cell(r, 5), summary: /^summary/i.test(a) });
-    } else if (section === 'plan') {
-      if (!b) continue;
-      if (cell(r, 3)) collegeCheck = cell(r, 3);
-      collegePlan.push({ phase: b, target: cell(r, 2), check: cell(r, 3) });
-    }
-  }
-  return { progress, goals, revenue, collegePlan, collegePlanTitle, collegeCheck };
-}
-
 function parseMonthly(grid: Grid): MonthEntry[] {
   return grid
     .map((r, i) => {
@@ -327,12 +270,11 @@ export async function loadToday(person: Person, date = todayIST(), partner?: Per
 }
 
 export async function loadWeek(person: Person, week: string) {
-  const [top3Grid, ciGrid, weeklyGrid, scoresGrid, goalsGrid] = await sheets().batchGet([R.top3, R.checkins, R.weekly, R.scores, R.goals]);
+  const [top3Grid, ciGrid, weeklyGrid, scoresGrid] = await sheets().batchGet([R.top3, R.checkins, R.weekly, R.scores]);
   const top3 = parseTop3(top3Grid);
   const checkins = parseCheckIns(ciGrid);
   const weekly = parseWeekly(weeklyGrid);
   const scores = parseScores(scoresGrid).filter((s) => s.person === person);
-  const { progress } = parseGoals(goalsGrid);
   const summary = weekSummary(person, week, top3, checkins, weekly);
 
   // Share of weekly goals marked Done, for past weeks that had goals.
@@ -357,21 +299,15 @@ export async function loadWeek(person: Person, week: string) {
     year,
     typicalGoals: goalCounts.length ? goalCounts[Math.floor(goalCounts.length / 2)] : null,
     lastScores: scores[scores.length - 1] ?? null,
-    progress,
     nextWeek,
     nextWeekGoals: weekly.filter((g) => g.week === nextWeek && g.person === person),
     earliestWeek: weekly.filter((g) => g.person === person).reduce((m, g) => (g.week < m ? g.week : m), week),
   };
 }
 
-export async function loadGoals(date = todayIST()) {
-  const [goalsGrid] = await sheets().batchGet([R.goals]);
-  return { ...parseGoals(goalsGrid), daysLeft: Math.max(0, daysBetween(date, FY_END)) };
-}
-
 export async function loadMonthly() {
-  const [monthlyGrid, goalsGrid] = await sheets().batchGet([R.monthly, R.goals]);
-  return { months: parseMonthly(monthlyGrid), progress: parseGoals(goalsGrid).progress };
+  const [monthlyGrid, goalsGrid] = await sheets().batchGet([R.monthly, GOALS_RANGE]);
+  return { months: parseMonthly(monthlyGrid), progress: fyProgress(goalsGrid) };
 }
 
 export async function loadVision(person: Person, date = todayIST()) {
@@ -411,4 +347,4 @@ export async function loadVision(person: Person, date = todayIST()) {
 }
 
 /** For the Week page date picker and for writes. */
-export { parseTop3, parseCheckIns, parseWeekly, parseScores, parseMonthly, parseGoals, R as RANGES };
+export { parseTop3, parseCheckIns, parseWeekly, parseScores, parseMonthly, R as RANGES };

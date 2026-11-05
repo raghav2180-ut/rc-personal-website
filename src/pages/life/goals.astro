@@ -1,145 +1,194 @@
 ---
 import LifeLayout from '../../layouts/LifeLayout.astro';
 import Problem from '../../components/life/Problem.astro';
-import { loadGoals, type GoalRow, type Progress } from '../../lib/life/data';
+import GoalSetup from '../../components/life/GoalSetup.astro';
+import { daysBetween, isIso } from '../../lib/life/dates';
+import { fmt, loadGoalsPage, longDay, milestones, monthsLabel, pace, pct, periodLabel, type Goal, type Table } from '../../lib/life/goals';
 import { errorMessage, lifeContext } from '../../lib/life/page';
 
 export const prerender = false;
 
-const { me, flash, href } = lifeContext(Astro);
+const { me, flash, href, here } = lifeContext(Astro);
 
-let data: Awaited<ReturnType<typeof loadGoals>> | null = null;
+let data: Awaited<ReturnType<typeof loadGoalsPage>> | null = null;
 let problem = '';
 try {
-  data = await loadGoals();
+  // Local testing only: ?today=2027-03-20 shows the page as of that date.
+  const asOf = import.meta.env.DEV ? Astro.url.searchParams.get('today') : null;
+  data = await loadGoalsPage(me, isIso(asOf) ? asOf : undefined);
 } catch (err) {
   problem = errorMessage(err);
 }
 
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
-/** Match a progress line ("SOT F.U.E.L students") to its goal row ("SOT F.U.E.L"). */
-function goalFor(p: Progress, goals: GoalRow[]): GoalRow | undefined {
-  const key = norm(p.label);
-  return goals.find((g) => !/^kajol$/i.test(g.owner) && g.area && key.startsWith(norm(g.area)));
-}
-
-function pace(p: Progress, daysLeft: number): string {
-  const remaining = p.target - p.current;
-  if (remaining <= 0) return 'Target reached. Hold it there.';
-  const weeks = Math.max(daysLeft / 7, 1);
-  if (/revenue/i.test(p.label)) return `₹${Number(remaining.toFixed(2))}L a month still to find`;
-  const perWeek = remaining / weeks;
-  if (perWeek >= 0.75) return `${remaining} more · about ${Number(perWeek.toFixed(1))} a week`;
-  const every = Math.round(1 / perWeek);
-  return `${remaining} more · about 1 every ${every} weeks`;
-}
-
-const companyGoals = data?.goals.filter((g) => !/^kajol$/i.test(g.owner)) ?? [];
-const kajolGoals = data?.goals.filter((g) => /^kajol$/i.test(g.owner)) ?? [];
-const revenueLines = data?.revenue.filter((r) => !r.summary) ?? [];
-const summary = data?.revenue.find((r) => r.summary);
+const today = data?.today ?? '';
+const fy = data?.fy ?? null;
+const quarter = data?.quarter ?? null;
+const fyDays = data ? Math.max(0, daysBetween(today, data.fyKey.end)) : 0;
+const qDays = data ? Math.max(0, daysBetween(today, data.qKey.end)) : 0;
+const steps = (g: Goal, t: Table) => milestones(g.milestones, t);
+const nextStep = (g: Goal, t: Table) => steps(g, t).find((m) => !m.done);
+const dueText = (d: string | null) => {
+  if (!d) return '';
+  const n = daysBetween(today, d);
+  return n < 0 ? `${longDay(d).replace(/ \d{4}$/, '')} · ${-n} days late` : n === 0 ? 'Today' : `${longDay(d).replace(/ \d{4}$/, '')} · ${n} days`;
+};
+const result = (t: Table) => t.goals.filter((g) => g.target !== null).map((g) => `${g.area} ${fmt(g, g.current ?? 0)}/${fmt(g, g.target)}`).join(' · ');
+const width = (g: Goal) => Math.min(100, Math.max(0, pct(g) ?? 0));
 ---
 <LifeLayout title="Goals" active="goals" name={me} flash={flash} href={href}>
   <header class="l-head">
     <div>
-      <span class="eyebrow">FY 2026–27 · DEADLINE 31 MAR 2027 · <span class="hot">{data?.daysLeft ?? '–'} DAYS LEFT</span></span>
-      <h1>Goals</h1>
+      <span class="eyebrow">{data ? `${periodLabel(data.fyKey)} · DEADLINE ${longDay(data.fyKey.end).toUpperCase()} · ` : ''}<span class="hot">{fyDays} DAYS LEFT</span></span>
+      <h1>{me === 'Kajol' ? 'Your goals' : 'Goals'}</h1>
     </div>
-    <span class="mono muted" style="font-size:12px">NUMBERS UPDATE IN THE <a href={href('/life/week') + '#review'}>SATURDAY REVIEW</a></span>
   </header>
 
   {problem && <Problem message={problem} />}
 
-  {data && me === 'Raghav' && (
+  {data && (
     <>
-      <div class="goal-cards">
-        {data.progress.map((p) => {
-          const g = goalFor(p, companyGoals);
-          const pct = Math.min(100, p.pct);
-          return (
-            <section class="card goal-card" aria-label={p.label}>
-              <span class="mono lbl">{p.label}</span>
-              <div class="nums"><b>{p.current}</b><span>/ {p.target}</span></div>
-              <div class="meter" role="img" aria-label={`${p.pct}% of target`}><i class:list={{ hi: pct >= 60 }} style={`width:${pct}%`}></i></div>
-              <div class="row"><b>{p.pct}%</b><span class="muted">{g?.owner ?? 'Everyone'}</span></div>
-              <p>{pace(p, data!.daysLeft)}</p>
-            </section>
-          );
-        })}
-      </div>
+      {data.prompts.map((p) => (
+        <details class="card gs-banner" open={p.urgent}>
+          <summary>
+            <span class="eyebrow" style="color:var(--color-stamp)">{p.why.toUpperCase()}</span>
+            <b>Set {p.label} goals · {p.months}</b>
+            <span class="btn">Set goals</span>
+          </summary>
+          <GoalSetup me={me} kind={p.kind} fy={p.fy} q={p.q} label={p.label} rows={p.rows} blanks={p.rows.length ? 1 : 4} here={here} />
+        </details>
+      ))}
 
-      <div class="l-row">
-        <section class="card l-col-2" style="display:block" aria-labelledby="gdh">
-          <h2 id="gdh" style="font-size:22px;margin-bottom:8px">How each goal gets there</h2>
-          {companyGoals.map((g) => (
-            <article class="gd">
-              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-                <h3>{g.area}</h3>
-                <span class="pill">{g.owner.toUpperCase()}</span>
-              </div>
-              <p class="muted" style="margin:0;font-size:15px">{g.goal}</p>
-              <dl>
-                {g.milestones && <><dt>MILESTONES</dt><dd>{g.milestones}</dd></>}
-                {g.revenue && <><dt>REVENUE</dt><dd>{g.revenue}</dd></>}
-                {g.notes && <><dt>NOTES</dt><dd class="muted">{g.notes}</dd></>}
-              </dl>
-            </article>
-          ))}
-        </section>
-
-        <div class="l-col-1">
-          {revenueLines.length > 0 && (
-            <section class="card tight stack-sm" aria-labelledby="rvh">
-              <h2 id="rvh" style="font-size:20px">Monthly revenue</h2>
-              {revenueLines.map((r) => (
-                <div class="rev-row">
-                  <div>
-                    <span style="font-weight:600">{r.name}</span>
-                    <span class="note">{r.detail}</span>
-                    {r.note && <span class="note">{r.note}</span>}
+      <!-- FY goals -->
+      {fy && fy.goals.length > 0 && (
+        <section class="stack" aria-labelledby="fyh">
+          <div class="g-head">
+            <h2 id="fyh">{periodLabel(fy)} goals</h2>
+            <span class="mono muted">BY {longDay(fy.end).toUpperCase()}</span>
+          </div>
+          <div class="g-cards">
+            {fy.goals.map((g) => {
+              const p = pct(g);
+              const nx = nextStep(g, fy);
+              const numeric = g.target !== null;
+              return (
+                <section class="card g-card" aria-label={g.area}>
+                  <div class="g-top"><span class="mono">{g.area}</span><span class="muted">{g.owner}</span></div>
+                  <h3>{g.goal}</h3>
+                  {numeric ? (
+                    <>
+                      <div class="g-nums"><b>{fmt(g, g.current)}</b><span>/ {fmt(g, g.target)}</span>{p !== null && <i>{p}%</i>}</div>
+                      <div class="meter" role="img" aria-label={`${p ?? 0}% of target`}><i class:list={{ hi: (p ?? 0) >= 60 }} style={`width:${width(g)}%`}></i></div>
+                      <p class="g-pace">{pace(g, fy, today)}</p>
+                      {nx && <p class="g-next"><span class="cp-k">Next</span> {nx.text}</p>}
+                    </>
+                  ) : (
+                    <ul class="g-steps">
+                      {steps(g, fy).map((m, i) => (
+                        <li class:list={{ done: m.done, late: !m.done && m.due !== null && m.due < today }}>
+                          <form method="post" action="/api/life/goals" data-enhance>
+                            <input type="hidden" name="action" value="milestone" />
+                            <input type="hidden" name="row" value={g.row} />
+                            <input type="hidden" name="goal" value={g.goal} />
+                            <input type="hidden" name="i" value={i} />
+                            <input type="hidden" name="next" value={here} />
+                            <button type="submit" class="g-tick" aria-label={m.done ? `Mark not done: ${m.text}` : `Mark done: ${m.text}`}>{m.done ? '✓' : ''}</button>
+                          </form>
+                          <span>{m.text}{m.due && !m.done && <small>{dueText(m.due)}</small>}</span>
+                        </li>
+                      ))}
+                      {steps(g, fy).length === 0 && <li class="muted">No steps yet. Add them in the sheet, separated by “;”.</li>}
+                    </ul>
+                  )}
+                  {(numeric || g.revenue || g.notes) && (
+                  <div class="g-actions">
+                    {numeric && (
+                      <details class="g-update">
+                        <summary>Update</summary>
+                        <form method="post" action="/api/life/goals" data-enhance class="g-form">
+                          <input type="hidden" name="action" value="current" />
+                          <input type="hidden" name="row" value={g.row} />
+                          <input type="hidden" name="goal" value={g.goal} />
+                          <input type="hidden" name="next" value={here} />
+                          <label class="label sm">Current<input class="field" name="value" inputmode="decimal" value={g.current ?? ''} /></label>
+                          <button class="btn" type="submit">Save</button>
+                        </form>
+                      </details>
+                    )}
+                    {(numeric ? g.milestones : '') || g.revenue || g.notes ? (
+                      <details class="g-more">
+                        <summary>Details</summary>
+                        <dl>
+                          {numeric && g.milestones && <><dt>MILESTONES</dt><dd>{g.milestones}</dd></>}
+                          {g.baseline !== null && <><dt>BASELINE</dt><dd>{fmt(g, g.baseline)}</dd></>}
+                          {g.revenue && <><dt>REVENUE</dt><dd>{g.revenue}</dd></>}
+                          {g.notes && <><dt>NOTES</dt><dd>{g.notes}</dd></>}
+                        </dl>
+                      </details>
+                    ) : null}
                   </div>
-                </div>
-              ))}
-              {summary && (
-                <div class="rev-total">
-                  <span style="font-weight:800">Total</span>
-                  <span style="font-size:15px">{summary.detail}</span>
-                </div>
-              )}
-              {summary?.note && <div class="callout"><strong>{summary.note}</strong></div>}
-            </section>
-          )}
+                  )}
+                </section>
+              );
+            })}
+          </div>
+          <details class="g-add">
+            <summary class="btn-dashed" style="display:inline-flex;align-items:center">+ Add a goal</summary>
+            <GoalSetup me={me} kind="FY" fy={fy.fy} q={null} label={periodLabel(fy)} rows={[]} blanks={1} here={here} submit="Add goal" />
+          </details>
+        </section>
+      )}
 
-          {data.collegePlan.length > 0 && (
-            <section class="card tight stack-sm" aria-labelledby="cph">
-              <h2 id="cph" style="font-size:20px">{data.collegePlanTitle.replace(/\s*\(.*\)\s*$/, '') || 'College plan'}</h2>
-              {data.collegePlan.map((c) => (
-                <div class="plan-row"><b>{c.phase}</b><span>{c.target}</span></div>
-              ))}
-              {data.collegeCheck && <p class="hand" style="margin:4px 0 0;font-size:18px">Tuesday check: {data.collegeCheck.toLowerCase()}</p>}
-            </section>
-          )}
-        </div>
-      </div>
+      <!-- This quarter -->
+      {quarter && quarter.goals.length > 0 && (
+        <section class="card stack-sm" aria-labelledby="qh">
+          <div class="g-head">
+            <h2 id="qh">This quarter · {periodLabel(quarter)}</h2>
+            <span class="mono muted">{monthsLabel(quarter).toUpperCase()} · {qDays} DAYS LEFT</span>
+          </div>
+          {quarter.goals.map((g) => {
+            const p = pct(g);
+            return (
+              <div class="q-row">
+                <div class="q-goal"><span class="mono">{g.area}</span><span>{g.goal}</span></div>
+                {g.target !== null ? (
+                  <>
+                    <div class="q-num"><b>{fmt(g, g.current ?? 0)}</b> / {fmt(g, g.target)}</div>
+                    <div class="meter" role="img" aria-label={`${p ?? 0}% of target`}><i class:list={{ hi: (p ?? 0) >= 60 }} style={`width:${width(g)}%`}></i></div>
+                    <span class="q-pace">{pace({ ...g, current: g.current ?? 0 }, quarter, today)}</span>
+                    <details class="g-update">
+                      <summary>Update</summary>
+                      <form method="post" action="/api/life/goals" data-enhance class="g-form">
+                        <input type="hidden" name="action" value="current" />
+                        <input type="hidden" name="row" value={g.row} />
+                        <input type="hidden" name="goal" value={g.goal} />
+                        <input type="hidden" name="next" value={here} />
+                        <label class="label sm">Current<input class="field" name="value" inputmode="decimal" value={g.current ?? ''} /></label>
+                        <button class="btn" type="submit">Save</button>
+                      </form>
+                    </details>
+                  </>
+                ) : <span class="muted q-pace">{nextStep(g, quarter)?.text ?? ''}</span>}
+              </div>
+            );
+          })}
+          <details class="g-add">
+            <summary class="btn-dashed" style="display:inline-flex;align-items:center">+ Add a {periodLabel(quarter)} goal</summary>
+            <GoalSetup me={me} kind="Q" fy={quarter.fy} q={quarter.q} label={periodLabel(quarter)} rows={[]} blanks={1} here={here} submit="Add goal" />
+          </details>
+        </section>
+      )}
 
+      {(data.pastQuarters.length > 0 || data.lastFy) && (
+        <section class="card tight stack-sm" aria-labelledby="ph">
+          <h2 id="ph" style="font-size:18px">Past results</h2>
+          {data.lastFy && <p class="g-past"><b>{periodLabel(data.lastFy)}</b> {result(data.lastFy)}</p>}
+          {data.pastQuarters.map((t) => <p class="g-past"><b>{periodLabel(t)}</b> {result(t) || 'No numbers'}</p>)}
+        </section>
+      )}
+
+      {!fy?.goals.length && !data.prompts.length && (
+        <section class="card"><p class="muted" style="margin:0">No goals yet for {periodLabel(data.fyKey)}.</p></section>
+      )}
     </>
   )}
-{data && me === 'Kajol' && (
-      <section class="card" aria-labelledby="kgh">
-        <div class="card-head" style="margin-bottom:12px">
-          <h2 id="kgh" style="font-size:22px">Your goals</h2>
-          <span class="mono muted" style="font-size:12px">FY 2026–27</span>
-        </div>
-        <div class="k-grid">
-          {kajolGoals.length === 0 && <p class="muted" style="margin:0">No goals yet. Add rows with Owner = Kajol in the sheet's Goals tab.</p>}
-          {kajolGoals.map((k) => (
-            <article class="k-card">
-              <span class="mono">{k.area}</span>
-              <h3>{k.goal}</h3>
-              {k.milestones && <p>{k.milestones}</p>}
-            </article>
-          ))}
-        </div>
-      </section>
-    )}
 </LifeLayout>
