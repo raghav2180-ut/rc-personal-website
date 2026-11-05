@@ -525,7 +525,6 @@ body:has(.modal-wrap) { overflow: hidden; }
 .rv-numrow > .label:first-child { flex: 0 1 260px; }
 .rv-unit { display: flex; align-items: center; gap: 6px; }
 .rv-unit i { font-style: normal; font-weight: 700; color: var(--color-ink); font-size: 18px; }
-.rv-fy > summary { cursor: pointer; font-weight: 600; color: var(--color-pen); min-height: 44px; display: flex; align-items: center; }
 
 .rv-one { font-size: 18px; font-weight: 700; border-color: var(--color-pen); }
 .rv-plan { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: flex-end; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }

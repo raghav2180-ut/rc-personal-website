@@ -202,20 +202,6 @@ const steps = [
             </label>
           </div>
         ))}
-        {data.progress.length > 0 && (
-          <details class="rv-fy">
-            <summary>FY totals: change only if they moved</summary>
-            <div class="grid-150" style="margin-top:10px">
-              {data.progress.map((p) => (
-                <label class="numbox">{p.label}
-                  <input type="hidden" name="fyRow" value={p.row} />
-                  <input type="number" step="any" name={`fy-${p.row}`} value={p.current} />
-                  <small class="mono muted" style="font-weight:400;font-size:11px">TARGET {p.target}</small>
-                </label>
-              ))}
-            </div>
-          </details>
-        )}
         <div class="rv-foot"><button class="btn" type="submit">Save and continue</button></div>
       </form>
     </div>

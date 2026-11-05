@@ -10,7 +10,7 @@
  * and, for Raghav, Goals!I (FY totals) when they changed.
  */
 import { UserError, text } from './actions';
-import { FY_GOALS, parseCheckIns, parseGoals, parseScores, parseTop3, parseWeekly, RANGES, SCORE_AREAS, WEEKLY_CAP, type WeeklyGoal } from './data';
+import { FY_GOALS, parseCheckIns, parseScores, parseTop3, parseWeekly, RANGES, SCORE_AREAS, WEEKLY_CAP, type WeeklyGoal } from './data';
 import { addDays, cellToIso, dayMonth, weekStart } from './dates';
 import type { Person } from './env';
 import { sheets, type Grid } from './sheets';
@@ -85,8 +85,8 @@ export const reviewValue = (r: ReviewRow | null, header: string) => (r ? r.cells
 export async function loadReview(person: Person, week: string) {
   const s = sheets();
   await s.ensureTab('Reviews', REVIEW_HEADER);
-  const [top3Grid, ciGrid, weeklyGrid, scoresGrid, goalsGrid, reviewGrid] = await s.batchGet([
-    RANGES.top3, RANGES.checkins, RANGES.weekly, RANGES.scores, RANGES.goals, REVIEW_RANGE,
+  const [top3Grid, ciGrid, weeklyGrid, scoresGrid, reviewGrid] = await s.batchGet([
+    RANGES.top3, RANGES.checkins, RANGES.weekly, RANGES.scores, REVIEW_RANGE,
   ]);
   const top3 = parseTop3(top3Grid).filter((t) => t.person === person && !t.bonus);
   const checkins = parseCheckIns(ciGrid).filter((c) => c.person === person);
@@ -139,7 +139,6 @@ export async function loadReview(person: Person, week: string) {
     thisScore,
     lastScore,
     review,
-    progress: person === 'Raghav' ? parseGoals(goalsGrid).progress : [],
   };
 }
 
@@ -226,12 +225,11 @@ export async function saveVisionCheck(person: Person, week: string, scores: (num
   await upsertReview(person, week, 3, Object.fromEntries(AREAS.map((a, i) => [`Closer: ${a.name}`, (closer[i] ?? '').slice(0, 500)])));
 }
 
-/** Step 4: the week's money and conversions, each with a note. FY totals only when they changed. */
+/** Step 4: the week's money and conversions, each with a note. */
 export async function saveNumbers(
   person: Person,
   week: string,
   numbers: Record<string, { value: string; note: string }>,
-  fyTotals: Map<number, number>,
 ) {
   const values: Record<string, string> = {};
   for (const n of NUMBERS) {
@@ -239,17 +237,6 @@ export async function saveNumbers(
     if (raw !== '' && !Number.isFinite(Number(raw))) throw new UserError(`“${n.label}” should be a number.`);
     values[n.label] = raw;
     values[`${n.label}: note`] = (numbers[n.key]?.note ?? '').slice(0, 500);
-  }
-  if (person === 'Raghav' && fyTotals.size) {
-    const s = sheets();
-    const [goalsGrid] = await s.batchGet([RANGES.goals]);
-    const progress = parseGoals(goalsGrid).progress;
-    const updates = [];
-    for (const p of progress) {
-      const v = fyTotals.get(p.row);
-      if (v !== undefined && Number.isFinite(v) && v !== p.current) updates.push({ range: `Goals!I${p.row}`, values: [[v]] });
-    }
-    if (updates.length) await s.batchUpdate(updates);
   }
   await upsertReview(person, week, 4, values);
 }
