@@ -1,0 +1,44 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import VisionTabs from '../../../components/life/VisionTabs.astro';
+import LvList from '../../../components/life/LvList.astro';
+import { loadLifeVision } from '../../../lib/life/lifevision';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+
+export const prerender = false;
+
+const { me, flash, href, here } = lifeContext(Astro);
+let data: Awaited<ReturnType<typeof loadLifeVision>> | null = null;
+let problem = '';
+try {
+  data = await loadLifeVision(me);
+} catch (err) {
+  problem = errorMessage(err);
+}
+const total = data?.bucket.length ?? 0;
+const done = data?.bucket.filter((b) => b.done).length ?? 0;
+---
+<LifeLayout title="Bucket list" active="vision" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">LIFE GOALS · <span class="hot">{done} OF {total} DONE</span></span>
+      <h1>Life Vision</h1>
+    </div>
+  </header>
+  <VisionTabs active="bucket" href={href} />
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <section class="card lv-card" aria-label="Bucket list">
+      <div class="card-head">
+        <h2 class="lv-title">Life Goals / Bucket List</h2>
+        {total > 0 && <span class="mono muted" style="font-size:12px">{done}/{total} · {Math.round((done / total) * 100)}%</span>}
+      </div>
+      {total > 0 && <div class="meter" role="img" aria-label={`${done} of ${total} done`}><i class="hi" style={`width:${(done / total) * 100}%`}></i></div>}
+      {total === 0 && <p class="muted" style="margin:0">Nothing here yet. Add your first life goal below.</p>}
+      <LvList items={data.bucket} list="Bucket" here={here} numbered checks placeholder="Add a life goal" />
+    </section>
+  )}
+</LifeLayout>

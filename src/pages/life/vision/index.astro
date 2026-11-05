@@ -1,0 +1,39 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import VisionTabs from '../../../components/life/VisionTabs.astro';
+import LvList from '../../../components/life/LvList.astro';
+import { loadLifeVision } from '../../../lib/life/lifevision';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+
+export const prerender = false;
+
+const { me, flash, href, here } = lifeContext(Astro);
+let data: Awaited<ReturnType<typeof loadLifeVision>> | null = null;
+let problem = '';
+try {
+  data = await loadLifeVision(me);
+} catch (err) {
+  problem = errorMessage(err);
+}
+---
+<LifeLayout title="Life Vision" active="vision" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">THE LIFE I'M BUILDING</span>
+      <h1>Life Vision</h1>
+    </div>
+  </header>
+  <VisionTabs active="life" href={href} />
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <section class="card lv-card" aria-label="My life vision">
+      <h2 class="lv-title">My Life Vision</h2>
+      {data.vision.length === 0 && <p class="muted" style="margin:0">Nothing here yet. Add the first line of your life vision below.</p>}
+      <LvList items={data.vision} list="Vision" here={here} placeholder="Add a line to your life vision" />
+      <p class="lv-foot muted">Ticked-off life goals are on the <a href={href('/life/vision/bucket')}>Bucket list</a>.</p>
+    </section>
+  )}
+</LifeLayout>

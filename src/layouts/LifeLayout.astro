@@ -30,7 +30,7 @@ const links = [
   { key: 'board', n: '03', label: 'Board', path: '/life/board' },
   { key: 'goals', n: '04', label: 'Goals', path: '/life/goals' },
   ...(name === 'Kajol' ? [] : [{ key: 'monthly', n: '05', label: 'Monthly', path: '/life/monthly' }]),
-  { key: 'vision', n: '06', label: 'Vision 2029', path: '/life/vision' },
+  { key: 'vision', n: '06', label: 'Life Vision', path: '/life/vision' },
   ...(canSeeMigraine(Astro.locals.session?.email) ? [{ key: 'migraine', n: '07', label: 'Migraine', path: '/life/migraine' }] : []),
 ];
 ---
