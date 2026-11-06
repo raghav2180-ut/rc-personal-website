@@ -4,6 +4,8 @@ import Problem from '../../../components/life/Problem.astro';
 import VisionTabs from '../../../components/life/VisionTabs.astro';
 import LvList from '../../../components/life/LvList.astro';
 import { loadLifeVision } from '../../../lib/life/lifevision';
+import VisionBoard from '../../../components/life/VisionBoard.astro';
+import { loadBoard, type Tile } from '../../../lib/life/visionboard';
 import { errorMessage, lifeContext } from '../../../lib/life/page';
 
 export const prerender = false;
@@ -11,8 +13,10 @@ export const prerender = false;
 const { me, flash, href, here } = lifeContext(Astro);
 let data: Awaited<ReturnType<typeof loadLifeVision>> | null = null;
 let problem = '';
+let tiles: Tile[] = [];
 try {
   data = await loadLifeVision(me);
+  tiles = await loadBoard(me, 'life', data.vision);
 } catch (err) {
   problem = errorMessage(err);
 }
@@ -36,4 +40,5 @@ try {
       <p class="lv-foot muted">Ticked-off life goals are on the <a href={href('/life/vision/bucket')}>Bucket list</a>.</p>
     </section>
   )}
+  {data && <VisionBoard board="life" tiles={tiles} here={here} title="Life Vision board" />}
 </LifeLayout>
