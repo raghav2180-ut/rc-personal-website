@@ -1,0 +1,68 @@
+---
+/** FY, quarter or month goals: set-up banners, one card per goal, add a goal, past results. */
+import GoalCard from './GoalCard.astro';
+import GoalSetup from './GoalSetup.astro';
+import type { Person } from '../../lib/life/env';
+import { fmt, longDay, monthsLabel, periodLabel, type Kind, type loadGoalsPage, type Table } from '../../lib/life/goals';
+
+interface Props {
+  level: Kind;
+  data: Awaited<ReturnType<typeof loadGoalsPage>>;
+  me: Person;
+  here: string;
+}
+const { level, data, me, here } = Astro.props;
+const table = level === 'FY' ? data.fy : level === 'Q' ? data.quarter : data.month;
+const key = level === 'FY' ? data.fyKey : level === 'Q' ? data.qKey : data.mKey;
+const prompts = data.prompts.filter((p) => p.kind === level);
+const past: Table[] = level === 'FY' ? (data.lastFy ? [data.lastFy] : []) : level === 'Q' ? data.pastQuarters : data.pastMonths;
+const heading = level === 'FY' ? `${periodLabel(key)} goals` : level === 'Q' ? `${periodLabel(key)} goals · ${monthsLabel(key)}` : `${periodLabel(key)} goals`;
+const result = (t: Table) =>
+  t.goals
+    .map((g) => (g.target !== null ? `${g.area || g.goal.slice(0, 30)} ${fmt(g, g.current ?? 0)}/${fmt(g, g.target)}` : `${g.done ? '✓' : '✗'} ${g.goal.slice(0, 40)}`))
+    .join(' · ');
+const goals = table?.goals ?? [];
+---
+{prompts.map((p) => (
+  <details class="card gs-banner" open={p.urgent}>
+    <summary>
+      <span class="eyebrow" style="color:var(--color-stamp)">{p.why.toUpperCase()}</span>
+      <b>Set {p.label} goals{p.kind !== 'M' ? ` · ${p.months}` : ''}</b>
+      <span class="btn">Set goals</span>
+    </summary>
+    <GoalSetup me={me} kind={p.kind} fy={p.fy} q={p.q} m={p.m} label={p.label} rows={p.rows} blanks={p.rows.length ? 1 : 4} here={here} />
+  </details>
+))}
+
+{goals.length > 0 && table && (
+  <section class="stack" aria-labelledby={`h-${level}`}>
+    <div class="g-head">
+      <h2 id={`h-${level}`}>{heading}</h2>
+      <span class="mono muted">BY {longDay(table.end).toUpperCase()} · {goals.filter((g) => (g.target !== null ? (g.current ?? 0) >= g.target : g.done)).length} OF {goals.length} DONE</span>
+    </div>
+    <div class="g-cards">
+      {goals.map((g) => <GoalCard g={g} t={table} today={data.today} here={here} />)}
+    </div>
+    <details class="g-add">
+      <summary class="btn-dashed" style="display:inline-flex;align-items:center">+ Add a goal</summary>
+      <GoalSetup me={me} kind={level} fy={table.fy} q={table.q} m={table.m} label={periodLabel(table)} rows={[]} blanks={1} here={here} submit="Add goal" />
+    </details>
+  </section>
+)}
+
+{goals.length === 0 && prompts.length === 0 && (
+  <section class="card stack-sm">
+    <p class="muted" style="margin:0">No goals for {periodLabel(key)} yet.</p>
+    <details class="g-add">
+      <summary class="btn-dashed" style="display:inline-flex;align-items:center">+ Add a goal</summary>
+      <GoalSetup me={me} kind={level} fy={key.fy} q={key.q} m={key.m} label={periodLabel(key)} rows={[]} blanks={2} here={here} submit="Add goals" />
+    </details>
+  </section>
+)}
+
+{past.length > 0 && (
+  <section class="card tight stack-sm" aria-labelledby={`p-${level}`}>
+    <h2 id={`p-${level}`} style="font-size:18px">Past results</h2>
+    {past.map((t) => <p class="g-past"><b>{periodLabel(t)}</b> {result(t) || 'No goals'}</p>)}
+  </section>
+)}

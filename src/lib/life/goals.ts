@@ -24,7 +24,7 @@ const iso = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`; // 
 const lastDay = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate();
 const colLetter = (i: number) => String.fromCharCode(65 + i);
 
-export type Kind = 'FY' | 'Q';
+export type Kind = 'FY' | 'Q' | 'M';
 
 // ----------------------------------------------------------- periods ---
 
@@ -32,6 +32,7 @@ export interface PeriodKey {
   kind: Kind;
   fy: string; // "2026–27"
   q: number | null;
+  m: number | null; // month (1–12) for a month's goals
   start: string;
   end: string;
 }
@@ -39,7 +40,7 @@ export interface PeriodKey {
 export function fyOf(date: string): PeriodKey {
   const [y, m] = date.split('-').map(Number);
   const s = m >= 4 ? y : y - 1;
-  return { kind: 'FY', fy: `${s}–${pad((s + 1) % 100)}`, q: null, start: iso(s, 4, 1), end: iso(s + 1, 3, 31) };
+  return { kind: 'FY', fy: `${s}–${pad((s + 1) % 100)}`, q: null, m: null, start: iso(s, 4, 1), end: iso(s + 1, 3, 31) };
 }
 
 export function quarterOf(date: string): PeriodKey {
@@ -47,13 +48,19 @@ export function quarterOf(date: string): PeriodKey {
   const q = m >= 4 ? Math.floor((m - 4) / 3) + 1 : 4;
   const sm = [4, 7, 10, 1][q - 1];
   const em = sm + 2;
-  return { kind: 'Q', fy: fyOf(date).fy, q, start: iso(y, sm, 1), end: iso(y, em, lastDay(y, em)) };
+  return { kind: 'Q', fy: fyOf(date).fy, q, m: null, start: iso(y, sm, 1), end: iso(y, em, lastDay(y, em)) };
+}
+
+export function monthOf(date: string): PeriodKey {
+  const [y, m] = date.split('-').map(Number);
+  return { kind: 'M', fy: fyOf(date).fy, q: quarterOf(date).q, m, start: iso(y, m, 1), end: iso(y, m, lastDay(y, m)) };
 }
 
 /** "FY 2026–27" or "Q3" */
-export const periodLabel = (p: PeriodKey) => (p.kind === 'FY' ? `FY ${p.fy}` : `Q${p.q}`);
+export const periodLabel = (p: PeriodKey) => (p.kind === 'FY' ? `FY ${p.fy}` : p.kind === 'Q' ? `Q${p.q}` : `${MON[p.m! - 1]} ${p.start.slice(0, 4)}`);
 /** "Oct–Dec 2026" */
 export function monthsLabel(p: PeriodKey): string {
+  if (p.kind === 'M') return periodLabel(p);
   const [sy, sm] = p.start.split('-').map(Number);
   const [ey, em] = p.end.split('-').map(Number);
   return sy === ey ? `${MON[sm - 1]}–${MON[em - 1]} ${ey}` : `${MON[sm - 1]} ${sy}–${MON[em - 1]} ${ey}`;
@@ -63,7 +70,7 @@ export function longDay(d: string): string {
   const [y, m, day] = d.split('-').map(Number);
   return `${day} ${MON[m - 1]} ${y}`;
 }
-const samePeriod = (a: PeriodKey, b: PeriodKey) => a.kind === b.kind && a.fy === b.fy && a.q === b.q;
+const samePeriod = (a: PeriodKey, b: PeriodKey) => a.kind === b.kind && a.fy === b.fy && a.q === b.q && a.m === b.m;
 
 // ------------------------------------------------------------- parsing ---
 
@@ -78,6 +85,7 @@ export interface Goal {
   milestones: string;
   revenue: string;
   notes: string;
+  done: boolean; // for goals without a number: Current says "Done"
 }
 
 type Col = 'area' | 'owner' | 'goal' | 'baseline' | 'current' | 'target' | 'pct' | 'milestones' | 'revenue' | 'notes';
@@ -120,6 +128,7 @@ function titlePeriod(a: string): PeriodKey | null {
   const end = iso(Number(m[3]), mi + 1, Number(m[1]));
   if (/\bQ[1-4]\b/i.test(a)) return quarterOf(end);
   if (/\bFY\b/i.test(a)) return fyOf(end);
+  if (/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{4}\s+goals/i.test(a)) return monthOf(end);
   return null;
 }
 
@@ -157,6 +166,7 @@ export function parseTables(grid: Grid): Table[] {
         milestones: cell(row, cols.milestones),
         revenue: cell(row, cols.revenue),
         notes: cell(row, cols.notes),
+        done: /^(done|yes|✓)$/i.test(cell(row, cols.current)),
       });
     }
     out.push({ ...p, titleRow: i + 1, headerRow: i + 2, lastRow: last, cols, goals });
@@ -188,6 +198,7 @@ export function pace(g: Goal, t: PeriodKey, today: string): string {
   const perWeek = left / Math.max(days / 7, 1);
   const n = Number(left.toFixed(2));
   if (perWeek >= 0.9) return `${n} to go · about ${Number(perWeek.toFixed(1))} a week`;
+  if (t.kind === 'M' || days <= 31) return `${n} to go · ${Math.max(1, Math.round(days / 7))} weeks left`;
   if (perWeek * 4.35 >= 1) return `${n} to go · about ${Math.round(perWeek * 4.35)} a month`;
   return `${Number(left.toFixed(2))} to go · about 1 every ${Math.round(1 / perWeek)} weeks`;
 }
@@ -240,6 +251,9 @@ function prefill(person: Person, kind: Kind, tables: Table[]): SetupPrompt['rows
     return mine(pastFy).map((g) => ({ area: g.area, owner: g.owner, goal: '', baseline: g.current === null ? '' : String(g.current) }));
   }
   if (kind === 'Q' && pastQ && mine(pastQ).length) return mine(pastQ).map((g) => ({ area: g.area, owner: g.owner, goal: g.goal, baseline: '0' }));
+  const pastM = tables.filter((t) => t.kind === 'M').sort((a, b) => a.end.localeCompare(b.end)).pop();
+  if (kind === 'M' && pastM && mine(pastM).length) return mine(pastM).map((g) => ({ area: g.area, owner: g.owner, goal: g.goal, baseline: g.target !== null ? '0' : '' }));
+  if (kind === 'M' && pastQ && mine(pastQ).length) return mine(pastQ).map((g) => ({ area: g.area, owner: g.owner, goal: '', baseline: g.target !== null ? '0' : '' }));
   if (kind === 'Q' && pastFy) return mine(pastFy).filter((g) => g.target !== null).map((g) => ({ area: g.area, owner: g.owner, goal: '', baseline: '0' }));
   return [];
 }
@@ -252,6 +266,9 @@ export async function loadGoalsPage(person: Person, today = todayIST()) {
   const qKey = quarterOf(today);
   const fy = tables.find((t) => samePeriod(t, fyKey));
   const quarter = tables.find((t) => samePeriod(t, qKey));
+  const mKey = monthOf(today);
+  const month = tables.find((t) => samePeriod(t, mKey));
+  const pastMonths = tables.filter((t) => t.kind === 'M' && t.fy === fyKey.fy && t.end < today && mineOf(t).length).sort((a, b) => a.end.localeCompare(b.end));
   const pastQuarters = tables.filter((t) => t.kind === 'Q' && t.fy === fyKey.fy && t.end < today && mineOf(t).length).sort((a, b) => a.end.localeCompare(b.end));
   const lastFy = tables.filter((t) => t.kind === 'FY' && t.end < today && mineOf(t).length).sort((a, b) => a.end.localeCompare(b.end)).pop();
 
@@ -269,12 +286,18 @@ export async function loadGoalsPage(person: Person, today = todayIST()) {
     add(qKey, `${periodLabel(qKey)} has started`, true);
     const nextQ = quarterOf(addDays(qKey.end, 1));
     if (daysBetween(today, qKey.end) <= 14) add(nextQ, `${periodLabel(qKey)} ends in ${daysBetween(today, qKey.end)} days`, false);
+    add(mKey, `${periodLabel(mKey)} has started`, true);
+    const nextM = monthOf(addDays(mKey.end, 1));
+    if (daysBetween(today, mKey.end) <= 6) add(nextM, `${periodLabel(mKey)} ends in ${daysBetween(today, mKey.end)} days`, false);
   }
 
   return {
     today,
     fyKey,
     qKey,
+    mKey,
+    month: month ? { ...month, goals: mineOf(month) } : null,
+    pastMonths: pastMonths.map((t) => ({ ...t, goals: mineOf(t) })),
     fy: fy ? { ...fy, goals: mineOf(fy) } : null,
     quarter: quarter ? { ...quarter, goals: mineOf(quarter) } : null,
     pastQuarters: pastQuarters.map((t) => ({ ...t, goals: mineOf(t) })),
@@ -313,6 +336,15 @@ export async function setCurrent(person: Person, row: number, goalText: string, 
   await s.batchUpdate([{ range: `Goals!${colLetter(t.cols.current)}${row}`, values: [[value === null ? '' : value]] }]);
 }
 
+/** A goal without a number is ticked off by writing "Done" in its Current cell. */
+export async function toggleGoalDone(person: Person, row: number, goalText: string) {
+  const { s, t, g } = await findGoal(person, row, goalText);
+  if (g.target !== null) throw new UserError('This goal has a number. Use Update instead.');
+  if (t.cols.current === undefined) throw new UserError('This table has no Current column.');
+  await s.batchUpdate([{ range: `Goals!${colLetter(t.cols.current)}${row}`, values: [[g.done ? '' : 'Done']] }]);
+  return !g.done;
+}
+
 export async function toggleMilestone(person: Person, row: number, goalText: string, index: number) {
   const { s, t, g } = await findGoal(person, row, goalText);
   if (t.cols.milestones === undefined) throw new UserError('This table has no milestones column.');
@@ -332,7 +364,7 @@ export interface NewGoal {
 }
 
 /** Add goals to a period's table, creating the table at the bottom of the tab if it doesn't exist yet. */
-export async function addGoals(person: Person, period: { kind: Kind; fy: string; q: number | null }, input: NewGoal[]) {
+export async function addGoals(person: Person, period: { kind: Kind; fy: string; q: number | null; m?: number | null }, input: NewGoal[]) {
   const rows = input.filter((g) => g.goal.trim());
   if (!rows.length) throw new UserError('Write at least one goal.');
   for (const g of rows) {
@@ -341,13 +373,15 @@ export async function addGoals(person: Person, period: { kind: Kind; fy: string;
     else if (isKajol(g.owner)) throw new UserError('Kajol adds her own goals from her login.');
     if (g.target !== null && g.target <= 0) throw new UserError(`The target for “${g.goal.slice(0, 50)}” should be above 0.`);
   }
-  if (!/^\d{4}–\d{2}$/.test(period.fy) || (period.kind === 'Q' && !(period.q! >= 1 && period.q! <= 4))) throw new UserError('Unknown period. Refresh and try again.');
+  if (!/^\d{4}–\d{2}$/.test(period.fy) || (period.kind === 'Q' && !(period.q! >= 1 && period.q! <= 4)) || (period.kind === 'M' && !(period.m! >= 1 && period.m! <= 12))) throw new UserError('Unknown period. Refresh and try again.');
 
   // Work out the period's dates from its FY and quarter.
   const fyStartYear = Number(period.fy.slice(0, 4));
   const key: PeriodKey =
     period.kind === 'FY'
       ? fyOf(iso(fyStartYear, 4, 1))
+      : period.kind === 'M'
+      ? monthOf(iso(period.m! >= 4 ? fyStartYear : fyStartYear + 1, period.m!, 1))
       : quarterOf(iso(period.q === 4 ? fyStartYear + 1 : fyStartYear, [4, 7, 10, 1][period.q! - 1], 1));
 
   const s = sheets();
@@ -399,11 +433,13 @@ export async function addGoals(person: Person, period: { kind: Kind; fy: string;
   const deadline = longDay(key.end);
   const [, sm] = key.start.split('-').map(Number);
   const title =
-    key.kind === 'FY'
+    key.kind === 'FY' || key.kind === 'M'
       ? `${n}. ${periodLabel(key)} goals (by ${deadline}) — update Current on the Goals page`
       : `${n}. ${periodLabel(key)} goals (${monthsLabel(key)}, by ${deadline}) — update Current on the Goals page`;
   const header =
-    key.kind === 'FY'
+    key.kind === 'M'
+      ? ['Area', 'Owner', `${periodLabel(key)} goal (by ${deadline})`, `Start of ${MON[sm - 1]} (1 ${MON[sm - 1]})`, 'Current', 'Target', '% done', 'Plan / steps', 'Revenue link', 'Notes']
+      : key.kind === 'FY'
       ? ['Area', 'Owner', `Goal (by ${deadline})`, `Baseline (${MON[sm - 1]} ${key.start.slice(0, 4)})`, 'Current', 'Target', '% done', 'Milestones / targets', 'Revenue link', 'Notes']
       : ['Area', 'Owner', `${periodLabel(key)} goal (by ${deadline})`, `Start of ${periodLabel(key)} (1 ${MON[sm - 1]})`, 'Current', 'Target', '% done', 'Monthly pace / plan', 'Revenue link', 'Notes'];
   const cols: Table['cols'] = { area: 0, owner: 1, goal: 2, baseline: 3, current: 4, target: 5, pct: 6, milestones: 7, revenue: 8, notes: 9 };

@@ -1,0 +1,86 @@
+---
+/** One goal: number, progress and pace, or a tick-off goal with its dated steps. */
+import { daysBetween } from '../../lib/life/dates';
+import { fmt, longDay, milestones, pace, pct, type Goal, type PeriodKey } from '../../lib/life/goals';
+
+interface Props {
+  g: Goal;
+  t: PeriodKey;
+  today: string;
+  here: string;
+}
+const { g, t, today, here } = Astro.props;
+const numeric = g.target !== null;
+const p = pct(g);
+const width = Math.min(100, Math.max(0, p ?? 0));
+const steps = milestones(g.milestones, t);
+const next = steps.find((m) => !m.done);
+const dueText = (d: string | null) => {
+  if (!d) return '';
+  const n = daysBetween(today, d);
+  const day = longDay(d).replace(/ \d{4}$/, '');
+  return n < 0 ? `${day} · ${-n} days late` : n === 0 ? 'Today' : `${day} · ${n} days`;
+};
+const hidden = (name: string, value: string | number) => ({ name, value });
+const base = [hidden('row', g.row), hidden('goal', g.goal), hidden('next', here)];
+---
+<section class:list={['card g-card', { 'is-done': !numeric && g.done }]} aria-label={g.area || g.goal}>
+  <div class="g-top"><span class="mono">{g.area || 'Goal'}</span><span class="muted">{g.owner}</span></div>
+  {numeric ? (
+    <>
+      <h3>{g.goal}</h3>
+      <div class="g-nums"><b>{fmt(g, g.current ?? (t.kind === 'FY' ? null : 0))}</b><span>/ {fmt(g, g.target)}</span>{p !== null && <i>{p}%</i>}</div>
+      <div class="meter" role="img" aria-label={`${p ?? 0}% of target`}><i class:list={{ hi: (p ?? 0) >= 60 }} style={`width:${width}%`}></i></div>
+      <p class="g-pace">{pace({ ...g, current: g.current ?? 0 }, t, today)}</p>
+      {next && <p class="g-next"><span class="cp-k">Next</span> {next.text}</p>}
+    </>
+  ) : (
+    <form method="post" action="/api/life/goals" data-enhance class="g-done-row">
+      <input type="hidden" name="action" value="done" />
+      {base.map((h) => <input type="hidden" name={h.name} value={h.value} />)}
+      <button type="submit" class="g-tick big" aria-label={g.done ? `Mark not done: ${g.goal}` : `Mark done: ${g.goal}`}>{g.done ? '✓' : ''}</button>
+      <h3>{g.goal}</h3>
+    </form>
+  )}
+  {!numeric && steps.length > 0 && (
+    <ul class="g-steps">
+      {steps.map((m, i) => (
+        <li class:list={{ done: m.done, late: !m.done && m.due !== null && m.due < today }}>
+          <form method="post" action="/api/life/goals" data-enhance>
+            <input type="hidden" name="action" value="milestone" />
+            {base.map((h) => <input type="hidden" name={h.name} value={h.value} />)}
+            <input type="hidden" name="i" value={i} />
+            <button type="submit" class="g-tick" aria-label={m.done ? `Mark not done: ${m.text}` : `Mark done: ${m.text}`}>{m.done ? '✓' : ''}</button>
+          </form>
+          <span>{m.text}{m.due && !m.done && <small>{dueText(m.due)}</small>}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+  {(numeric || g.revenue || g.notes) && (
+    <div class="g-actions">
+      {numeric && (
+        <details class="g-update">
+          <summary>Update</summary>
+          <form method="post" action="/api/life/goals" data-enhance class="g-form">
+            <input type="hidden" name="action" value="current" />
+            {base.map((h) => <input type="hidden" name={h.name} value={h.value} />)}
+            <label class="label sm">Current<input class="field" name="value" inputmode="decimal" value={g.current ?? ''} /></label>
+            <button class="btn" type="submit">Save</button>
+          </form>
+        </details>
+      )}
+      {((numeric ? g.milestones : '') || g.revenue || g.notes) && (
+        <details class="g-more">
+          <summary>Details</summary>
+          <dl>
+            {numeric && g.milestones && <><dt>PLAN</dt><dd>{g.milestones}</dd></>}
+            {g.baseline !== null && <><dt>{t.kind === 'FY' ? 'BASELINE' : 'START'}</dt><dd>{fmt(g, g.baseline)}</dd></>}
+            {g.revenue && <><dt>REVENUE</dt><dd>{g.revenue}</dd></>}
+            {g.notes && <><dt>NOTES</dt><dd>{g.notes}</dd></>}
+          </dl>
+        </details>
+      )}
+    </div>
+  )}
+</section>

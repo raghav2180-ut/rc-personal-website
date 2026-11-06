@@ -1,5 +1,5 @@
 import { UserError } from '../../../lib/life/actions';
-import { addGoals, setCurrent, toggleMilestone, type Kind, type NewGoal } from '../../../lib/life/goals';
+import { addGoals, setCurrent, toggleGoalDone, toggleMilestone, type Kind, type NewGoal } from '../../../lib/life/goals';
 import { formRoute } from '../../../lib/life/http';
 
 export const prerender = false;
@@ -14,13 +14,16 @@ export const POST = formRoute(async (form) => {
       await setCurrent(person, form.int('row'), form.str('goal', 500), value);
       return 'goal-current';
     }
+    case 'done':
+      return (await toggleGoalDone(person, form.int('row'), form.str('goal', 500))) ? 'goal-done' : 'goal-undone';
     case 'milestone':
       await toggleMilestone(person, form.int('row'), form.str('goal', 500), Number(form.str('i', 3)));
       return 'milestone';
     case 'add': {
       const kind = form.str('kind', 2) as Kind;
-      if (kind !== 'FY' && kind !== 'Q') throw new UserError('Unknown period. Refresh and try again.');
+      if (kind !== 'FY' && kind !== 'Q' && kind !== 'M') throw new UserError('Unknown period. Refresh and try again.');
       const q = kind === 'Q' ? Number(form.str('q', 1)) : null;
+      const m = kind === 'M' ? Number(form.str('m', 2)) : null;
       const areas = form.all('area');
       const owners = form.all('owner');
       const baselines = form.all('baseline');
@@ -41,7 +44,7 @@ export const POST = formRoute(async (form) => {
         target: toNum(targets[i], 'The target'),
         milestones: (steps[i] ?? '').slice(0, 1000).trim(),
       }));
-      await addGoals(person, { kind, fy: form.str('fy', 7), q }, goals);
+      await addGoals(person, { kind, fy: form.str('fy', 7), q, m }, goals);
       return 'period-goals';
     }
     default:

@@ -26,6 +26,8 @@ const SAVED: Record<string, string> = {
   status: 'Status updated',
   'goals-added': 'Goals added',
   'goal-current': 'Number updated',
+  'goal-done': 'Goal ticked off',
+  'goal-undone': 'Marked not done',
   milestone: 'Step updated',
   'period-goals': 'Goals saved to the sheet',
   nothing: 'Nothing new to add',

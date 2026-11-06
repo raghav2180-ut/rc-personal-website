@@ -1,0 +1,35 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import GoalsTabs from '../../../components/life/GoalsTabs.astro';
+import GoalsLevel from '../../../components/life/GoalsLevel.astro';
+import { daysBetween, isIso } from '../../../lib/life/dates';
+import { loadGoalsPage, longDay, periodLabel } from '../../../lib/life/goals';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+
+export const prerender = false;
+
+const { me, flash, href, here } = lifeContext(Astro);
+let data: Awaited<ReturnType<typeof loadGoalsPage>> | null = null;
+let problem = '';
+try {
+  // Local testing only: ?today=2027-03-20 shows the page as of that date.
+  const asOf = import.meta.env.DEV ? Astro.url.searchParams.get('today') : null;
+  data = await loadGoalsPage(me, isIso(asOf) ? asOf : undefined);
+} catch (err) {
+  problem = errorMessage(err);
+}
+const key = data ? data.fyKey : null;
+const left = data && key ? Math.max(0, daysBetween(data.today, key.end)) : 0;
+---
+<LifeLayout title="FY Goals" active="goals" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">{key ? `${periodLabel(key)} · BY ${longDay(key.end).toUpperCase()} · ` : ''}<span class="hot">{left} DAYS LEFT</span></span>
+      <h1>{me === 'Kajol' ? 'Your goals' : 'Goals'}</h1>
+    </div>
+  </header>
+  <GoalsTabs active="fy" href={href} />
+  {problem && <Problem message={problem} />}
+  {data && <GoalsLevel level="FY" data={data} me={me} here={here} />}
+</LifeLayout>

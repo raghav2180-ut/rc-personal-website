@@ -67,11 +67,11 @@ const numbersOf = (m: MonthEntry) => [
 ].filter((n) => n.value);
 const span = months.length ? `${months.length} MONTHS · ${monthLabel(months[months.length - 1].key, false)} – ${monthLabel(months[0].key, false)}` : 'MONTHLY LOG';
 ---
-<LifeLayout title="Monthly" active="monthly" name={me} flash={flash} href={href}>
+<LifeLayout title="Monthly Log" active="monthly" name={me} flash={flash} href={href}>
   <header class="l-head">
     <div>
       <span class="eyebrow">{span}</span>
-      <h1>Monthly log</h1>
+      <h1>Monthly Log</h1>
     </div>
     <a class="btn" href="#write" onclick="document.getElementById('write').open = true">
       {targetEntry ? 'Update' : 'Write'} {monthLabel(target).split(' ')[0]} · due {dayMonth(lastDayOfMonth(target))}
