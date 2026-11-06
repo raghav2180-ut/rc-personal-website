@@ -27,6 +27,12 @@ export function text(value: string): string {
   return /^[=+\-@]/.test(v) ? `'${v}` : v;
 }
 
+/** Bring the board in step after a Top 3 or weekly-goal change. The date is for the reader only. */
+export async function syncBoardFor(person: Person, _date?: string) {
+  const { syncBoard } = await import('./board-sync');
+  await syncBoard(person);
+}
+
 const ynOrBlank = (v: string | null) => (v === 'Yes' || v === 'No' ? v : '');
 
 // ------------------------------------------------------------------ Top 3 ---
@@ -52,6 +58,7 @@ export async function setTop3Done(input: { row: number; date: string; person: Pe
   // A Top 3 task made from a board card moves that card to Done (or back to Today).
   const { syncTop3ToBoard } = await import('./board');
   await syncTop3ToBoard(input.person, input.date, item.n, input.done === 'Yes');
+  await syncBoardFor(input.person, input.date);
 }
 
 export async function addTop3(input: { date: string; person: Person; task: string; fy: string }) {
@@ -65,8 +72,7 @@ export async function addTop3(input: { date: string; person: Person; task: strin
   const fy = FY_GOALS.includes(input.fy) ? input.fy : '';
   await s.append('Top3!A:F', [[input.date, input.person, n, text(label), '', fy]]);
   // Every Top 3 task also gets a card in the board's Today list.
-  const { ensureTop3Cards } = await import('./board');
-  await ensureTop3Cards(input.person, input.date);
+  await syncBoardFor(input.person, input.date);
 }
 
 export async function editTop3(input: {
@@ -99,9 +105,9 @@ export async function editTop3(input: {
   const ci = parseCheckIns(ciGrid).find((c) => c.date === input.date && c.person === input.person);
   if (ci) updates.push({ range: `CheckIns!D${ci.row}`, values: [[doneCount]] });
   await s.batchUpdate(updates);
-  const { syncTop3ToBoard, syncTop3Title } = await import('./board');
-  await syncTop3Title(input.person, input.date, item.n, task);
+  const { syncTop3ToBoard } = await import('./board');
   await syncTop3ToBoard(input.person, input.date, item.n, input.done === 'Yes');
+  await syncBoardFor(input.person, input.date);
 }
 
 // --------------------------------------------------------------- Check-in ---
@@ -151,6 +157,7 @@ export async function setWeeklyStatus(input: { row: number; week: string; person
     throw new UserError('That goal moved in the sheet. Refresh and try again.');
   }
   await s.batchUpdate([{ range: `Weekly!E${goal.row}`, values: [[input.status]] }]);
+  await syncBoardFor(input.person, input.week);
 }
 
 export async function addWeeklyGoals(person: Person, week: string, goals: { fy: string; goal: string }[]) {
@@ -168,6 +175,7 @@ export async function addWeeklyGoals(person: Person, week: string, goals: { fy: 
     'Weekly!A:F',
     fresh.map((g) => [week, person, g.fy, text(g.goal), 'Not started', '']),
   );
+  await syncBoardFor(person, week);
   return fresh.length;
 }
 

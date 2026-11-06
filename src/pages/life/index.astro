@@ -6,7 +6,8 @@ import Problem from '../../components/life/Problem.astro';
 import { loadToday } from '../../lib/life/data';
 import { addDays, dayMonth, isIso, longDate, todayIST, weekday } from '../../lib/life/dates';
 import { errorMessage, lifeContext } from '../../lib/life/page';
-import { ensureTop3Cards, loadBoard } from '../../lib/life/board';
+import { loadBoard } from '../../lib/life/board';
+import { syncBoard } from '../../lib/life/board-sync';
 import { labelStyle } from '../../lib/life/board-model';
 
 export const prerender = false;
@@ -30,7 +31,7 @@ let cards: Awaited<ReturnType<typeof loadBoard>>['cards'] = [];
 let boardProblem = '';
 try {
   // Top 3 tasks added anywhere (here, the sheet, a check-in) get their board cards.
-  if (isToday) await ensureTop3Cards(person, date);
+  if (isToday) await syncBoard(person);
   cards = (await loadBoard(person)).cards;
 } catch (err) {
   boardProblem = errorMessage(err);

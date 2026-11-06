@@ -6,16 +6,17 @@
  *   Board          A ID | B Owner | C List | D Position | E Title | F Description | G Labels
  *                  H Start | I Due | J Due complete | K Complete | L Checklists (JSON) | M Attachments (JSON)
  *                  N FY goal | O Waiting on | P Top 3 (date#n) | Q Created | R Updated | S Archived from | T Trello URL
+ *                  U Weekly goal (week#row in the Weekly tab)
  *   BoardComments  A ID | B Card ID | C Owner | D Date | E Author | F Text
  */
 import { cellToIso } from './dates';
 import type { Grid } from './sheets';
 
-export const BOARD_RANGE = 'Board!A2:T';
+export const BOARD_RANGE = 'Board!A2:U';
 export const COMMENTS_RANGE = 'BoardComments!A2:F';
 export const BOARD_HEADER = [
   'ID', 'Owner', 'List', 'Position', 'Title', 'Description', 'Labels', 'Start', 'Due', 'Due complete', 'Complete',
-  'Checklists', 'Attachments', 'FY goal', 'Waiting on', 'Top 3', 'Created', 'Updated', 'Archived from', 'Trello URL',
+  'Checklists', 'Attachments', 'FY goal', 'Waiting on', 'Top 3', 'Created', 'Updated', 'Archived from', 'Trello URL', 'Weekly goal',
 ];
 export const COMMENTS_HEADER = ['ID', 'Card ID', 'Owner', 'Date', 'Author', 'Text'];
 
@@ -75,6 +76,7 @@ export interface Card {
   updated: string;
   archivedFrom: string;
   trelloUrl: string;
+  weekly: string; // "2026-11-02#57": week and Weekly-tab row of the linked goal
 }
 
 export interface Comment {
@@ -127,6 +129,7 @@ export function parseBoard(grid: Grid): Card[] {
         updated: cell(r, 17).trim(),
         archivedFrom: cell(r, 18).trim(),
         trelloUrl: cell(r, 19).trim(),
+        weekly: cell(r, 20).trim(),
       };
     })
     .filter((c): c is Card => !!c);
@@ -167,6 +170,7 @@ export function cardRow(c: Omit<Card, 'row'>): (string | number)[] {
     c.updated,
     c.archivedFrom,
     c.trelloUrl,
+    c.weekly,
   ];
 }
 

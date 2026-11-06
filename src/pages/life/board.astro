@@ -3,7 +3,8 @@ import LifeLayout from '../../layouts/LifeLayout.astro';
 import BoardTile from '../../components/life/BoardTile.astro';
 import CardPanel from '../../components/life/CardPanel.astro';
 import Problem from '../../components/life/Problem.astro';
-import { ensureTop3Cards, loadBoard } from '../../lib/life/board';
+import { loadBoard } from '../../lib/life/board';
+import { syncBoard } from '../../lib/life/board-sync';
 import { LABELS, LISTS, type Card } from '../../lib/life/board-model';
 import { dueState, dueThisWeek } from '../../lib/life/board-view';
 import { FY_GOALS } from '../../lib/life/data';
@@ -29,7 +30,7 @@ const openId = q.get('card') ?? '';
 let data: Awaited<ReturnType<typeof loadBoard>> | null = null;
 let problem = '';
 try {
-  await ensureTop3Cards(owner);
+  await syncBoard(owner);
   data = await loadBoard(owner);
 } catch (err) {
   problem = errorMessage(err);
