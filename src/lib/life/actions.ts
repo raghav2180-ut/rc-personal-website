@@ -64,6 +64,9 @@ export async function addTop3(input: { date: string; person: Person; task: strin
   const label = n > 3 && !/\(bonus\)/i.test(task) ? `${task} (bonus)` : task;
   const fy = FY_GOALS.includes(input.fy) ? input.fy : '';
   await s.append('Top3!A:F', [[input.date, input.person, n, text(label), '', fy]]);
+  // Every Top 3 task also gets a card in the board's Today list.
+  const { ensureTop3Cards } = await import('./board');
+  await ensureTop3Cards(input.person, input.date);
 }
 
 export async function editTop3(input: {
@@ -96,7 +99,8 @@ export async function editTop3(input: {
   const ci = parseCheckIns(ciGrid).find((c) => c.date === input.date && c.person === input.person);
   if (ci) updates.push({ range: `CheckIns!D${ci.row}`, values: [[doneCount]] });
   await s.batchUpdate(updates);
-  const { syncTop3ToBoard } = await import('./board');
+  const { syncTop3ToBoard, syncTop3Title } = await import('./board');
+  await syncTop3Title(input.person, input.date, item.n, task);
   await syncTop3ToBoard(input.person, input.date, item.n, input.done === 'Yes');
 }
 
