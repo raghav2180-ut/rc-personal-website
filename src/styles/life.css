@@ -637,3 +637,10 @@ body:has(.modal-wrap) { overflow: hidden; }
 .g-tick.big { width: 32px; height: 32px; flex: none; font-size: 16px; }
 .g-card.is-done .g-tick.big { background: var(--color-pen); border-color: var(--color-pen); }
 .g-card.is-done h3 { color: var(--color-muted); text-decoration: line-through; }
+
+/* Today page: board counts */
+.b-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.b-stats a { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); text-decoration: none; color: var(--color-ink) !important; min-height: 44px; }
+.b-stats a:hover { border-color: var(--color-pen); }
+.b-stats b { font-size: 22px; font-weight: 800; line-height: 1.1; }
+.b-stats span { font-size: 12px; color: var(--color-muted); }

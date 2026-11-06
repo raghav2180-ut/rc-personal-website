@@ -8,7 +8,6 @@ import { addDays, dayMonth, isIso, longDate, todayIST, weekday } from '../../lib
 import { errorMessage, lifeContext } from '../../lib/life/page';
 import { loadBoard } from '../../lib/life/board';
 import { syncBoard } from '../../lib/life/board-sync';
-import { labelStyle } from '../../lib/life/board-model';
 
 export const prerender = false;
 
@@ -41,6 +40,9 @@ const todayCards = open('today');
 const weekCount = open('week').length;
 const waitingCount = open('waiting').length;
 const inboxCount = open('inbox').length;
+// Cards moved to Done today (Updated is a UTC timestamp; shift it to IST).
+const istDay = (t: string) => (Number.isFinite(Date.parse(t)) ? new Date(Date.parse(t) + 330 * 60000).toISOString().slice(0, 10) : '');
+const doneToday = cards.filter((c) => c.list === 'done' && istDay(c.updated) === date).length;
 
 const wd = weekday(date);
 const eyebrow = wd === 0
@@ -99,45 +101,26 @@ const summary = data?.summary;
           </div>
         </section>
 
-        <section class="card tight stack-sm" aria-labelledby="trh" data-busy>
+        <section class="card tight stack-sm" aria-labelledby="trh">
           <div class="card-head">
-            <h2 id="trh">Board · Today</h2>
+            <h2 id="trh">Board</h2>
             <a href={href('/life/board')} style="font-size:14px">Open board →</a>
           </div>
           {boardProblem ? (
             <p class="muted" style="margin:0;font-size:14px">{boardProblem}</p>
           ) : (
-            <>
-              {todayCards.length === 0 ? (
-                <p class="muted" style="margin:0;font-size:14px">No cards in Today. Move cards from This Week on the board, or add one here.</p>
-              ) : (
-                <ul class="bt-list">
-                  {todayCards.map((c) => {
-                    const inTop3 = c.top3.startsWith(`${today}#`);
-                    return (
-                      <li>
-                        <a class="bt-title" href={href('/life/board', { card: c.id })}>{c.title}</a>
-                        {c.labels.length > 0 && <span class="bt-labels">{c.labels.map((l) => <i style={`background:${labelStyle(l).color}`} title={l}></i>)}</span>}
-                        {inTop3 ? <span class="badge top3">TOP 3</span> : isToday && (
-                          <form method="post" action="/api/life/board" data-enhance>
-                            <input type="hidden" name="action" value="top3" /><input type="hidden" name="card" value={c.id} /><input type="hidden" name="next" value={here} />
-                            <button type="submit" class="bt-top3" title="Add to today's Top 3">★ Top 3</button>
-                          </form>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              {isToday && (
-                <form method="post" action="/api/life/board" data-enhance class="bt-add">
-                  <input type="hidden" name="action" value="create" /><input type="hidden" name="list" value="today" /><input type="hidden" name="next" value={here} />
-                  <input class="field" name="title" maxlength="500" required placeholder="Add a card to Today" aria-label="Add a card to Today" />
-                  <button class="btn" type="submit">Add</button>
-                </form>
-              )}
-              <p class="mono muted" style="margin:0;font-size:11px">THIS WEEK {weekCount} · WAITING {waitingCount} · INBOX {inboxCount}</p>
-            </>
+            <div class="b-stats">
+              {[
+                { label: 'Today', n: todayCards.length },
+                { label: 'This week', n: weekCount },
+                { label: 'Waiting', n: waitingCount },
+                { label: 'Inbox', n: inboxCount },
+                { label: 'Someday', n: open('someday').length },
+                { label: 'Done today', n: doneToday },
+              ].map((x) => (
+                <a href={href('/life/board')}><b>{x.n}</b><span>{x.label}</span></a>
+              ))}
+            </div>
           )}
         </section>
 
