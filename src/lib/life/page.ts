@@ -40,6 +40,8 @@ const SAVED: Record<string, string> = {
   month: 'Monthly log saved',
   measure: 'Saved',
   'lv-added': 'Added',
+  'vb-saved': 'Picture saved',
+  'vb-deleted': 'Picture removed',
   'lv-saved': 'Saved',
   'lv-done': 'Ticked off. Well done',
   'lv-undone': 'Marked not done',

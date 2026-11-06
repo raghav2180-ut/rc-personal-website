@@ -39,6 +39,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.session = session;
   const response = await next();
   response.headers.set('X-Robots-Tag', 'noindex, nofollow');
-  response.headers.set('Cache-Control', 'private, no-store');
+  // Family photos may be cached by the signed-in browser; everything else is never stored.
+  if (!path.startsWith('/api/life/photo/')) response.headers.set('Cache-Control', 'private, no-store');
   return response;
 });
