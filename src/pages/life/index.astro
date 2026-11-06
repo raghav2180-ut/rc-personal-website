@@ -6,7 +6,8 @@ import Problem from '../../components/life/Problem.astro';
 import { loadToday } from '../../lib/life/data';
 import { addDays, dayMonth, isIso, longDate, todayIST, weekday } from '../../lib/life/dates';
 import { errorMessage, lifeContext } from '../../lib/life/page';
-import { env } from '../../lib/life/env';
+import { loadBoard } from '../../lib/life/board';
+import { labelStyle } from '../../lib/life/board-model';
 
 export const prerender = false;
 
@@ -23,6 +24,20 @@ try {
 } catch (err) {
   problem = errorMessage(err);
 }
+
+// The board's Today column, so the day's cards sit next to the Top 3.
+let cards: Awaited<ReturnType<typeof loadBoard>>['cards'] = [];
+let boardProblem = '';
+try {
+  cards = (await loadBoard(person)).cards;
+} catch (err) {
+  boardProblem = errorMessage(err);
+}
+const open = (list: string) => cards.filter((c) => c.list === list && !c.complete);
+const todayCards = open('today');
+const weekCount = open('week').length;
+const waitingCount = open('waiting').length;
+const inboxCount = open('inbox').length;
 
 const wd = weekday(date);
 const eyebrow = wd === 0
@@ -81,12 +96,46 @@ const summary = data?.summary;
           </div>
         </section>
 
-        <section class="card tight stack-sm" aria-labelledby="trh">
+        <section class="card tight stack-sm" aria-labelledby="trh" data-busy>
           <div class="card-head">
-            <h2 id="trh">Trello · Today</h2>
-            <a href={env('TRELLO_BOARD_URL') ?? 'https://trello.com/'} target="_blank" rel="noopener" style="font-size:14px">Open board ↗</a>
+            <h2 id="trh">Board · Today</h2>
+            <a href={href('/life/board')} style="font-size:14px">Open board →</a>
           </div>
-          <p class="muted" style="margin:0;font-size:14px">Pick today's Top 3 from the Today column. A live list and your calendar will show here in the next update.</p>
+          {boardProblem ? (
+            <p class="muted" style="margin:0;font-size:14px">{boardProblem}</p>
+          ) : (
+            <>
+              {todayCards.length === 0 ? (
+                <p class="muted" style="margin:0;font-size:14px">No cards in Today. Move cards from This Week on the board, or add one here.</p>
+              ) : (
+                <ul class="bt-list">
+                  {todayCards.map((c) => {
+                    const inTop3 = c.top3.startsWith(`${today}#`);
+                    return (
+                      <li>
+                        <a class="bt-title" href={href('/life/board', { card: c.id })}>{c.title}</a>
+                        {c.labels.length > 0 && <span class="bt-labels">{c.labels.map((l) => <i style={`background:${labelStyle(l).color}`} title={l}></i>)}</span>}
+                        {inTop3 ? <span class="badge top3">TOP 3</span> : isToday && (
+                          <form method="post" action="/api/life/board" data-enhance>
+                            <input type="hidden" name="action" value="top3" /><input type="hidden" name="card" value={c.id} /><input type="hidden" name="next" value={here} />
+                            <button type="submit" class="bt-top3" title="Add to today's Top 3">★ Top 3</button>
+                          </form>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {isToday && (
+                <form method="post" action="/api/life/board" data-enhance class="bt-add">
+                  <input type="hidden" name="action" value="create" /><input type="hidden" name="list" value="today" /><input type="hidden" name="next" value={here} />
+                  <input class="field" name="title" maxlength="500" required placeholder="Add a card to Today" aria-label="Add a card to Today" />
+                  <button class="btn" type="submit">Add</button>
+                </form>
+              )}
+              <p class="mono muted" style="margin:0;font-size:11px">THIS WEEK {weekCount} · WAITING {waitingCount} · INBOX {inboxCount}</p>
+            </>
+          )}
         </section>
 
         <section class="card tight stack-sm" aria-labelledby="ph3">
