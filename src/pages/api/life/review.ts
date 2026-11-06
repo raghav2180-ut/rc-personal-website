@@ -1,4 +1,4 @@
-import { UserError } from '../../../lib/life/actions';
+import { syncBoardFor, UserError } from '../../../lib/life/actions';
 import { formRoute } from '../../../lib/life/http';
 import {
   AREAS,
@@ -75,5 +75,7 @@ export const POST = formRoute(async (form) => {
     default:
       throw new UserError('Unknown review step.');
   }
+  // Closing goals and planning the week change what belongs on the board.
+  if (step === '2' || step === '5') await syncBoardFor(person, week);
   return `review-${step}`;
 });
