@@ -280,3 +280,85 @@ export async function syncTop3ToBoard(owner: string, date: string, n: number, do
     console.error('[life] board sync failed', err);
   }
 }
+
+// ------------------------------------------------- Top 3 → board, always ---
+
+const plainTask = (t: string) => t.replace(/\s*\(bonus\)\s*$/i, '').trim();
+const sameText = (a: string, b: string) => plainTask(a).toLowerCase().replace(/\s+/g, ' ') === plainTask(b).toLowerCase().replace(/\s+/g, ' ');
+
+/**
+ * Make sure every Top 3 task for the day has a card on the person's board:
+ * - a card already linked to it is left alone (but moved to Done if the task is done);
+ * - else an open card with the same title is linked and moved to Today;
+ * - else a new card is created in Today (or Done, if the task is already done).
+ * Safe to call often: it only writes when something is missing. Never throws.
+ */
+export async function ensureTop3Cards(owner: Person, date = todayIST()) {
+  try {
+    const s = await ensureTabs();
+    const [top3Grid, boardGrid] = await s.batchGet([RANGES.top3, BOARD_RANGE]);
+    const tasks = parseTop3(top3Grid).filter((t) => t.date === date && t.person === owner && plainTask(t.task));
+    if (!tasks.length) return;
+    const all = parseBoard(boardGrid);
+    const mine = all.filter((c) => c.owner === owner);
+    const updates: Card[] = [];
+    const fresh: Omit<Card, 'row'>[] = [];
+    const now = nowIso();
+
+    for (const t of tasks) {
+      const link = `${date}#${t.n}`;
+      const done = t.done === 'Yes';
+      let card = mine.find((c) => c.top3 === link);
+      if (card) {
+        if (done && card.list !== 'done') {
+          Object.assign(card, { list: 'done', pos: startOf(all, owner, 'done'), complete: true });
+          updates.push(card);
+        }
+        continue;
+      }
+      card = mine.find((c) => !['done', 'archive'].includes(c.list) && !c.top3.startsWith(`${date}#`) && sameText(c.title, t.task));
+      if (card) {
+        const list: ListKey = done ? 'done' : 'today';
+        Object.assign(card, { top3: link, list, pos: list === 'done' ? startOf(all, owner, 'done') : endOf(all, owner, 'today'), complete: done || card.complete });
+        updates.push(card);
+        continue;
+      }
+      const list: ListKey = done ? 'done' : 'today';
+      const pos = list === 'done' ? startOf([...all, ...(fresh as Card[])], owner, 'done') : endOf([...all, ...(fresh as Card[])], owner, 'today');
+      fresh.push({
+        id: newId(), owner, list, pos, title: plainTask(t.task).slice(0, 500), desc: '', labels: [], start: '', due: '',
+        dueDone: false, complete: done, checklists: [], attachments: [], fy: FY_GOALS.includes(t.fy) ? t.fy : '', waiting: '',
+        top3: link, created: now, updated: now, archivedFrom: '', trelloUrl: '',
+      });
+    }
+
+    if (updates.length) {
+      await s.batchUpdate(
+        updates.map((c) => {
+          c.updated = now;
+          const { row, ...rest } = c;
+          return { range: `Board!A${row}:T${row}`, values: [cardRow(rest)] };
+        }),
+        RAW,
+      );
+    }
+    if (fresh.length) await s.append('Board!A:T', fresh.map(cardRow), RAW);
+  } catch (err) {
+    console.error('[life] top 3 → board failed', err);
+  }
+}
+
+/** Keep a linked card's title in step when a Top 3 task is edited. Never throws. */
+export async function syncTop3Title(owner: Person, date: string, n: number, task: string) {
+  try {
+    const s = sheets();
+    const [boardGrid] = await s.batchGet([BOARD_RANGE]);
+    const card = parseBoard(boardGrid).find((c) => c.owner === owner && c.top3 === `${date}#${n}`);
+    const title = plainTask(task);
+    if (!card || !title || card.title === title) return;
+    card.title = title.slice(0, 500);
+    await save(s, card);
+  } catch (err) {
+    console.error('[life] top 3 title sync failed', err);
+  }
+}
