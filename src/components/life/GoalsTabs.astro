@@ -1,0 +1,16 @@
+---
+interface Props {
+  active: 'fy' | 'quarterly' | 'monthly' | 'weekly';
+  href: (p: string) => string;
+}
+const { active, href } = Astro.props;
+const tabs = [
+  { key: 'fy', label: 'FY Goals', path: '/life/goals' },
+  { key: 'quarterly', label: 'Quarterly Goals', path: '/life/goals/quarterly' },
+  { key: 'monthly', label: 'Monthly Goals', path: '/life/goals/monthly' },
+  { key: 'weekly', label: 'Weekly Goals', path: '/life/goals/weekly' },
+];
+---
+<nav class="v-tabs" aria-label="Goals">
+  {tabs.map((t) => <a href={href(t.path)} aria-current={active === t.key ? 'page' : undefined}>{t.label}</a>)}
+</nav>

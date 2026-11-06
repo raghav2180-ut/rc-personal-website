@@ -630,3 +630,10 @@ body:has(.modal-wrap) { overflow: hidden; }
 .bt-top3:hover { border-color: var(--color-pen); }
 .bt-add { display: flex; gap: 8px; }
 .bt-add .field { flex: 1; min-width: 0; }
+
+/* tick-off goals (no number) */
+.g-done-row { display: flex; gap: 12px; align-items: flex-start; }
+.g-done-row h3 { padding-top: 2px; }
+.g-tick.big { width: 32px; height: 32px; flex: none; font-size: 16px; }
+.g-card.is-done .g-tick.big { background: var(--color-pen); border-color: var(--color-pen); }
+.g-card.is-done h3 { color: var(--color-muted); text-decoration: line-through; }

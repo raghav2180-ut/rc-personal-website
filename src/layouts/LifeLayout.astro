@@ -25,11 +25,11 @@ const suite = inMigraine ? 'Migraine Diary' : 'Dream Life 2029';
 const yearsLeft = Math.max(0, 2029 - new Date().getFullYear());
 
 const links = [
-  { key: 'today', n: '01', label: 'Today', path: '/life' },
-  { key: 'week', n: '02', label: 'Week', path: '/life/week' },
-  { key: 'board', n: '03', label: 'Board', path: '/life/board' },
-  { key: 'goals', n: '04', label: 'Goals', path: '/life/goals' },
-  ...(name === 'Kajol' ? [] : [{ key: 'monthly', n: '05', label: 'Monthly', path: '/life/monthly' }]),
+  { key: 'today', n: '01', label: "Today's Checkin and Review", path: '/life' },
+  { key: 'board', n: '02', label: 'Board', path: '/life/board' },
+  { key: 'goals', n: '03', label: 'Goals', path: '/life/goals' },
+  { key: 'week', n: '04', label: 'Weekly Checkin and Review', path: '/life/week' },
+  ...(name === 'Kajol' ? [] : [{ key: 'monthly', n: '05', label: 'Monthly Log', path: '/life/monthly' }]),
   { key: 'vision', n: '06', label: 'Life Vision', path: '/life/vision' },
   ...(canSeeMigraine(Astro.locals.session?.email) ? [{ key: 'migraine', n: '07', label: 'Migraine', path: '/life/migraine' }] : []),
 ];

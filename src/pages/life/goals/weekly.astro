@@ -1,0 +1,150 @@
+---
+import LifeLayout from '../../../layouts/LifeLayout.astro';
+import Problem from '../../../components/life/Problem.astro';
+import GoalsTabs from '../../../components/life/GoalsTabs.astro';
+import { FY_GOALS, loadWeek, STATUSES, WEEKLY_CAP } from '../../../lib/life/data';
+import { addDays, dayMonth, isIso, isoWeek, monthName, parts, shortDay, todayIST, weekStart } from '../../../lib/life/dates';
+import { errorMessage, lifeContext } from '../../../lib/life/page';
+
+export const prerender = false;
+
+const { me, person, flash, href, here } = lifeContext(Astro);
+const today = todayIST();
+const thisWeek = weekStart(today);
+const asked = Astro.url.searchParams.get('w');
+const week = isIso(asked) ? weekStart(asked) : thisWeek;
+const isThisWeek = week === thisWeek;
+
+let data: Awaited<ReturnType<typeof loadWeek>> | null = null;
+let problem = '';
+try {
+  data = await loadWeek(person, week);
+} catch (err) {
+  problem = errorMessage(err);
+}
+
+const sat = addDays(week, 5);
+const ps = parts(week);
+const pe = parts(sat);
+const range =
+  ps.month === pe.month
+    ? `MON ${ps.day} – SAT ${pe.day} ${monthName(pe.month)} ${pe.year}`
+    : `MON ${ps.day} ${monthName(ps.month)} – SAT ${pe.day} ${monthName(pe.month)} ${pe.year}`;
+const prevWeek = addDays(week, -7);
+const nextWeek = addDays(week, 7);
+const weekLink = (w: string) => href('/life/goals/weekly', w === thisWeek ? {} : { w });
+const nextStatus = (s: string) => STATUSES[(STATUSES.indexOf(s as (typeof STATUSES)[number]) + 1) % STATUSES.length];
+
+const goals = data?.summary.goals ?? [];
+const capCount = goals.length;
+---
+<LifeLayout title="Weekly Goals" active="goals" name={me} flash={flash} href={href}>
+  <header class="l-head">
+    <div>
+      <span class="eyebrow">{isThisWeek ? 'THIS WEEK' : week > thisWeek ? 'NEXT WEEK' : 'PAST WEEK'} · WEEK {isoWeek(week)} · {range}</span>
+      <h1>{me === 'Kajol' ? 'Your goals' : 'Goals'}</h1>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <a class="btn-ghost" href={weekLink(prevWeek)} aria-label="Previous week">← {dayMonth(prevWeek)}</a>
+      <a class="btn-ghost" href={weekLink(nextWeek)} aria-label="Next week" aria-disabled={nextWeek > addDays(thisWeek, 7) ? 'true' : undefined}>{dayMonth(nextWeek)} →</a>
+    </div>
+  </header>
+
+  <GoalsTabs active="weekly" href={href} />
+
+  {problem && <Problem message={problem} />}
+
+  {data && (
+    <>
+        <section class="card" style="display:block" aria-labelledby="wgh" data-busy>
+          <div class="card-head" style="align-items:center">
+            <h2 id="wgh">Weekly goals</h2>
+            <div class="cap">
+              <div aria-hidden="true" style="display:flex;gap:4px">
+                {Array.from({ length: WEEKLY_CAP }, (_, i) => (
+                  <i class:list={{ on: i < capCount && !(capCount >= WEEKLY_CAP && i === WEEKLY_CAP - 1), last: capCount >= WEEKLY_CAP && i === WEEKLY_CAP - 1 }} />
+                ))}
+              </div>
+              <span class:list={['mono', { full: capCount >= WEEKLY_CAP }]}>
+                {capCount} OF {WEEKLY_CAP}{capCount >= WEEKLY_CAP ? ' · AT THE CAP' : ''}
+              </span>
+            </div>
+          </div>
+          <p class="sub">3 to 5 goals a week, each tied to an FY goal. Tap a status to move it on. Each goal also sits in the board’s This Week list.</p>
+
+          {goals.length === 0 && <p class="empty">No goals for this week yet.</p>}
+
+          {goals.map((g, i) => (
+            <div class="wg" id={`goal-${i + 1}`}>
+              <span class="n">{i + 1}</span>
+              <div class="body">
+                <span class="area">{g.fy || 'No FY goal'}</span>
+                <span class="goal">{g.goal}</span>
+                {(g.day || g.firstStep || g.priority) && (
+                  <span class="remark">{g.priority && <b class="mono">{g.priority.toUpperCase()} · </b>}{g.day && `${shortDay(g.day)} deep work`}{g.day && g.firstStep && ' · '}{g.firstStep && `First step: ${g.firstStep}`}</span>
+                )}
+                {g.remarks && <span class="remark">{g.remarks}</span>}
+              </div>
+              <form method="post" action="/api/life/weekly" data-enhance>
+                <input type="hidden" name="row" value={g.row} />
+                <input type="hidden" name="week" value={week} />
+                <input type="hidden" name="person" value={person} />
+                <input type="hidden" name="status" value={nextStatus(g.status)} />
+                <input type="hidden" name="next" value={`${here}#goal-${i + 1}`} />
+                <button type="submit" class="status" data-s={g.status} aria-label={`Status: ${g.status}. Change to ${nextStatus(g.status)}`}>{g.status}</button>
+              </form>
+            </div>
+          ))}
+
+          {capCount < WEEKLY_CAP && (
+            <div class="t3-add">
+              <details>
+                <summary class="btn-dashed" style="display:inline-flex;align-items:center">+ Add a goal ({WEEKLY_CAP - capCount} left)</summary>
+                <form method="post" action="/api/life/weekly" data-enhance class="next-slot" style="margin-top:12px;align-items:flex-end">
+                  <input type="hidden" name="action" value="add" />
+                  <input type="hidden" name="week" value={week} />
+                  <input type="hidden" name="person" value={person} />
+                  <input type="hidden" name="next" value={here} />
+                  <label class="label fy">FY goal
+                    <select class="field" name="fy"><option value="">Pick one</option>{FY_GOALS.map((f) => <option>{f}</option>)}</select>
+                  </label>
+                  <label class="label g">Goal
+                    <input class="field" name="goal" required maxlength="300" />
+                  </label>
+                  <button class="btn" type="submit">Add</button>
+                </form>
+              </details>
+            </div>
+          )}
+        </section>
+
+
+      {data.trend.length > 0 && (
+        <section class="card stack" aria-labelledby="trend">
+          <div class="card-head">
+            <h2 id="trend" style="font-size:20px">Weekly goals fully done</h2>
+            <span class="mono muted" style="font-size:12px">LAST {data.trend.length} WEEKS WITH GOALS{data.average !== null ? ` · ${data.year} AVERAGE ${data.average}%` : ''}</span>
+          </div>
+          <div class="trend-wrap">
+            <div class="trend bars" style={`--cols:${data.trend.length}`}>
+              {data.trend.map((t) => (
+                <div class="bar">
+                  <span class="mono">{t.pct}%</span>
+                  <i class:list={{ hi: t.pct >= 50 }} style={`height:${Math.max(t.pct * 1.8, 3)}px`} title={`${t.total} goals`}></i>
+                </div>
+              ))}
+            </div>
+            <div class="trend labels" style={`--cols:${data.trend.length}`}>
+              {data.trend.map((t) => <span>{dayMonth(t.week)}</span>)}
+            </div>
+          </div>
+          {data.typicalGoals !== null && (
+            <p class="hand" style="margin:0;font-size:19px">Most weeks had about {data.typicalGoals} goals. Fewer goals, more of them finished.</p>
+          )}
+        </section>
+      )}
+
+      <p class="muted" style="margin:0;font-size:14px">Day-by-day check-ins and the Saturday review are on <a href={href('/life/week', isThisWeek ? {} : { w: week })}>Weekly Checkin and Review</a>.</p>
+    </>
+  )}
+</LifeLayout>
