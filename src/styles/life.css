@@ -617,3 +617,16 @@ body:has(.modal-wrap) { overflow: hidden; }
 .lv-add { border-top: 1px solid var(--line); padding-top: 14px; }
 .lv-foot { margin: 0; font-size: 14px; }
 .v29-edit { margin-top: 18px; font-family: var(--font-ui, inherit); }
+
+/* Today page: the board's Today column */
+.bt-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bt-list li { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line-2); min-height: 44px; }
+.bt-list li:first-child { border-top: none; }
+.bt-title { flex: 1; min-width: 0; color: var(--color-ink) !important; text-decoration: none; font-weight: 600; font-size: 14px; line-height: 1.35; }
+.bt-title:hover { color: var(--color-pen) !important; }
+.bt-labels { display: inline-flex; gap: 3px; }
+.bt-labels i { width: 18px; height: 6px; border-radius: 3px; display: inline-block; }
+.bt-top3 { border: 1px solid var(--field); background: #fff; border-radius: 8px; padding: 6px 10px; min-height: 36px; font-size: 12px; font-weight: 700; color: var(--color-pen); cursor: pointer; white-space: nowrap; }
+.bt-top3:hover { border-color: var(--color-pen); }
+.bt-add { display: flex; gap: 8px; }
+.bt-add .field { flex: 1; min-width: 0; }
