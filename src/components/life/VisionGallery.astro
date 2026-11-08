@@ -1,0 +1,98 @@
+---
+/**
+ * The vision board image with the pictures under it. Clicking any picture opens
+ * a full-screen viewer that scrolls through all of them (swipe, arrows, wheel).
+ */
+interface Props {
+  board: string;
+  pictures: string[];
+}
+const { board, pictures } = Astro.props;
+const all = [board, ...pictures];
+---
+<section class="vp" aria-label="Vision board" data-vp>
+  <a class="vp-board" href={board} data-vp-open="0"><img src={board} alt="Vision board" decoding="async" /></a>
+  <div class="vp-grid">
+    {pictures.map((src, i) => (
+      <a href={src} data-vp-open={i + 1}><img src={src} alt="" loading="lazy" decoding="async" /></a>
+    ))}
+  </div>
+
+  <dialog class="vp-dlg" aria-label="Vision pictures" data-vp-dialog>
+    <div class="vp-track" data-vp-track>
+      {all.map((src, i) => (
+        <figure class="vp-slide"><img src={src} alt={i === 0 ? 'Vision board' : ''} loading="lazy" decoding="async" /></figure>
+      ))}
+    </div>
+    <span class="vp-count mono" data-vp-count aria-live="polite"></span>
+    <button type="button" class="vp-btn vp-close" data-vp-close aria-label="Close">✕</button>
+    <button type="button" class="vp-btn vp-prev" data-vp-step="-1" aria-label="Previous picture">‹</button>
+    <button type="button" class="vp-btn vp-next" data-vp-step="1" aria-label="Next picture">›</button>
+  </dialog>
+</section>
+
+<script>
+  // Event delegation, so it keeps working after the page's background form swaps.
+  const parts = () => {
+    const dlg = document.querySelector('[data-vp-dialog]') as HTMLDialogElement | null;
+    const track = dlg?.querySelector('[data-vp-track]') as HTMLElement | null;
+    const count = dlg?.querySelector('[data-vp-count]') as HTMLElement | null;
+    return dlg && track && count ? { dlg, track, count } : null;
+  };
+  const total = (t: HTMLElement) => t.children.length;
+  const current = (t: HTMLElement) => Math.round(t.scrollLeft / Math.max(1, t.clientWidth));
+  const label = () => {
+    const p = parts();
+    if (p) p.count.textContent = `${current(p.track) + 1} / ${total(p.track)}`;
+  };
+  const go = (i: number, smooth = true) => {
+    const p = parts();
+    if (!p) return;
+    const n = Math.max(0, Math.min(total(p.track) - 1, i));
+    p.track.scrollTo({ left: n * p.track.clientWidth, behavior: smooth ? 'smooth' : 'instant' });
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    const open = target.closest('[data-vp-open]') as HTMLElement | null;
+    const p = parts();
+    if (!p) return;
+    if (open) {
+      event.preventDefault();
+      p.dlg.showModal();
+      go(Number(open.dataset.vpOpen), false);
+      label();
+      return;
+    }
+    const step = target.closest('[data-vp-step]') as HTMLElement | null;
+    if (step) return go(current(p.track) + Number(step.dataset.vpStep));
+    // Close on the ✕ or on the dark space around a picture.
+    if (target.closest('[data-vp-close]') || (p.dlg.open && !target.closest('img, button'))) p.dlg.close();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const p = parts();
+    if (!p?.dlg.open) return;
+    if (event.key === 'ArrowRight') go(current(p.track) + 1);
+    if (event.key === 'ArrowLeft') go(current(p.track) - 1);
+  });
+
+  // A mouse wheel moves one picture at a time.
+  let wheelLock = 0;
+  document.addEventListener(
+    'wheel',
+    (event) => {
+      const p = parts();
+      if (!p?.dlg.open || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      event.preventDefault();
+      if (Date.now() - wheelLock < 450 || Math.abs(event.deltaY) < 4) return;
+      wheelLock = Date.now();
+      go(current(p.track) + (event.deltaY > 0 ? 1 : -1));
+    },
+    { passive: false },
+  );
+
+  document.addEventListener('scroll', (event) => {
+    if ((event.target as HTMLElement).matches?.('[data-vp-track]')) label();
+  }, true);
+</script>
