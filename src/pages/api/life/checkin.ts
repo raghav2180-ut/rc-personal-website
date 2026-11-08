@@ -10,7 +10,6 @@ export const POST = formRoute(async (form) => {
     vision: form.opt('vision'),
     walk: form.opt('walk'),
     deep: form.opt('deep'),
-    night: form.opt('night'),
     displaced: form.opt('displaced'),
     win: form.str('win', 2000),
     worry: form.str('worry', 2000),

@@ -51,7 +51,7 @@ const goalsDone = goals.filter((g) => g.status === 'Done').length;
 const cellClass = (v: string) => (v === 'Yes' ? 'sq y' : v === 'No' ? 'sq n' : 'sq');
 const word = (v: string) => (v === 'Yes' ? 'yes' : v === 'No' ? 'no' : 'not yet');
 ---
-<LifeLayout title="Weekly Checkin and Review" active="week" name={me} flash={flash} href={href}>
+<LifeLayout title="Weekly Log" active="week" name={me} flash={flash} href={href}>
   <header class="l-head">
     <div>
       <span class="eyebrow">WEEK {isoWeek(week)} · {range}</span>

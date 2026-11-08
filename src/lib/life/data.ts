@@ -7,7 +7,10 @@ import type { Person } from './env';
 import { sheets, type Grid } from './sheets';
 import { fyProgress, GOALS_RANGE } from './goals';
 
-export const FY_GOALS = ['Colleges', 'Tech clients', 'SOT F.U.E.L', 'UMP Ultimate', 'UMP B2B', 'Revenue', 'Team & ops', 'Personal'];
+export const FY_GOALS = ['UMP Colleges (B2B)', 'Tech clients', 'SOT F.U.E.L', 'UMP Ultimate', 'Revenue', 'Team & ops', 'Personal'];
+/** Old area names still in past rows, read as their current name. */
+const AREA_RENAMES: Record<string, string> = { Colleges: 'UMP Colleges (B2B)', 'UMP B2B': 'UMP Colleges (B2B)' };
+export const areaName = (a: string) => AREA_RENAMES[a.trim()] ?? a;
 export const STATUSES = ['Not started', 'In progress', 'Done', 'Partially done', 'Not done'] as const;
 export const DISPLACED = ['Nothing', 'Meetings', 'Team', 'Ops & admin', 'Travel', 'Other'];
 export const SCORE_AREAS = ['UnsaidTalks', 'Personal money', 'Family', 'Health & energy', 'Personal brand', 'Calm & confidence'];
@@ -45,7 +48,7 @@ export interface CheckIn {
   vision: 'Yes' | 'No' | '';
   top3Done: string;
   walk: 'Yes' | 'No' | '';
-  night: 'Yes' | 'No' | '';
+  night: 'Yes' | 'No' | ''; // no longer asked; kept for past rows
   win: string;
   worry: string;
   notes: string;
@@ -107,7 +110,7 @@ function parseTop3(grid: Grid): Top3Item[] {
       const doneRaw = cell(r, 4);
       const done: Top3Item['done'] = /^y/i.test(doneRaw) ? 'Yes' : /^p/i.test(doneRaw) ? 'Partial' : /^n/i.test(doneRaw) ? 'No' : '';
       const n = Number(cell(r, 2)) || 0;
-      return { row: i + 2, date, person: cell(r, 1), n, task, done, fy: cell(r, 5), bonus: n > 3 };
+      return { row: i + 2, date, person: cell(r, 1), n, task, done, fy: areaName(cell(r, 5)), bonus: n > 3 };
     })
     .filter((x): x is Top3Item => !!x);
 }
@@ -144,7 +147,7 @@ function parseWeekly(grid: Grid): WeeklyGoal[] {
         row: i + 2,
         week: weekStart(date),
         person: cell(r, 1),
-        fy: cell(r, 2),
+        fy: areaName(cell(r, 2)),
         goal: cell(r, 3),
         status: cell(r, 4) || 'Not started',
         remarks: cell(r, 5),

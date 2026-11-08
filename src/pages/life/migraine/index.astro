@@ -34,8 +34,8 @@ const entryHref = `/life/migraine/entry?d=${date}`;
 const since =
   month.sinceLast == null ? null : month.sinceLast === 0 ? 'today' : month.sinceLast === 1 ? 'yesterday' : `${month.sinceLast} days ago`;
 ---
-<LifeLayout title="Migraine" active="migraine" name={me} flash={flash}>
-  <MigraineHead title="Migraine" eyebrow={`Migraine diary · ${longDate(today)}`} tab="today" />
+<LifeLayout title="Migraine Tracker" active="migraine" name={me} flash={flash}>
+  <MigraineHead title="Migraine Tracker" eyebrow={`Migraine diary · ${longDate(today)}`} tab="today" />
 
   {problem && <Problem message={problem} />}
 
