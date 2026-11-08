@@ -1,5 +1,5 @@
 /**
- * Vision pictures shown under the Bucket list (Raghav only).
+ * Raghav's vision board and pictures, shown on the Life Vision tab (Kajol's is empty).
  *
  * The pictures are stored encrypted with the site (vision-photos.sealed.ts);
  * the key is in the private sheet (VisionPhotos!B1), so only signed-in users
@@ -8,12 +8,13 @@
 import type { Person } from './env';
 import { sheets } from './sheets';
 
-const NAMES = Array.from({ length: 11 }, (_, i) => `ai-${i + 1}`);
-const KNOWN = new Set(NAMES);
+const PICTURES = Array.from({ length: 11 }, (_, i) => `ai-${i + 1}`);
+const KNOWN = new Set(['board', ...PICTURES]);
+const url = (name: string) => `/api/life/photo/${name}.jpg`;
 
-/** Picture URLs for this person's bucket list (Kajol's is empty). */
-export function visionPictures(person: Person): string[] {
-  return person === 'Raghav' ? NAMES.map((n) => `/api/life/photo/${n}.jpg`) : [];
+/** The vision board image and the pictures under it, or nothing for Kajol. */
+export function visionPictures(person: Person): { board: string; pictures: string[] } | null {
+  return person === 'Raghav' ? { board: url('board'), pictures: PICTURES.map(url) } : null;
 }
 
 let keyCache: { key: CryptoKey; at: number } | null = null;
