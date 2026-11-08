@@ -4,8 +4,7 @@ import Problem from '../../../components/life/Problem.astro';
 import VisionTabs from '../../../components/life/VisionTabs.astro';
 import LvList from '../../../components/life/LvList.astro';
 import { loadLifeVision } from '../../../lib/life/lifevision';
-import VisionBoard from '../../../components/life/VisionBoard.astro';
-import { loadBoard, type Tile } from '../../../lib/life/visionboard';
+import { visionPictures } from '../../../lib/life/visionboard';
 import { errorMessage, lifeContext } from '../../../lib/life/page';
 
 export const prerender = false;
@@ -13,13 +12,12 @@ export const prerender = false;
 const { me, flash, href, here } = lifeContext(Astro);
 let data: Awaited<ReturnType<typeof loadLifeVision>> | null = null;
 let problem = '';
-let tiles: Tile[] = [];
 try {
   data = await loadLifeVision(me);
-  tiles = await loadBoard(me, 'bucket', data.bucket);
 } catch (err) {
   problem = errorMessage(err);
 }
+const pics = visionPictures(me);
 const total = data?.bucket.length ?? 0;
 const done = data?.bucket.filter((b) => b.done).length ?? 0;
 ---
@@ -45,5 +43,9 @@ const done = data?.bucket.filter((b) => b.done).length ?? 0;
       <LvList items={data.bucket} list="Bucket" here={here} numbered checks placeholder="Add a life goal" />
     </section>
   )}
-  {data && <VisionBoard board="bucket" tiles={tiles} here={here} title="Bucket list board" />}
+  {data && pics.length > 0 && (
+    <section class="vp-grid" aria-label="Vision pictures">
+      {pics.map((src) => <a href={src} target="_blank" rel="noopener"><img src={src} alt="" loading="lazy" decoding="async" /></a>)}
+    </section>
+  )}
 </LifeLayout>

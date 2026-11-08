@@ -5,8 +5,6 @@ import VisionTabs from '../../../components/life/VisionTabs.astro';
 import { loadVision, SCORE_AREAS } from '../../../lib/life/data';
 import { addDays, dayMonth, todayIST, weekday } from '../../../lib/life/dates';
 import { errorMessage, lifeContext } from '../../../lib/life/page';
-import VisionBoard from '../../../components/life/VisionBoard.astro';
-import { loadBoard, type Tile } from '../../../lib/life/visionboard';
 
 export const prerender = false;
 
@@ -14,11 +12,9 @@ const { me, person, flash, href, here } = lifeContext(Astro);
 const today = todayIST();
 
 let data: Awaited<ReturnType<typeof loadVision>> | null = null;
-let tiles: Tile[] = [];
 let problem = '';
 try {
   data = await loadVision(person, today);
-  tiles = await loadBoard(person, '2029');
 } catch (err) {
   problem = errorMessage(err);
 }
@@ -136,5 +132,4 @@ const streakWord = (s: { sunday: boolean; value: string; hasCheckIn: boolean }) 
       </aside>
     </div>
   )}
-  {data && <VisionBoard board="2029" tiles={tiles} here={here} title="Vision board 2029" />}
 </LifeLayout>
