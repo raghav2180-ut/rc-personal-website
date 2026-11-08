@@ -62,7 +62,7 @@ const numbersOf = (m: MonthEntry) => [
   { value: m.revenue ? `₹${m.revenue}L` : '', label: 'Revenue / month' },
   { value: m.fuel, label: 'SOT F.U.E.L students' },
   { value: m.ump, label: 'UMP Ultimate active' },
-  { value: m.colleges, label: 'Colleges' },
+  { value: m.colleges, label: 'UMP Colleges (B2B)' },
   { value: m.tech, label: 'Tech clients' },
 ].filter((n) => n.value);
 const span = months.length ? `${months.length} MONTHS · ${monthLabel(months[months.length - 1].key, false)} – ${monthLabel(months[0].key, false)}` : 'MONTHLY LOG';
@@ -95,7 +95,7 @@ const span = months.length ? `${months.length} MONTHS · ${monthLabel(months[mon
             <label class="numbox">Revenue (₹L/month)<input name="revenue" type="number" step="any" value={val(targetEntry?.revenue, /revenue/i)} /></label>
             <label class="numbox">SOT F.U.E.L students<input name="fuel" type="number" value={val(targetEntry?.fuel, /f\.?u\.?e\.?l/i)} /></label>
             <label class="numbox">UMP Ultimate active<input name="ump" type="number" value={val(targetEntry?.ump, /ultimate/i)} /></label>
-            <label class="numbox">Colleges<input name="colleges" type="number" value={val(targetEntry?.colleges, /college/i)} /></label>
+            <label class="numbox">UMP Colleges (B2B)<input name="colleges" type="number" value={val(targetEntry?.colleges, /college/i)} /></label>
             <label class="numbox">Tech clients<input name="tech" type="number" value={val(targetEntry?.tech, /tech/i)} /></label>
           </div>
           <label class="label">Notes

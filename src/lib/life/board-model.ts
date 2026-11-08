@@ -9,6 +9,7 @@
  *                  U Weekly goal (week#row in the Weekly tab)
  *   BoardComments  A ID | B Card ID | C Owner | D Date | E Author | F Text
  */
+import { areaName } from './data';
 import { cellToIso } from './dates';
 import type { Grid } from './sheets';
 
@@ -122,7 +123,7 @@ export function parseBoard(grid: Grid): Card[] {
         complete: /^y/i.test(cell(r, 10)),
         checklists: json<Checklist[]>(cell(r, 11), []).map((c) => ({ name: String(c.name ?? 'Checklist'), items: (c.items ?? []).map((it) => [String(it[0]), !!it[1]] as ChecklistItem) })),
         attachments: json<Attachment[]>(cell(r, 12), []),
-        fy: cell(r, 13).trim(),
+        fy: areaName(cell(r, 13).trim()),
         waiting: cell(r, 14).trim(),
         top3: cell(r, 15).trim(),
         created: cell(r, 16).trim(),

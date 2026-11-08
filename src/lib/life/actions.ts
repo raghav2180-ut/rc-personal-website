@@ -118,7 +118,6 @@ export interface CheckInInput {
   vision: string | null;
   walk: string | null;
   deep: string | null;
-  night: string | null;
   displaced: string | null;
   win: string;
   worry: string;
@@ -133,7 +132,7 @@ export async function saveCheckIn(input: CheckInInput) {
   const displaced = input.displaced && DISPLACED.includes(input.displaced) ? input.displaced : '';
   const existing = parseCheckIns(ciGrid).find((c) => c.date === input.date && c.person === input.person);
 
-  const front = [ynOrBlank(input.vision), doneCount, ynOrBlank(input.walk), ynOrBlank(input.night), text(input.win), text(input.worry)];
+  const front = [ynOrBlank(input.vision), doneCount, ynOrBlank(input.walk), existing?.night ?? '', text(input.win), text(input.worry)];
   const back = [ynOrBlank(input.deep), displaced];
 
   if (existing) {

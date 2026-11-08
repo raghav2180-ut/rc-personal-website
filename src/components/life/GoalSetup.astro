@@ -27,7 +27,7 @@ const ownerId = `owners-${kind}-${m ?? q ?? fy}`;
   {kind === 'Q' && q !== null && <input type="hidden" name="q" value={q} />}
   {kind === 'M' && m !== null && <input type="hidden" name="m" value={m} />}
   <input type="hidden" name="next" value={here} />
-  <datalist id={listId}>{['Colleges', 'Tech clients', 'SOT F.U.E.L', 'UMP Ultimate', 'UMP B2B', 'Revenue (₹L/month)', 'Team & ops'].map((a) => <option value={a} />)}</datalist>
+  <datalist id={listId}>{['UMP Colleges (B2B)', 'Tech clients', 'SOT F.U.E.L', 'UMP Ultimate', 'Revenue (₹L/month)', 'Team & ops'].map((a) => <option value={a} />)}</datalist>
   {!kajol && <datalist id={ownerId}>{['Raghav', 'Raghav + Uttam', 'Uttam + Raghav', 'Uttam'].map((a) => <option value={a} />)}</datalist>}
   {slots.map((r) => (
     <div class:list={['gs-row', { kajol }]}>
